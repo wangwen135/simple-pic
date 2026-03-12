@@ -5,21 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Upload</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/i18n.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --accent-color: #3b82f6;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .gradient-bg {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
         }
 
+        [data-theme="light"] .gradient-bg {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 50%, #f8fafc 100%);
+        }
+
         .glass {
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="light"] .glass {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .drop-zone {
@@ -74,6 +106,106 @@
         .preview-image {
             object-fit: cover;
         }
+
+        /* Storage space selector */
+        .storage-selector {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .storage-selector:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .storage-selector select {
+            background: transparent;
+            color: var(--text-primary);
+            border: none;
+            outline: none;
+        }
+
+        .storage-selector select option {
+            background: #1e293b;
+            color: var(--text-primary);
+        }
+
+        [data-theme="light"] .storage-selector select option {
+            background: #ffffff;
+            color: var(--text-primary);
+        }
+
+        .admin-link {
+            transition: all 0.2s ease;
+            border-radius: 6px;
+            padding: 6px 12px;
+        }
+
+        [data-theme="dark"] .admin-link:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        [data-theme="light"] .admin-link:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* 未登录状态链接样式 */
+        .login-link {
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-color: rgba(59, 130, 246, 0.5);
+        }
+
+        [data-theme="dark"] .login-link:hover {
+            color: #3b82f6;
+            text-decoration-color: #3b82f6;
+        }
+
+        [data-theme="light"] .login-link:hover {
+            color: #2563eb;
+            text-decoration-color: #2563eb;
+        }
+
+        .theme-btn, .lang-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        [data-theme="light"] .theme-btn,
+        [data-theme="light"] .lang-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--text-primary);
+        }
+
+        .theme-btn:hover, .lang-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .history-item {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        [data-theme="light"] .history-item {
+            background: rgba(241, 245, 249, 0.8);
+        }
+
+        .history-item:hover {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        [data-theme="light"] .history-item:hover {
+            background: rgba(226, 232, 240, 1);
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
@@ -86,18 +218,47 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold text-white">Simple-Pic</h1>
+                <h1 class="text-xl font-bold" data-i18n="app_title">Simple-Pic</h1>
             </div>
 
-            <div class="flex items-center space-x-4">
-                <div id="user-info" class="flex items-center space-x-3 text-sm">
-                    <span class="text-slate-400">Not logged in</span>
+            <div class="flex items-center space-x-3">
+                <!-- Storage space selector for logged-in users -->
+                <div id="storageSelector" class="storage-selector px-3 py-2 rounded-lg">
+                    <label class="text-xs text-slate-400 mr-2" data-i18n="storage">Storage</label>
+                    <select id="storageSpaceSelect" class="text-sm font-medium">
+                    </select>
                 </div>
-                <a href="/admin/dashboard.html" id="admin-link" class="hidden text-slate-300 hover:text-white text-sm transition-colors">
-                    Admin Panel
+
+                <!-- Storage space selector for anonymous users -->
+                <div id="anonymousStorageSelector" class="storage-selector hidden px-3 py-2 rounded-lg">
+                    <label class="text-xs text-slate-400 mr-2" data-i18n="storage">Storage</label>
+                    <select id="anonymousStorageSelect" class="text-sm font-medium">
+                    </select>
+                </div>
+
+                <!-- User info -->
+                <div id="user-info" class="flex items-center">
+                    <a href="/login.html" class="login-link text-sm" data-i18n="not_logged_in">Not logged in</a>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <a href="/admin/dashboard.html" id="admin-link" class="admin-link hidden text-slate-300 text-sm" data-i18n="admin_panel">
+                    [Admin Panel]
                 </a>
-                <button id="logout-btn" class="hidden px-4 py-2 rounded-lg bg-slate-700 text-white text-sm hover:bg-slate-600 transition-colors">
+
+                <button id="logout-btn" class="hidden px-4 py-2 rounded-lg bg-slate-700 text-white text-sm hover:bg-slate-600 transition-colors" data-i18n="logout">
                     Logout
+                </button>
+
+                <!-- Theme and language toggles -->
+                <button id="langBtn" class="lang-btn px-3 py-2 rounded-lg text-sm font-medium">
+                    <span id="langText">中文</span>
+                </button>
+                <button id="themeBtn" class="theme-btn px-3 py-2 rounded-lg" title="Toggle theme">
+                    <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -114,20 +275,20 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xl font-semibold text-white mb-2">Drop images here</p>
-                    <p class="text-slate-400">or click to select • Paste from clipboard (Ctrl+V)</p>
+                    <p class="text-xl font-semibold mb-2" data-i18n="drop_images_here">Drop images here</p>
+                    <p class="text-slate-400" data-i18n="or_click_to_select">or click to select • Paste from clipboard (Ctrl+V)</p>
                 </div>
             </div>
         </div>
 
         <!-- Link format selector -->
         <div class="glass rounded-xl p-6 mb-8">
-            <h3 class="text-lg font-semibold text-white mb-4">Link Format</h3>
+            <h3 class="text-lg font-semibold mb-4" data-i18n="link_format">Link Format</h3>
             <div class="flex flex-wrap gap-3">
-                <button class="link-format active px-4 py-2 rounded-lg border border-slate-600 text-white text-sm" data-format="markdown">
+                <button class="link-format active px-4 py-2 rounded-lg border border-slate-600 text-sm" data-format="markdown" data-i18n="markdown">
                     Markdown
                 </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="direct">
+                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="direct" data-i18n="direct_link">
                     Direct Link
                 </button>
                 <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="html">
@@ -142,13 +303,13 @@
         <!-- Upload history -->
         <div class="glass rounded-xl p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-white">Recent Uploads</h3>
-                <button id="clear-history" class="text-sm text-slate-400 hover:text-white transition-colors">
+                <h3 class="text-lg font-semibold" data-i18n="recent_uploads">Recent Uploads</h3>
+                <button id="clear-history" class="text-sm text-slate-400 hover:text-white transition-colors" data-i18n="clear_history">
                     Clear History
                 </button>
             </div>
             <div id="upload-history" class="space-y-3 max-h-96 overflow-y-auto">
-                <p class="text-slate-500 text-center py-8">No uploads yet</p>
+                <p class="text-slate-500 text-center py-8" data-i18n="no_uploads_yet">No uploads yet</p>
             </div>
         </div>
     </div>
@@ -161,16 +322,50 @@
         const fileInput = document.getElementById('fileInput');
         const uploadHistory = document.getElementById('upload-history');
         const linkFormats = document.querySelectorAll('.link-format');
+        const storageSelector = document.getElementById('storageSelector');
+        const storageSpaceSelect = document.getElementById('storageSpaceSelect');
+        const anonymousStorageSelector = document.getElementById('anonymousStorageSelector');
+        const anonymousStorageSelect = document.getElementById('anonymousStorageSelect');
         let currentFormat = 'markdown';
         let uploadHistoryData = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
         let currentUser = null;
         let currentStorageSpace = 'default';
+        let availableStorageSpaces = [];
+
+        // Theme icons
+        const sunIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+        const moonIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+            updateLangText();
             checkAuth();
+            checkAnonymousConfig();
             renderUploadHistory();
         });
+
+        // Theme toggle
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            i18n.toggleTheme();
+            updateThemeIcon();
+        });
+
+        function updateThemeIcon() {
+            const theme = i18n.getTheme();
+            document.getElementById('themeIcon').innerHTML = theme === 'light' ? sunIcon : moonIcon;
+        }
+
+        // Language toggle
+        document.getElementById('langBtn').addEventListener('click', () => {
+            i18n.toggleLanguage();
+            updateLangText();
+        });
+
+        function updateLangText() {
+            const lang = i18n.getLanguage();
+            document.getElementById('langText').textContent = lang === 'zh' ? '中文' : 'EN';
+        }
 
         // Check authentication
         async function checkAuth() {
@@ -188,21 +383,107 @@
             }
         }
 
-        function updateUserInfo() {
+        // Get user's available storage spaces
+        async function getUserStorageSpaces() {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                if (data.success && data.user && data.user.storageSpaces) {
+                    return data.user.storageSpaces;
+                }
+            } catch (error) {
+                console.error('Failed to get user storage spaces');
+            }
+            return [];
+        }
+
+        // Check anonymous upload config
+        async function checkAnonymousConfig() {
+            try {
+                const response = await fetch('/api/auth/config');
+                const data = await response.json();
+
+                if (data.success && data.availableStorageSpaces) {
+                    availableStorageSpaces = data.availableStorageSpaces;
+
+                    // Check URL for storage parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const storageParam = urlParams.get('storage');
+
+                    if (!currentUser && availableStorageSpaces.length > 0) {
+                        // Show storage selector for anonymous users
+                        anonymousStorageSelector.classList.remove('hidden');
+
+                        // Populate storage options
+                        anonymousStorageSelect.innerHTML = availableStorageSpaces.map(space =>
+                            `<option value="${space.name}">${space.name}</option>`
+                        ).join('');
+
+                        // Select the storage from URL or first one
+                        if (storageParam) {
+                            const exists = availableStorageSpaces.find(s => s.name === storageParam);
+                            if (exists) {
+                                anonymousStorageSelect.value = storageParam;
+                                currentStorageSpace = storageParam;
+                            } else {
+                                currentStorageSpace = availableStorageSpaces[0].name;
+                            }
+                        } else {
+                            currentStorageSpace = availableStorageSpaces[0].name;
+                        }
+                    } else if (!currentUser && availableStorageSpaces.length === 0) {
+                        // No anonymous upload available
+                        showToast(i18n.t('no_storage_for_anonymous'), 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check anonymous config');
+            }
+        }
+
+        // Storage space selection for logged-in users
+        storageSpaceSelect.addEventListener('change', () => {
+            currentStorageSpace = storageSpaceSelect.value;
+            // Save preference to server
+            fetch('/api/auth/switch-space', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storageSpace: currentStorageSpace })
+            }).catch(err => console.error('Failed to switch storage space:', err));
+        });
+
+        // Storage space selection for anonymous users
+        anonymousStorageSelect.addEventListener('change', () => {
+            currentStorageSpace = anonymousStorageSelect.value;
+        });
+
+        async function updateUserInfo() {
             const userInfo = document.getElementById('user-info');
             const adminLink = document.getElementById('admin-link');
             const logoutBtn = document.getElementById('logout-btn');
 
             if (currentUser) {
-                userInfo.innerHTML = `
-                    <span class="text-white font-medium">${currentUser.username}</span>
-                    <span class="text-slate-500">|</span>
-                    <span class="text-slate-400">${currentStorageSpace}</span>
-                `;
+                // Get user's storage spaces
+                const userStorageSpaces = await getUserStorageSpaces();
+                const userSpaces = userStorageSpaces.length > 0 ? userStorageSpaces : [currentStorageSpace];
+
+                // Show storage selector for logged-in users
+                storageSelector.classList.remove('hidden');
+                storageSpaceSelect.innerHTML = userSpaces.map(space =>
+                    `<option value="${space}">${space}</option>`
+                ).join('');
+
+                // Select current storage space
+                if (userSpaces.includes(currentStorageSpace)) {
+                    storageSpaceSelect.value = currentStorageSpace;
+                }
+
+                userInfo.innerHTML = `<span class="font-medium">${currentUser.username}</span>`;
                 if (currentUser.role === 'ADMIN') {
                     adminLink.classList.remove('hidden');
                 }
                 logoutBtn.classList.remove('hidden');
+                anonymousStorageSelector.classList.add('hidden');
             }
         }
 
@@ -245,7 +526,7 @@
         async function handleFiles(files) {
             for (let file of files) {
                 if (!file.type.startsWith('image/')) {
-                    showToast('Please select image files only', 'error');
+                    showToast(i18n.t('please_select_images'), 'error');
                     continue;
                 }
 
@@ -273,12 +554,12 @@
                     addToHistory(result, file);
                     const link = getLink(result);
                     await copyToClipboard(link);
-                    showToast('Image uploaded and link copied!', 'success');
+                    showToast(i18n.t('image_uploaded'), 'success');
                 } else {
-                    showToast(result.error || 'Upload failed', 'error');
+                    showToast(result.error || i18n.t('upload_failed'), 'error');
                 }
             } catch (error) {
-                showToast('Upload failed: ' + error.message, 'error');
+                showToast(i18n.t('upload_failed') + ': ' + error.message, 'error');
             }
         }
 
@@ -334,18 +615,18 @@
         // Render upload history
         function renderUploadHistory() {
             if (uploadHistoryData.length === 0) {
-                uploadHistory.innerHTML = '<p class="text-slate-500 text-center py-8">No uploads yet</p>';
+                uploadHistory.innerHTML = `<p class="text-slate-500 text-center py-8" data-i18n="no_uploads_yet">${i18n.t('no_uploads_yet')}</p>`;
                 return;
             }
 
             uploadHistory.innerHTML = uploadHistoryData.map(item => `
-                <div class="flex items-center space-x-4 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors">
+                <div class="history-item flex items-center space-x-4 p-3 rounded-lg transition-colors">
                     <img src="${item.thumbnailUrl}" alt="${item.name}" class="w-12 h-12 rounded-lg preview-image object-cover">
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-white truncate">${item.name}</p>
+                        <p class="text-sm font-medium truncate">${item.name}</p>
                         <p class="text-xs text-slate-400 truncate">${item.links[currentFormat]}</p>
                     </div>
-                    <button onclick="copyLink('${item.links[currentFormat]}')" class="p-2 rounded-lg hover:bg-slate-700 transition-colors" title="Copy link">
+                    <button onclick="copyLink('${item.links[currentFormat].replace(/'/g, "\\'")}')" class="p-2 rounded-lg hover:bg-slate-700 transition-colors" title="Copy link">
                         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                         </svg>
@@ -357,7 +638,7 @@
         // Copy link from history
         window.copyLink = async function(link) {
             await copyToClipboard(link);
-            showToast('Link copied!', 'success');
+            showToast(i18n.t('link_copied'), 'success');
         };
 
         // Clear history
@@ -365,7 +646,7 @@
             uploadHistoryData = [];
             localStorage.removeItem('uploadHistory');
             renderUploadHistory();
-            showToast('History cleared', 'success');
+            showToast(i18n.t('history_cleared'), 'success');
         });
 
         // Link format selection

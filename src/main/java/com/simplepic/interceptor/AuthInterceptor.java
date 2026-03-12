@@ -1,7 +1,9 @@
 package com.simplepic.interceptor;
 
 import com.simplepic.model.LoginSession;
+import com.simplepic.model.SystemConfig;
 import com.simplepic.service.AuthService;
+import com.simplepic.service.ConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +25,15 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private ConfigService configService;
+
     // Paths that don't require authentication
     private static final String[] PUBLIC_PATHS = {
             "/api/auth/login",
             "/api/auth/logout",
+            "/api/auth/config",
             "/login.html",
-            "/upload.html",
             "/api/image/",
             "/admin/login.html"
     };
@@ -66,6 +71,26 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         // Check if path is public
         if (isPublicPath(path)) {
+            return true;
+        }
+
+        // Handle /upload.html specially - check if anonymous upload is enabled
+        if ("/upload.html".equals(path)) {
+            String token = getTokenFromRequest(request);
+            LoginSession session = token != null ? authService.getSession(token) : null;
+
+            if (session == null) {
+                // Not logged in, check if anonymous upload is enabled
+                SystemConfig config = configService.getConfig();
+                if (!config.isAnonymousUploadEnabled()) {
+                    // Anonymous upload not enabled, redirect to login
+                    response.sendRedirect("/login.html");
+                    return false;
+                }
+                // Anonymous upload enabled, allow access
+                return true;
+            }
+            // Logged in, allow access
             return true;
         }
 

@@ -16,10 +16,12 @@ public class StorageSpace {
     private String maxSizeStr; // String representation like "10GB"
     private long maxSize; // in bytes
     private String domain;
+    private boolean allowAnonymous;
 
     public StorageSpace() {
         this.maxSize = 10L * 1024 * 1024 * 1024; // Default 10GB
         this.maxSizeStr = "10GB";
+        this.allowAnonymous = false;
     }
 
     public String getMaxSizeStr() {

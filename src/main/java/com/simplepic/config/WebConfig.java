@@ -46,7 +46,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/api/health");
 
         // Add auth interceptor
+        // /upload.html 不排除，需要在拦截器中检查匿名上传配置
         registry.addInterceptor(authInterceptor)
-                .excludePathPatterns("/api/health", "/api/upload", "/api/image/**", "/login.html", "/upload.html", "/css/**", "/js/**");
+                .excludePathPatterns("/api/health", "/api/upload", "/api/image/**", "/login.html", "/css/**", "/js/**");
     }
 }

@@ -5,21 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/i18n.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --accent-color: #3b82f6;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .glass {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        [data-theme="light"] .glass {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
         .gradient-bg {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        }
+
+        [data-theme="light"] .gradient-bg {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 50%, #f8fafc 100%);
         }
 
         .glow {
@@ -29,7 +61,18 @@
         .input-field {
             background: rgba(30, 41, 59, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
             transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] .input-field {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--text-primary);
+        }
+
+        [data-theme="light"] .input-field::placeholder {
+            color: var(--text-secondary);
         }
 
         .input-field:focus {
@@ -61,9 +104,31 @@
             animation: float 15s infinite;
         }
 
+        [data-theme="light"] .particle {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
         @keyframes float {
             0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
             50% { transform: translateY(-100px) rotate(180deg); opacity: 0.1; }
+        }
+
+        .theme-btn, .lang-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        [data-theme="light"] .theme-btn,
+        [data-theme="light"] .lang-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: var(--text-primary);
+        }
+
+        .theme-btn:hover, .lang-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
         }
     </style>
 </head>
@@ -75,6 +140,18 @@
     <div class="particle" style="width: 12px; height: 12px; top: 70%; left: 70%; animation-delay: -6s;"></div>
     <div class="particle" style="width: 6px; height: 6px; top: 30%; left: 50%; animation-delay: -8s;"></div>
 
+    <!-- Theme and language toggles -->
+    <div class="absolute top-4 right-4 flex items-center space-x-2">
+        <button id="langBtn" class="lang-btn px-3 py-2 rounded-lg text-sm font-medium">
+            <span id="langText">中文</span>
+        </button>
+        <button id="themeBtn" class="theme-btn px-3 py-2 rounded-lg" title="Toggle theme">
+            <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+        </button>
+    </div>
+
     <!-- Login card -->
     <div class="glass rounded-2xl p-8 w-full max-w-md mx-4 glow">
         <div class="text-center mb-8">
@@ -83,31 +160,33 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-white mb-2">Simple-Pic</h1>
-            <p class="text-slate-400">Simple local image hosting</p>
+            <h1 class="text-3xl font-bold mb-2" id="appTitle" data-i18n="app_title">Simple-Pic</h1>
+            <p class="text-slate-400" id="appDescription" data-i18n="app_description">Simple local image hosting</p>
         </div>
 
         <form id="loginForm" class="space-y-6">
             <div>
-                <label for="username" class="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                <label for="username" class="block text-sm font-medium mb-2" data-i18n="username">Username</label>
                 <input
                     type="text"
                     id="username"
                     name="username"
                     required
-                    class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-slate-500"
+                    class="input-field w-full px-4 py-3 rounded-lg"
+                    data-i18n-placeholder="entering_username"
                     placeholder="Enter your username"
                 >
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                <label for="password" class="block text-sm font-medium mb-2" data-i18n="password">Password</label>
                 <input
                     type="password"
                     id="password"
                     name="password"
                     required
-                    class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-slate-500"
+                    class="input-field w-full px-4 py-3 rounded-lg"
+                    data-i18n-placeholder="entering_password"
                     placeholder="Enter your password"
                 >
             </div>
@@ -115,7 +194,7 @@
             <div class="flex items-center justify-between">
                 <label class="flex items-center">
                     <input type="checkbox" id="rememberMe" name="rememberMe" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-slate-400">Remember me</span>
+                    <span class="ml-2 text-sm text-slate-400" data-i18n="remember_me">Remember me</span>
                 </label>
             </div>
 
@@ -125,15 +204,23 @@
                 type="submit"
                 id="submitBtn"
                 class="btn-primary w-full py-3 rounded-lg text-white font-semibold"
+                data-i18n="sign_in"
             >
                 Sign In
             </button>
         </form>
 
-        <div class="mt-6 text-center">
-            <a href="/upload.html" class="text-blue-400 hover:text-blue-300 text-sm transition-colors">
+        <!-- Anonymous upload link -->
+        <div id="anonymousSection" class="mt-6 text-center hidden">
+            <a href="/upload.html" id="anonymousLink" class="text-blue-400 hover:text-blue-300 text-sm transition-colors" data-i18n="upload_without_login">
                 Upload image without login →
             </a>
+            <p id="anonymousNotAllowed" class="hidden text-slate-500 text-sm" data-i18n="anonymous_upload_not_allowed"></p>
+            <div id="anonymousStorageSelector" class="hidden mt-4">
+                <p class="text-sm text-slate-400 mb-2" data-i18n="select_storage_for_upload"></p>
+                <select id="anonymousStorage" class="input-field w-full px-4 py-2 rounded-lg text-sm">
+                </select>
+            </div>
         </div>
     </div>
 
@@ -141,7 +228,112 @@
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
         const errorMessage = document.getElementById('errorMessage');
+        const themeBtn = document.getElementById('themeBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const langBtn = document.getElementById('langBtn');
+        const langText = document.getElementById('langText');
+        const anonymousSection = document.getElementById('anonymousSection');
+        const anonymousLink = document.getElementById('anonymousLink');
+        const anonymousNotAllowed = document.getElementById('anonymousNotAllowed');
+        const anonymousStorageSelector = document.getElementById('anonymousStorageSelector');
+        const anonymousStorage = document.getElementById('anonymousStorage');
 
+        // Theme icons
+        const sunIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+        const moonIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+            updateLangText();
+            loadSystemInfo();
+            checkAnonymousUpload();
+        });
+
+        // Theme toggle
+        themeBtn.addEventListener('click', () => {
+            i18n.toggleTheme();
+            updateThemeIcon();
+        });
+
+        function updateThemeIcon() {
+            const theme = i18n.getTheme();
+            themeIcon.innerHTML = theme === 'light' ? sunIcon : moonIcon;
+        }
+
+        // Language toggle
+        langBtn.addEventListener('click', () => {
+            i18n.toggleLanguage();
+            updateLangText();
+        });
+
+        function updateLangText() {
+            const lang = i18n.getLanguage();
+            langText.textContent = lang === 'zh' ? '中文' : 'EN';
+        }
+
+        // Load system info
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/api/auth/config');
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update app title and description from config
+                    if (data.systemName) {
+                        document.getElementById('appTitle').textContent = data.systemName;
+                    }
+                    if (data.systemDescription) {
+                        document.getElementById('appDescription').textContent = data.systemDescription;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load system info');
+            }
+        }
+
+        // Check anonymous upload config
+        async function checkAnonymousUpload() {
+            try {
+                const response = await fetch('/api/auth/config');
+                const data = await response.json();
+
+                if (data.success) {
+                    if (!data.anonymousUploadEnabled) {
+                        // Hide anonymous upload completely
+                        anonymousSection.classList.add('hidden');
+                    } else if (data.availableStorageSpaces && data.availableStorageSpaces.length > 0) {
+                        // Show storage selector for anonymous upload
+                        anonymousLink.classList.add('hidden');
+                        anonymousNotAllowed.classList.add('hidden');
+                        anonymousStorageSelector.classList.remove('hidden');
+
+                        // Populate storage options
+                        anonymousStorage.innerHTML = data.availableStorageSpaces.map(space =>
+                            `<option value="${space.name}">${space.name}</option>`
+                        ).join('');
+
+                        // Add click handler to storage select
+                        anonymousStorage.addEventListener('change', () => {
+                            const selectedSpace = anonymousStorage.value;
+                            const selectedStorageData = data.availableStorageSpaces.find(s => s.name === selectedSpace);
+                            if (selectedStorageData) {
+                                window.location.href = `/upload.html?storage=${selectedSpace}`;
+                            }
+                        });
+                    } else {
+                        // No storage allows anonymous upload
+                        anonymousLink.classList.add('hidden');
+                        anonymousNotAllowed.classList.remove('hidden');
+                        i18n.applyLanguage();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check anonymous upload config');
+            }
+        }
+
+        // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -150,7 +342,7 @@
             const rememberMe = document.getElementById('rememberMe').checked;
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Signing in...';
+            submitBtn.textContent = i18n.t('signing_in');
             errorMessage.classList.add('hidden');
 
             try {
@@ -167,13 +359,13 @@
                 if (data.success) {
                     window.location.href = '/upload.html';
                 } else {
-                    showError(data.error || 'Login failed');
+                    showError(data.error || i18n.t('invalid_credentials'));
                 }
             } catch (error) {
-                showError('Network error. Please try again.');
+                showError(i18n.t('network_error'));
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
+                submitBtn.textContent = i18n.t('sign_in');
             }
         });
 

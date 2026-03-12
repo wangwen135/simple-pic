@@ -96,6 +96,7 @@ public class AdminController {
             spaceMap.put("maxSize", space.getFormattedMaxSize());
             spaceMap.put("domain", space.getDomain());
             spaceMap.put("maxSizeBytes", space.getMaxSizeInBytes());
+            spaceMap.put("allowAnonymous", space.isAllowAnonymous());
 
             StorageStats stats = storageService.getStorageStats(space.getName());
             if (stats != null) {
@@ -116,13 +117,14 @@ public class AdminController {
      * Create storage space
      */
     @PostMapping("/storages")
-    public ResponseEntity<Map<String, Object>> createStorage(@RequestBody Map<String, String> request) {
-        String name = request.get("name");
-        String path = request.get("path");
-        String maxSize = request.get("maxSize");
-        String domain = request.get("domain");
+    public ResponseEntity<Map<String, Object>> createStorage(@RequestBody Map<String, Object> request) {
+        String name = (String) request.get("name");
+        String path = (String) request.get("path");
+        String maxSize = (String) request.get("maxSize");
+        String domain = (String) request.get("domain");
+        Boolean allowAnonymous = request.get("allowAnonymous") != null ? (Boolean) request.get("allowAnonymous") : false;
 
-        boolean success = storageService.createStorageSpace(name, path, maxSize, domain);
+        boolean success = storageService.createStorageSpace(name, path, maxSize, domain, allowAnonymous);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);
@@ -140,12 +142,13 @@ public class AdminController {
     @PutMapping("/storages/{name}")
     public ResponseEntity<Map<String, Object>> updateStorage(
             @PathVariable String name,
-            @RequestBody Map<String, String> request) {
-        String path = request.get("path");
-        String maxSize = request.get("maxSize");
-        String domain = request.get("domain");
+            @RequestBody Map<String, Object> request) {
+        String path = (String) request.get("path");
+        String maxSize = (String) request.get("maxSize");
+        String domain = (String) request.get("domain");
+        Boolean allowAnonymous = request.get("allowAnonymous") != null ? (Boolean) request.get("allowAnonymous") : false;
 
-        boolean success = storageService.updateStorageSpace(name, path, maxSize, domain);
+        boolean success = storageService.updateStorageSpace(name, path, maxSize, domain, allowAnonymous);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", success);
@@ -299,6 +302,18 @@ public class AdminController {
     public ResponseEntity<List<SystemConfig.ApiKey>> getApiKeys() {
         SystemConfig config = configService.getConfig();
         return ResponseEntity.ok(config.getApiKeys() != null ? config.getApiKeys() : new ArrayList<>());
+    }
+
+    /**
+     * Get theme
+     */
+    @GetMapping("/theme")
+    public ResponseEntity<Map<String, Object>> getTheme() {
+        SystemConfig config = configService.getConfig();
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("theme", config.getTheme() != null ? config.getTheme() : "light");
+        return ResponseEntity.ok(response);
     }
 
     /**

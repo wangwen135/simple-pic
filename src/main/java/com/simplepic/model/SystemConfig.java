@@ -15,6 +15,8 @@ public class SystemConfig {
     private String name;
     private String description;
 
+    private boolean anonymousUploadEnabled;
+
     private String theme;
     private int itemsPerPage;
 
@@ -32,12 +34,18 @@ public class SystemConfig {
     private int maxRequests;
     private int timeWindow;
 
+    // 登录安全设置
+    private boolean loginLockoutEnabled;
+    private int maxFailedAttempts;
+    private int lockoutMinutes;
+
     @Data
     public static class StorageSpace {
         private String name;
         private String path;
         private String maxSize;
         private String domain;
+        private boolean allowAnonymous;
     }
 
     @Data

@@ -32,6 +32,9 @@ public class AuthService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     // Session storage: token -> LoginSession
     private final Map<String, LoginSession> sessions = new ConcurrentHashMap<>();
 
@@ -92,6 +95,61 @@ public class AuthService {
 
         logger.warn("Login failed for user: {}", username);
         return null;
+    }
+
+    /**
+     * Login with username, password and IP address (for lockout feature)
+     */
+    public String login(String username, String password, String ipAddress) {
+        // Check if IP is locked
+        if (loginAttemptService.isLocked(ipAddress)) {
+            logger.warn("Login attempt from locked IP: {}", ipAddress);
+            return null;
+        }
+
+        SystemConfig config = configService.getConfig();
+        if (config == null || config.getUsers() == null) {
+            logger.error("Configuration not loaded");
+            return null;
+        }
+
+        for (SystemConfig.User userConfig : config.getUsers()) {
+            if (userConfig.getUsername().equals(username)) {
+                if (passwordEncoder.matches(password, userConfig.getPassword())) {
+                    // Login successful, clear failed attempts
+                    loginAttemptService.loginSucceeded(ipAddress);
+
+                    // Create session
+                    String token = generateToken();
+                    String[] storageSpaces = userConfig.getStorageSpaces().toArray(new String[0]);
+
+                    LoginSession session = new LoginSession(username, userConfig.getRole(), storageSpaces);
+                    sessions.put(token, session);
+
+                    logger.info("User {} logged in successfully from IP: {}", username, ipAddress);
+                    return token;
+                }
+            }
+        }
+
+        // Login failed, record attempt
+        loginAttemptService.loginFailed(ipAddress);
+        logger.warn("Login failed for user: {} from IP: {}", username, ipAddress);
+        return null;
+    }
+
+    /**
+     * Check if an IP is locked out
+     */
+    public boolean isIPLocked(String ipAddress) {
+        return loginAttemptService.isLocked(ipAddress);
+    }
+
+    /**
+     * Get remaining lockout minutes for an IP
+     */
+    public long getRemainingLockoutMinutes(String ipAddress) {
+        return loginAttemptService.getRemainingLockoutMinutes(ipAddress);
     }
 
     /**

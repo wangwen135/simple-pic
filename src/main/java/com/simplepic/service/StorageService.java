@@ -43,6 +43,7 @@ public class StorageService {
                     space.setPath(spaceConfig.getPath());
                     space.setMaxSize(spaceConfig.getMaxSize());
                     space.setDomain(spaceConfig.getDomain());
+                    space.setAllowAnonymous(spaceConfig.isAllowAnonymous());
                     return space;
                 })
                 .collect(java.util.stream.Collectors.toList());
@@ -64,6 +65,7 @@ public class StorageService {
                 space.setPath(spaceConfig.getPath());
                 space.setMaxSize(spaceConfig.getMaxSize());
                 space.setDomain(spaceConfig.getDomain());
+                space.setAllowAnonymous(spaceConfig.isAllowAnonymous());
                 return space;
             }
         }
@@ -75,6 +77,13 @@ public class StorageService {
      * Create storage space
      */
     public boolean createStorageSpace(String name, String path, String maxSize, String domain) {
+        return createStorageSpace(name, path, maxSize, domain, false);
+    }
+
+    /**
+     * Create storage space
+     */
+    public boolean createStorageSpace(String name, String path, String maxSize, String domain, boolean allowAnonymous) {
         SystemConfig config = configService.getConfig();
         if (config == null) {
             return false;
@@ -91,6 +100,7 @@ public class StorageService {
         spaceConfig.setPath(path);
         spaceConfig.setMaxSize(maxSize);
         spaceConfig.setDomain(domain);
+        spaceConfig.setAllowAnonymous(allowAnonymous);
 
         if (config.getStorageSpaces() == null) {
             config.setStorageSpaces(new ArrayList<>());
@@ -118,6 +128,13 @@ public class StorageService {
      * Update storage space
      */
     public boolean updateStorageSpace(String name, String path, String maxSize, String domain) {
+        return updateStorageSpace(name, path, maxSize, domain, false);
+    }
+
+    /**
+     * Update storage space
+     */
+    public boolean updateStorageSpace(String name, String path, String maxSize, String domain, boolean allowAnonymous) {
         SystemConfig config = configService.getConfig();
         if (config == null || config.getStorageSpaces() == null) {
             return false;
@@ -128,6 +145,7 @@ public class StorageService {
                 spaceConfig.setPath(path);
                 spaceConfig.setMaxSize(maxSize);
                 spaceConfig.setDomain(domain);
+                spaceConfig.setAllowAnonymous(allowAnonymous);
 
                 configService.saveConfig(config);
                 logger.info("Storage space {} updated", name);

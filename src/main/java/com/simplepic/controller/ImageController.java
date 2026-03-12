@@ -3,7 +3,9 @@ package com.simplepic.controller;
 import com.simplepic.model.ImageInfo;
 import com.simplepic.model.UploadResult;
 import com.simplepic.model.User;
+import com.simplepic.model.StorageSpace;
 import com.simplepic.service.AuthService;
+import com.simplepic.service.ConfigService;
 import com.simplepic.service.ImageService;
 import com.simplepic.service.ThumbnailService;
 import org.slf4j.Logger;
@@ -46,6 +48,9 @@ public class ImageController {
     @Autowired
     private ThumbnailService thumbnailService;
 
+    @Autowired
+    private ConfigService configService;
+
     /**
      * Upload image
      */
@@ -61,7 +66,55 @@ public class ImageController {
                 if (user != null && user.getCurrentStorageSpace() != null) {
                     storageSpace = user.getCurrentStorageSpace();
                 } else {
-                    storageSpace = "default";
+                    // Anonymous upload check
+                    com.simplepic.model.SystemConfig config = configService.getConfig();
+                    if (config.isAnonymousUploadEnabled()) {
+                        // Find first storage space that allows anonymous upload
+                        if (config.getStorageSpaces() != null) {
+                            for (com.simplepic.model.SystemConfig.StorageSpace space : config.getStorageSpaces()) {
+                                if (space.isAllowAnonymous()) {
+                                    storageSpace = space.getName();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (storageSpace == null) {
+                        storageSpace = "default";
+                    }
+                }
+            }
+
+            // Verify anonymous upload is allowed if not authenticated
+            if (token == null || token.isEmpty()) {
+                com.simplepic.model.User user = authService.getCurrentUser(token);
+                if (user == null) {
+                    com.simplepic.model.SystemConfig config = configService.getConfig();
+                    if (!config.isAnonymousUploadEnabled()) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("success", false);
+                        response.put("error", "Anonymous upload is not enabled");
+                        return ResponseEntity.status(403).body(response);
+                    }
+
+                    // Check if the specific storage space allows anonymous upload
+                    boolean spaceAllowsAnonymous = false;
+                    if (config.getStorageSpaces() != null) {
+                        for (com.simplepic.model.SystemConfig.StorageSpace space : config.getStorageSpaces()) {
+                            if (space.getName().equals(storageSpace) && space.isAllowAnonymous()) {
+                                spaceAllowsAnonymous = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!spaceAllowsAnonymous) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("success", false);
+                        response.put("error", "This storage space does not allow anonymous upload");
+                        return ResponseEntity.status(403).body(response);
+                    }
                 }
             }
 

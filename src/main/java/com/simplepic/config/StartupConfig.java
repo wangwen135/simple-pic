@@ -91,38 +91,24 @@ public class StartupConfig implements CommandLineRunner {
         config.setName("Simple-Pic");
         config.setDescription("简单好用的本地图床");
 
-        // Frontend config
-        config.setTheme("dark");
+        // Frontend config - 默认使用明亮主题
+        config.setTheme("light");
         config.setItemsPerPage(50);
 
-        // Create default storage space
-        SystemConfig.StorageSpace defaultStorage = new SystemConfig.StorageSpace();
-        defaultStorage.setName("default");
-        defaultStorage.setPath("./storage/default");
-        defaultStorage.setMaxSize("10GB");
-        defaultStorage.setDomain("http://localhost:8080");
-        config.getStorageSpaces().add(defaultStorage);
+        // 不创建默认存储空间，需要用户手动配置
 
-        // Create admin user
+        // 只创建 admin 用户
         SystemConfig.User adminUser = new SystemConfig.User();
         adminUser.setUsername("admin");
         adminUser.setPassword(passwordEncoder.encode(adminPassword));
         adminUser.setRole("ADMIN");
-        adminUser.getStorageSpaces().add("default");
+        // 不分配存储空间，等用户创建后再分配
         config.getUsers().add(adminUser);
 
-        // Create default user
-        SystemConfig.User defaultUser = new SystemConfig.User();
-        defaultUser.setUsername("user");
-        defaultUser.setPassword(passwordEncoder.encode("user123"));
-        defaultUser.setRole("USER");
-        defaultUser.getStorageSpaces().add("default");
-        config.getUsers().add(defaultUser);
-
-        // Watermark config
-        config.setWatermarkEnabled(true);
+        // 水印默认关闭
+        config.setWatermarkEnabled(false);
         config.setWatermarkType("text");
-        config.setWatermarkContent("Simple-Pic");
+        config.setWatermarkContent("");
         config.setWatermarkPosition("bottom-right");
         config.setWatermarkOpacity(0.5);
 
@@ -130,6 +116,11 @@ public class StartupConfig implements CommandLineRunner {
         config.setRateLimitEnabled(true);
         config.setMaxRequests(100);
         config.setTimeWindow(60);
+
+        // Login lockout config
+        config.setLoginLockoutEnabled(true);
+        config.setMaxFailedAttempts(5);
+        config.setLockoutMinutes(10);
 
         return config;
     }

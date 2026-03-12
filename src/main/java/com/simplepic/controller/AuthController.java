@@ -13,8 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,12 +44,27 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request,
-                                                     HttpServletResponse response) {
+                                                     HttpServletResponse response,
+                                                     HttpServletRequest httpRequest) {
         String username = request.get("username");
         String password = request.get("password");
         boolean rememberMe = Boolean.parseBoolean(request.getOrDefault("rememberMe", "false"));
 
-        String token = authService.login(username, password);
+        // Get client IP address
+        String ipAddress = getClientIpAddress(httpRequest);
+
+        // Check if IP is locked
+        if (authService.isIPLocked(ipAddress)) {
+            long remainingMinutes = authService.getRemainingLockoutMinutes(ipAddress);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("error", "IP地址已被锁定");
+            result.put("error_en", "IP address locked");
+            result.put("remainingMinutes", remainingMinutes);
+            return ResponseEntity.status(429).body(result);
+        }
+
+        String token = authService.login(username, password, ipAddress);
 
         if (token != null) {
             // Set cookie
@@ -63,14 +81,33 @@ public class AuthController {
             result.put("token", token);
             result.put("user", user);
 
-            logger.info("User {} logged in successfully", username);
+            logger.info("User {} logged in successfully from IP: {}", username, ipAddress);
             return ResponseEntity.ok(result);
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", false);
         result.put("error", "Invalid username or password");
+        result.put("error_en", "用户名或密码错误");
         return ResponseEntity.status(401).body(result);
+    }
+
+    /**
+     * Get client IP address
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getHeader("X-Real-IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        // Handle multiple IPs in X-Forwarded-For
+        if (ipAddress != null && ipAddress.contains(",")) {
+            ipAddress = ipAddress.split(",")[0].trim();
+        }
+        return ipAddress;
     }
 
     /**
@@ -135,5 +172,34 @@ public class AuthController {
         result.put("success", false);
         result.put("error", "Failed to switch storage space");
         return ResponseEntity.badRequest().body(result);
+    }
+
+    /**
+     * Get auth config (for anonymous upload)
+     */
+    @GetMapping("/config")
+    public ResponseEntity<Map<String, Object>> getAuthConfig() {
+        SystemConfig config = configService.getConfig();
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("anonymousUploadEnabled", config.isAnonymousUploadEnabled());
+        result.put("systemName", config.getName());
+        result.put("systemDescription", config.getDescription());
+
+        // Get storage spaces that allow anonymous upload
+        List<Map<String, String>> availableSpaces = new ArrayList<>();
+        if (config.getStorageSpaces() != null) {
+            for (SystemConfig.StorageSpace space : config.getStorageSpaces()) {
+                if (space.isAllowAnonymous()) {
+                    Map<String, String> spaceInfo = new HashMap<>();
+                    spaceInfo.put("name", space.getName());
+                    spaceInfo.put("domain", space.getDomain());
+                    availableSpaces.add(spaceInfo);
+                }
+            }
+        }
+        result.put("availableStorageSpaces", availableSpaces);
+
+        return ResponseEntity.ok(result);
     }
 }

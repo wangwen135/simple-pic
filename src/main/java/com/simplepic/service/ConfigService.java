@@ -116,6 +116,8 @@ public class ConfigService {
                     section = "security";
                 } else if (trimmed.startsWith("frontend:")) {
                     section = "frontend";
+                } else if (trimmed.startsWith("login-lockout:")) {
+                    section = "login-lockout";
                 }
                 continue;
             }
@@ -136,6 +138,8 @@ public class ConfigService {
                     currentSpace.setMaxSize(trimmed.substring(trimmed.indexOf(":") + 1).trim());
                 } else if (trimmed.startsWith("domain:")) {
                     currentSpace.setDomain(trimmed.substring(7).trim());
+                } else if (trimmed.startsWith("allow-anonymous:") || trimmed.startsWith("allowAnonymous:")) {
+                    currentSpace.setAllowAnonymous(Boolean.parseBoolean(trimmed.substring(trimmed.indexOf(":") + 1).trim()));
                 }
                 continue;
             }
@@ -195,6 +199,8 @@ public class ConfigService {
                     config.setName(trimmed.substring(5).trim());
                 } else if (trimmed.startsWith("description:")) {
                     config.setDescription(trimmed.substring(12).trim());
+                } else if (trimmed.startsWith("anonymous-upload-enabled:") || trimmed.startsWith("anonymousUploadEnabled:")) {
+                    config.setAnonymousUploadEnabled(Boolean.parseBoolean(trimmed.substring(trimmed.indexOf(":") + 1).trim()));
                 }
                 continue;
             }
@@ -243,6 +249,18 @@ public class ConfigService {
                 }
                 continue;
             }
+
+            // Parse login-lockout properties
+            if (section.equals("login-lockout") && indent == 6) {
+                if (trimmed.startsWith("enabled:")) {
+                    config.setLoginLockoutEnabled(Boolean.parseBoolean(trimmed.substring(8).trim()));
+                } else if (trimmed.startsWith("max-failed-attempts:") || trimmed.startsWith("maxFailedAttempts:")) {
+                    config.setMaxFailedAttempts(Integer.parseInt(trimmed.substring(trimmed.indexOf(":") + 1).trim()));
+                } else if (trimmed.startsWith("lockout-minutes:") || trimmed.startsWith("lockoutMinutes:")) {
+                    config.setLockoutMinutes(Integer.parseInt(trimmed.substring(trimmed.indexOf(":") + 1).trim()));
+                }
+                continue;
+            }
         }
 
         config.setStorageSpaces(storageSpaces);
@@ -250,7 +268,7 @@ public class ConfigService {
         config.setApiKeys(apiKeys);
 
         // Set defaults
-        if (config.getTheme() == null || config.getTheme().isEmpty()) config.setTheme("dark");
+        if (config.getTheme() == null || config.getTheme().isEmpty()) config.setTheme("light");
         if (config.getItemsPerPage() == 0) config.setItemsPerPage(50);
 
         return config;
@@ -287,6 +305,7 @@ public class ConfigService {
         yaml.append("  system:\n");
         yaml.append("    name: ").append(config.getName()).append("\n");
         yaml.append("    description: ").append(config.getDescription()).append("\n");
+        yaml.append("    anonymous-upload-enabled: ").append(config.isAnonymousUploadEnabled()).append("\n");
         yaml.append("  storage-spaces:\n");
 
         if (config.getStorageSpaces() != null) {
@@ -295,6 +314,7 @@ public class ConfigService {
                 yaml.append("      path: ").append(space.getPath()).append("\n");
                 yaml.append("      max-size: ").append(space.getMaxSize()).append("\n");
                 yaml.append("      domain: ").append(space.getDomain()).append("\n");
+                yaml.append("      allow-anonymous: ").append(space.isAllowAnonymous()).append("\n");
             }
         }
 
@@ -332,6 +352,11 @@ public class ConfigService {
         yaml.append("  frontend:\n");
         yaml.append("    theme: ").append(config.getTheme()).append("\n");
         yaml.append("    items-per-page: ").append(config.getItemsPerPage()).append("\n");
+
+        yaml.append("  login-lockout:\n");
+        yaml.append("    enabled: ").append(config.isLoginLockoutEnabled()).append("\n");
+        yaml.append("    max-failed-attempts: ").append(config.getMaxFailedAttempts()).append("\n");
+        yaml.append("    lockout-minutes: ").append(config.getLockoutMinutes()).append("\n");
 
         return yaml.toString();
     }
