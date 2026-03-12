@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple-Pic - Upload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(59, 130, 246, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .link-format {
+            transition: all 0.2s ease;
+        }
+
+        .link-format:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .link-format.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .preview-image {
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Header -->
+    <header class="glass border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-white">Simple-Pic</h1>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div id="user-info" class="flex items-center space-x-3 text-sm">
+                    <span class="text-slate-400">Not logged in</span>
+                </div>
+                <a href="/admin/dashboard.html" id="admin-link" class="hidden text-slate-300 hover:text-white text-sm transition-colors">
+                    Admin Panel
+                </a>
+                <button id="logout-btn" class="hidden px-4 py-2 rounded-lg bg-slate-700 text-white text-sm hover:bg-slate-600 transition-colors">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Upload area -->
+        <div id="dropZone" class="drop-zone rounded-2xl p-12 text-center cursor-pointer mb-8">
+            <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+            <div class="space-y-4">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-500/20">
+                    <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xl font-semibold text-white mb-2">Drop images here</p>
+                    <p class="text-slate-400">or click to select • Paste from clipboard (Ctrl+V)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Link format selector -->
+        <div class="glass rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-semibold text-white mb-4">Link Format</h3>
+            <div class="flex flex-wrap gap-3">
+                <button class="link-format active px-4 py-2 rounded-lg border border-slate-600 text-white text-sm" data-format="markdown">
+                    Markdown
+                </button>
+                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="direct">
+                    Direct Link
+                </button>
+                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="html">
+                    HTML
+                </button>
+                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="bbcode">
+                    BBCode
+                </button>
+            </div>
+        </div>
+
+        <!-- Upload history -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-white">Recent Uploads</h3>
+                <button id="clear-history" class="text-sm text-slate-400 hover:text-white transition-colors">
+                    Clear History
+                </button>
+            </div>
+            <div id="upload-history" class="space-y-3 max-h-96 overflow-y-auto">
+                <p class="text-slate-500 text-center py-8">No uploads yet</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadHistory = document.getElementById('upload-history');
+        const linkFormats = document.querySelectorAll('.link-format');
+        let currentFormat = 'markdown';
+        let uploadHistoryData = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
+        let currentUser = null;
+        let currentStorageSpace = 'default';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            renderUploadHistory();
+        });
+
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUser = data.user;
+                    currentStorageSpace = data.user.currentStorageSpace || 'default';
+                    updateUserInfo();
+                }
+            } catch (error) {
+                console.error('Failed to check auth');
+            }
+        }
+
+        function updateUserInfo() {
+            const userInfo = document.getElementById('user-info');
+            const adminLink = document.getElementById('admin-link');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (currentUser) {
+                userInfo.innerHTML = `
+                    <span class="text-white font-medium">${currentUser.username}</span>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-slate-400">${currentStorageSpace}</span>
+                `;
+                if (currentUser.role === 'ADMIN') {
+                    adminLink.classList.remove('hidden');
+                }
+                logoutBtn.classList.remove('hidden');
+            }
+        }
+
+        // File input change
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+            fileInput.value = '';
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Paste from clipboard
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    handleFiles([file]);
+                    break;
+                }
+            }
+        });
+
+        // Handle file upload
+        async function handleFiles(files) {
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) {
+                    showToast('Please select image files only', 'error');
+                    continue;
+                }
+
+                await uploadFile(file);
+            }
+        }
+
+        // Upload file
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            if (currentStorageSpace) {
+                formData.append('storageSpace', currentStorageSpace);
+            }
+
+            try {
+                const response = await fetch('/api/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addToHistory(result, file);
+                    const link = getLink(result);
+                    await copyToClipboard(link);
+                    showToast('Image uploaded and link copied!', 'success');
+                } else {
+                    showToast(result.error || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                showToast('Upload failed: ' + error.message, 'error');
+            }
+        }
+
+        // Get link based on format
+        function getLink(result) {
+            switch (currentFormat) {
+                case 'markdown':
+                    return result.markdown;
+                case 'direct':
+                    return result.directLink;
+                case 'html':
+                    return result.html;
+                case 'bbcode':
+                    return result.bbcode;
+                default:
+                    return result.markdown;
+            }
+        }
+
+        // Copy to clipboard
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (error) {
+                console.error('Failed to copy to clipboard:', error);
+            }
+        }
+
+        // Add to history
+        function addToHistory(result, file) {
+            const historyItem = {
+                url: result.url,
+                thumbnailUrl: result.thumbnailUrl,
+                path: result.path,
+                name: file.name,
+                timestamp: Date.now(),
+                links: {
+                    markdown: result.markdown,
+                    direct: result.directLink,
+                    html: result.html,
+                    bbcode: result.bbcode
+                }
+            };
+
+            uploadHistoryData.unshift(historyItem);
+            if (uploadHistoryData.length > 50) {
+                uploadHistoryData.pop();
+            }
+            localStorage.setItem('uploadHistory', JSON.stringify(uploadHistoryData));
+            renderUploadHistory();
+        }
+
+        // Render upload history
+        function renderUploadHistory() {
+            if (uploadHistoryData.length === 0) {
+                uploadHistory.innerHTML = '<p class="text-slate-500 text-center py-8">No uploads yet</p>';
+                return;
+            }
+
+            uploadHistory.innerHTML = uploadHistoryData.map(item => `
+                <div class="flex items-center space-x-4 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors">
+                    <img src="${item.thumbnailUrl}" alt="${item.name}" class="w-12 h-12 rounded-lg preview-image object-cover">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">${item.name}</p>
+                        <p class="text-xs text-slate-400 truncate">${item.links[currentFormat]}</p>
+                    </div>
+                    <button onclick="copyLink('${item.links[currentFormat]}')" class="p-2 rounded-lg hover:bg-slate-700 transition-colors" title="Copy link">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Copy link from history
+        window.copyLink = async function(link) {
+            await copyToClipboard(link);
+            showToast('Link copied!', 'success');
+        };
+
+        // Clear history
+        document.getElementById('clear-history').addEventListener('click', () => {
+            uploadHistoryData = [];
+            localStorage.removeItem('uploadHistory');
+            renderUploadHistory();
+            showToast('History cleared', 'success');
+        });
+
+        // Link format selection
+        linkFormats.forEach(btn => {
+            btn.addEventListener('click', () => {
+                linkFormats.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFormat = btn.dataset.format;
+                renderUploadHistory();
+            });
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        });
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast px-4 py-3 rounded-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

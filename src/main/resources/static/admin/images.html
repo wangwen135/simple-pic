@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple-Pic - Images</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .sidebar-link { transition: all 0.2s ease; }
+        .sidebar-link:hover { background: rgba(59, 130, 246, 0.1); }
+        .sidebar-link.active { background: rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="flex">
+        <aside class="w-64 min-h-screen glass border-r border-slate-700/50 p-4">
+            <div class="flex items-center space-x-3 mb-8 px-2">
+                <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-white">Simple-Pic</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="/admin/dashboard.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span>Dashboard</span></a>
+                <a href="/admin/images.html" class="sidebar-link active flex items-center space-x-3 px-3 py-2 rounded-lg text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>Images</span></a>
+                <a href="/admin/storage.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"></path></svg><span>Storage</span></a>
+                <a href="/admin/users.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg><span>Users</span></a>
+                <a href="/admin/system.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span>System</span></a>
+                <a href="/admin/apikey.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg><span>API Keys</span></a>
+            </nav>
+            <div class="absolute bottom-4 left-4 right-4">
+                <a href="/upload.html" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span>Upload</span></a>
+                <button onclick="logout()" class="w-full mt-2 flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-400 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span>Logout</span></button>
+            </div>
+        </aside>
+        <main class="flex-1 p-8">
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-3xl font-bold text-white">Images</h1>
+                <button onclick="showUploadModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Upload Image</button>
+            </div>
+            <div class="glass rounded-xl p-6 mb-6">
+                <div class="flex items-center space-x-4 mb-4">
+                    <select id="storageSpace" class="px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600" onchange="loadImages()">
+                        <option value="default">default</option>
+                    </select>
+                    <div id="breadcrumb" class="flex items-center space-x-2 text-slate-400">
+                        <span class="text-white cursor-pointer hover:text-blue-400" onclick="navigate('')">Root</span>
+                    </div>
+                </div>
+                <div id="images-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p class="text-slate-500 col-span-full text-center py-8">Loading...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="upload-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="glass rounded-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold text-white mb-4">Upload Image</h2>
+            <input type="file" id="upload-file" accept="image/*" class="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 mb-4">
+            <button onclick="uploadImage()" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg mb-2">Upload</button>
+            <button onclick="hideUploadModal()" class="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+        </div>
+    </div>
+    <script>
+        let currentPath = '';
+        let currentStorage = 'default';
+
+        async function loadImages() {
+            currentStorage = document.getElementById('storageSpace').value;
+            try {
+                const response = await fetch(`/api/image/list?storageSpace=${currentStorage}&path=${encodeURIComponent(currentPath)}`);
+                const data = await response.json();
+
+                renderImages(data.images, data.directories);
+                updateBreadcrumb();
+            } catch (error) {
+                console.error('Failed to load images:', error);
+            }
+        }
+
+        function renderImages(images, directories) {
+            const container = document.getElementById('images-container');
+            let html = '';
+
+            // Render directories
+            directories.forEach(dir => {
+                const name = dir.split('/').pop();
+                html += `
+                    <div class="p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors cursor-pointer" onclick="navigate('${dir}')">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                            <span class="text-white">${name}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Render images
+            images.forEach(img => {
+                const space = img.storageSpace || currentStorage;
+                const thumbUrl = img.hasThumbnail
+                    ? `/api/image/thumb/${space}/${img.path}`
+                    : `/api/image/${space}/${img.path}`;
+
+                html += `
+                    <div class="p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors">
+                        <div class="relative mb-3">
+                            <img src="${thumbUrl}" alt="${img.name}" class="w-full h-32 object-cover rounded-lg">
+                            <button onclick="deleteImage('${img.path}')" class="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-md">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        <p class="text-white text-sm truncate">${img.name}</p>
+                        <p class="text-slate-400 text-xs">${img.getFormattedSize()}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || '<p class="text-slate-500 col-span-full text-center py-8">No images found</p>';
+        }
+
+        function navigate(path) {
+            currentPath = path;
+            loadImages();
+        }
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            if (!currentPath) {
+                breadcrumb.innerHTML = '<span class="text-white">Root</span>';
+                return;
+            }
+
+            const parts = currentPath.split('/');
+            let html = '<span class="text-white cursor-pointer hover:text-blue-400" onclick="navigate(\'\')">Root</span>';
+            let accum = '';
+            parts.forEach((part, index) => {
+                accum += (index > 0 ? '/' : '') + part;
+                html += ' <span class="text-slate-500">/</span> ';
+                if (index === parts.length - 1) {
+                    html += `<span class="text-white">${part}</span>`;
+                } else {
+                    html += `<span class="text-blue-400 cursor-pointer hover:text-blue-300" onclick="navigate('${accum}')">${part}</span>`;
+                }
+            });
+            breadcrumb.innerHTML = html;
+        }
+
+        function showUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
+
+        function hideUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('upload-file');
+            if (!fileInput.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('storageSpace', currentStorage);
+
+            try {
+                const response = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.success) {
+                    hideUploadModal();
+                    loadImages();
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                alert('Upload failed');
+            }
+        }
+
+        async function deleteImage(path) {
+            if (!confirm('Delete this image?')) return;
+
+            try {
+                const response = await fetch(`/api/image/${currentStorage}/${path}`, { method: 'DELETE' });
+                const result = await response.json();
+
+                if (result.success) {
+                    loadImages();
+                }
+            } catch (error) {
+                console.error('Delete failed:', error);
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', loadImages);
+    </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple-Pic - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        }
+
+        .glow {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .input-field {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.3);
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-100px) rotate(180deg); opacity: 0.1; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center overflow-hidden relative">
+    <!-- Background particles -->
+    <div class="particle" style="width: 10px; height: 10px; top: 10%; left: 10%;"></div>
+    <div class="particle" style="width: 15px; height: 15px; top: 20%; left: 80%; animation-delay: -2s;"></div>
+    <div class="particle" style="width: 8px; height: 8px; top: 60%; left: 20%; animation-delay: -4s;"></div>
+    <div class="particle" style="width: 12px; height: 12px; top: 70%; left: 70%; animation-delay: -6s;"></div>
+    <div class="particle" style="width: 6px; height: 6px; top: 30%; left: 50%; animation-delay: -8s;"></div>
+
+    <!-- Login card -->
+    <div class="glass rounded-2xl p-8 w-full max-w-md mx-4 glow">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Simple-Pic</h1>
+            <p class="text-slate-400">Simple local image hosting</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-slate-500"
+                    placeholder="Enter your username"
+                >
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    class="input-field w-full px-4 py-3 rounded-lg text-white placeholder-slate-500"
+                    placeholder="Enter your password"
+                >
+            </div>
+
+            <div class="flex items-center justify-between">
+                <label class="flex items-center">
+                    <input type="checkbox" id="rememberMe" name="rememberMe" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-slate-400">Remember me</span>
+                </label>
+            </div>
+
+            <div id="errorMessage" class="hidden bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm"></div>
+
+            <button
+                type="submit"
+                id="submitBtn"
+                class="btn-primary w-full py-3 rounded-lg text-white font-semibold"
+            >
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="/upload.html" class="text-blue-400 hover:text-blue-300 text-sm transition-colors">
+                Upload image without login →
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
+            errorMessage.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password, rememberMe }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/upload.html';
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
