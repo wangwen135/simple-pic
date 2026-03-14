@@ -2,6 +2,7 @@ package com.simplepic.controller;
 
 import com.simplepic.model.*;
 import com.simplepic.service.*;
+import com.simplepic.util.ErrorMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,7 +131,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to create storage space");
+            response.put("error", ErrorMessages.getZh("failed_to_create_storage"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_create_storage"));
         }
 
         return ResponseEntity.ok(response);
@@ -154,7 +156,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to update storage space");
+            response.put("error", ErrorMessages.getZh("failed_to_update_storage"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_update_storage"));
         }
 
         return ResponseEntity.ok(response);
@@ -171,7 +174,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to delete storage space");
+            response.put("error", ErrorMessages.getZh("failed_to_delete_storage"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_delete_storage"));
         }
 
         return ResponseEntity.ok(response);
@@ -218,7 +222,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to create user");
+            response.put("error", ErrorMessages.getZh("failed_to_create_user"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_create_user"));
         }
 
         return ResponseEntity.ok(response);
@@ -245,7 +250,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to update user");
+            response.put("error", ErrorMessages.getZh("failed_to_update_user"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_update_user"));
         }
 
         return ResponseEntity.ok(response);
@@ -262,7 +268,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to delete user");
+            response.put("error", ErrorMessages.getZh("failed_to_delete_user"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_delete_user"));
         }
 
         return ResponseEntity.ok(response);
@@ -360,7 +367,8 @@ public class AdminController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
-        response.put("error", "Invalid API key index");
+        response.put("error", ErrorMessages.getZh("invalid_api_key_index"));
+        response.put("error_en", ErrorMessages.getEn("invalid_api_key_index"));
 
         return ResponseEntity.badRequest().body(response);
     }
@@ -409,7 +417,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to create directory");
+            response.put("error", ErrorMessages.getZh("failed_to_create_directory"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_create_directory"));
         }
 
         return ResponseEntity.ok(response);
@@ -429,7 +438,8 @@ public class AdminController {
         response.put("success", success);
 
         if (!success) {
-            response.put("error", "Failed to delete directory");
+            response.put("error", ErrorMessages.getZh("failed_to_delete_directory"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_delete_directory"));
         }
 
         return ResponseEntity.ok(response);
@@ -445,9 +455,9 @@ public class AdminController {
     }
 
     /**
-     * Generate API key token
+     * Generate API key token using secure random
      */
     private String generateApiKeyToken() {
-        return UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
+        return com.simplepic.security.SecureTokenGenerator.generateApiKeyToken();
     }
 }

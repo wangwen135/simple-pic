@@ -8,6 +8,8 @@ import com.simplepic.service.AuthService;
 import com.simplepic.service.ConfigService;
 import com.simplepic.service.ImageService;
 import com.simplepic.service.ThumbnailService;
+import com.simplepic.util.ErrorMessages;
+import com.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +96,8 @@ public class ImageController {
                     if (!config.isAnonymousUploadEnabled()) {
                         Map<String, Object> response = new HashMap<>();
                         response.put("success", false);
-                        response.put("error", "Anonymous upload is not enabled");
+                        response.put("error", ErrorMessages.getZh("anonymous_upload_not_enabled"));
+                        response.put("error_en", ErrorMessages.getEn("anonymous_upload_not_enabled"));
                         return ResponseEntity.status(403).body(response);
                     }
 
@@ -112,7 +115,8 @@ public class ImageController {
                     if (!spaceAllowsAnonymous) {
                         Map<String, Object> response = new HashMap<>();
                         response.put("success", false);
-                        response.put("error", "This storage space does not allow anonymous upload");
+                        response.put("error", ErrorMessages.getZh("storage_no_anonymous"));
+                        response.put("error_en", ErrorMessages.getEn("storage_no_anonymous"));
                         return ResponseEntity.status(403).body(response);
                     }
                 }
@@ -132,7 +136,8 @@ public class ImageController {
             logger.error("Upload failed", e);
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("error", "Upload failed: " + e.getMessage());
+            response.put("error", ErrorMessages.getZh("upload_failed") + ": " + e.getMessage());
+            response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }
@@ -178,6 +183,15 @@ public class ImageController {
             HttpServletRequest request) {
         String path = request.getRequestURI();
         path = path.substring("/api/image/".length() + storageSpace.length() + 1);
+
+        // Validate path to prevent traversal attacks
+        if (!SimplePicUtils.isPathSafe(path)) {
+            logger.warn("Invalid path requested: {}", path);
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Normalize path
+        path = SimplePicUtils.normalizePath(path);
 
         File imageFile = imageService.getImageFile(path, storageSpace);
 
@@ -238,7 +252,8 @@ public class ImageController {
         if (success) {
             return ResponseEntity.ok(response);
         } else {
-            response.put("error", "Failed to delete image");
+            response.put("error", ErrorMessages.getZh("failed_to_delete_image"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_delete_image"));
             return ResponseEntity.badRequest().body(response);
         }
     }

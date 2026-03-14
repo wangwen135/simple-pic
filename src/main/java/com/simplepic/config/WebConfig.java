@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -24,9 +25,20 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve static files from classpath
-        registry.addResourceHandler("/**")
+        // Serve static files from classpath, but don't handle root path
+        registry.addResourceHandler("/css/**")
+                .addResourceLocations("classpath:/static/css/");
+        registry.addResourceHandler("/js/**")
+                .addResourceLocations("classpath:/static/js/");
+        registry.addResourceHandler("/lib/**")
+                .addResourceLocations("classpath:/static/lib/");
+        registry.addResourceHandler("/fonts/**")
+                .addResourceLocations("classpath:/static/fonts/");
+        registry.addResourceHandler("/favicon.ico")
                 .addResourceLocations("classpath:/static/");
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/")
+                .resourceChain(true);
     }
 
     @Override
@@ -42,12 +54,34 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // Add rate limit interceptor
         registry.addInterceptor(rateLimitInterceptor)
-                .addPathPatterns("/**")
+                .addPathPatterns("/api/**")
                 .excludePathPatterns("/api/health");
 
-        // Add auth interceptor
-        // /upload.html 不排除，需要在拦截器中检查匿名上传配置
+        // Add auth interceptor (don't exclude "/" or "/upload.html" so they can be handled)
         registry.addInterceptor(authInterceptor)
-                .excludePathPatterns("/api/health", "/api/upload", "/api/image/**", "/login.html", "/css/**", "/js/**");
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/api/health",
+                        "/api/upload",
+                        "/api/image/**",
+                        "/api/auth/**",
+                        "/login.html",
+                        "/css/**",
+                        "/js/**",
+                        "/lib/**",
+                        "/fonts/**",
+                        "/favicon.ico",
+                        "/admin/login.html",
+                        "/favicon.ico",
+                        "*.ico",
+                        "*.png",
+                        "*.jpg",
+                        "*.jpeg",
+                        "*.gif",
+                        "*.svg",
+                        "*.woff",
+                        "*.woff2",
+                        "*.ttf"
+                );
     }
 }

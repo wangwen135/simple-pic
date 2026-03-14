@@ -4,6 +4,7 @@ import com.simplepic.model.LoginSession;
 import com.simplepic.model.SystemConfig;
 import com.simplepic.service.AuthService;
 import com.simplepic.service.ConfigService;
+import com.simplepic.util.ErrorMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +106,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
             // Return 401 for API requests
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Unauthorized\"}");
+            response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("unauthorized") + "\",\"error_en\":\"" + ErrorMessages.getEn("unauthorized") + "\"}");
             return false;
         }
 
@@ -116,14 +117,14 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return false;
             }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Invalid or expired token\"}");
+            response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("invalid_or_expired_token") + "\",\"error_en\":\"" + ErrorMessages.getEn("invalid_or_expired_token") + "\"}");
             return false;
         }
 
         // Check admin role for admin paths
         if (isAdminPath(path) && !"ADMIN".equals(session.getRole())) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.getWriter().write("{\"error\":\"Forbidden: Admin access required\"}");
+            response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("forbidden") + "\",\"error_en\":\"" + ErrorMessages.getEn("forbidden") + "\"}");
             return false;
         }
 

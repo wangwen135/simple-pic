@@ -6,6 +6,7 @@ import com.simplepic.model.UploadResult;
 import com.simplepic.service.AuthService;
 import com.simplepic.service.ConfigService;
 import com.simplepic.service.ImageService;
+import com.simplepic.util.ErrorMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,8 @@ public class ApiController {
             if (token == null || token.isEmpty()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("error", "API token required");
+                response.put("error", ErrorMessages.getZh("api_token_required"));
+                response.put("error_en", ErrorMessages.getEn("api_token_required"));
                 return ResponseEntity.status(401).body(response);
             }
 
@@ -63,7 +65,8 @@ public class ApiController {
             if (storageSpace == null) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("error", "Invalid API token");
+                response.put("error", ErrorMessages.getZh("invalid_api_token"));
+                response.put("error_en", ErrorMessages.getEn("invalid_api_token"));
                 return ResponseEntity.status(401).body(response);
             }
 
@@ -87,7 +90,8 @@ public class ApiController {
             logger.error("API upload failed", e);
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("error", "Upload failed: " + e.getMessage());
+            response.put("error", ErrorMessages.getZh("upload_failed") + ": " + e.getMessage());
+            response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }

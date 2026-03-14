@@ -19,14 +19,21 @@ public class LoginSession {
     private String currentStorageSpace;
     private long loginTime;
     private long expiryTime;
+    private boolean rememberMe;
 
     public LoginSession(String username, String role, String[] storageSpaces) {
+        this(username, role, storageSpaces, true);
+    }
+
+    public LoginSession(String username, String role, String[] storageSpaces, boolean rememberMe) {
         this.username = username;
         this.role = role;
         this.storageSpaces = storageSpaces;
         this.currentStorageSpace = storageSpaces.length > 0 ? storageSpaces[0] : null;
         this.loginTime = System.currentTimeMillis();
-        this.expiryTime = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000); // 30 days
+        this.rememberMe = rememberMe;
+        long expiryDuration = rememberMe ? 30L * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 days or 1 day
+        this.expiryTime = System.currentTimeMillis() + expiryDuration;
     }
 
     public boolean isExpired() {
@@ -34,6 +41,13 @@ public class LoginSession {
     }
 
     public void extendExpiry() {
-        this.expiryTime = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000); // Extend to 30 days
+        long expiryDuration = rememberMe ? 30L * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        this.expiryTime = System.currentTimeMillis() + expiryDuration;
+    }
+
+    public void extendExpiry(boolean rememberMe) {
+        this.rememberMe = rememberMe;
+        long expiryDuration = rememberMe ? 30L * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+        this.expiryTime = System.currentTimeMillis() + expiryDuration;
     }
 }

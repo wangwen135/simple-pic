@@ -2,8 +2,12 @@ package com.simplepic.security;
 
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -15,23 +19,31 @@ public class RateLimiter {
 
     private final Map<String, TokenBucket> buckets = new ConcurrentHashMap<>();
 
-    private final Thread cleanupThread;
+    private ScheduledExecutorService cleanupExecutor;
 
-    public RateLimiter() {
-        // Start cleanup thread
-        cleanupThread = new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(TimeUnit.MINUTES.toMillis(5));
-                    cleanup();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
+    @PostConstruct
+    public void init() {
+        // Initialize scheduled executor for cleanup
+        cleanupExecutor = Executors.newScheduledThreadPool(1);
+        cleanupExecutor.scheduleAtFixedRate(
+                this::cleanup,
+                5, 5, TimeUnit.MINUTES);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        // Shutdown executor on bean destruction
+        if (cleanupExecutor != null) {
+            cleanupExecutor.shutdown();
+            try {
+                if (!cleanupExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    cleanupExecutor.shutdownNow();
                 }
+            } catch (InterruptedException e) {
+                cleanupExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
             }
-        });
-        cleanupThread.setDaemon(true);
-        cleanupThread.start();
+        }
     }
 
     /**

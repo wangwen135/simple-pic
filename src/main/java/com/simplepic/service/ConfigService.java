@@ -61,14 +61,9 @@ public class ConfigService {
 
             logger.info("Configuration loaded from: {}", configFile.getAbsolutePath());
 
-            // Debug log
+            // Log user count only (no sensitive data)
             if (configCache.getUsers() != null && !configCache.getUsers().isEmpty()) {
-                for (SystemConfig.User user : configCache.getUsers()) {
-                    logger.info("Loaded user: {}, password: {}, role: {}",
-                        user.getUsername(),
-                        user.getPassword() != null ? user.getPassword().substring(0, 10) + "..." : "NULL",
-                        user.getRole());
-                }
+                logger.info("Loaded {} user(s)", configCache.getUsers().size());
             }
         } catch (IOException e) {
             logger.error("Failed to load configuration", e);

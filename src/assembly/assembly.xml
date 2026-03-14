@@ -1,0 +1,64 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 https://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <id>bin</id>
+    <formats>
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>simple-pic-${project.version}</baseDirectory>
+
+    <fileSets>
+        <!-- JAR file -->
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+
+        <!-- Static resources (CSS, JS, fonts, etc.) -->
+        <fileSet>
+            <directory>${project.build.directory}/classes/static</directory>
+            <outputDirectory>.</outputDirectory>
+        </fileSet>
+
+        <!-- Startup/Stop scripts for Linux -->
+        <fileSet>
+            <directory>src/assembly/scripts</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>start.sh</include>
+                <include>stop.sh</include>
+                <include>status.sh</include>
+                <include>restart.sh</include>
+            </includes>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- Startup/Stop scripts for Windows -->
+        <fileSet>
+            <directory>src/assembly/scripts</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>start.bat</include>
+                <include>stop.bat</include>
+                <include>status.bat</include>
+                <include>restart.bat</include>
+            </includes>
+        </fileSet>
+
+        <!-- README -->
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>README.md</include>
+                <include>README_CN.md</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>

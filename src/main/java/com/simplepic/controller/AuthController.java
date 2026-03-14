@@ -6,10 +6,13 @@ import com.simplepic.model.User;
 import com.simplepic.service.AuthService;
 import com.simplepic.service.ConfigService;
 import com.simplepic.service.UserService;
+import com.simplepic.util.ErrorMessages;
+import com.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
@@ -39,6 +42,9 @@ public class AuthController {
     @Autowired
     private ConfigService configService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     /**
      * Login
      */
@@ -51,29 +57,31 @@ public class AuthController {
         boolean rememberMe = Boolean.parseBoolean(request.getOrDefault("rememberMe", "false"));
 
         // Get client IP address
-        String ipAddress = getClientIpAddress(httpRequest);
+        String ipAddress = SimplePicUtils.getClientIpAddress(httpRequest);
 
         // Check if IP is locked
         if (authService.isIPLocked(ipAddress)) {
             long remainingMinutes = authService.getRemainingLockoutMinutes(ipAddress);
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
-            result.put("error", "IP地址已被锁定");
-            result.put("error_en", "IP address locked");
+            result.put("error", ErrorMessages.getZh("ip_locked"));
+            result.put("error_en", ErrorMessages.getEn("ip_locked"));
             result.put("remainingMinutes", remainingMinutes);
             return ResponseEntity.status(429).body(result);
         }
 
-        String token = authService.login(username, password, ipAddress);
+        String token = authService.login(username, password, ipAddress, rememberMe);
 
         if (token != null) {
-            // Set cookie
+            // Set cookie with security attributes
             int maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
-            Cookie cookie = new Cookie("token", token);
-            cookie.setHttpOnly(true);
-            cookie.setPath("/");
-            cookie.setMaxAge(maxAge);
-            response.addCookie(cookie);
+            boolean isSecure = isProductionEnvironment();
+            // Set SameSite cookie attribute for CSRF protection via header
+            String cookieHeader = String.format("token=%s; Path=/; HttpOnly; %s; Max-Age=%d; SameSite=Strict",
+                    token,
+                    isSecure ? "Secure" : "",
+                    maxAge);
+            response.addHeader("Set-Cookie", cookieHeader);
 
             User user = userService.getUser(username);
             Map<String, Object> result = new HashMap<>();
@@ -87,27 +95,9 @@ public class AuthController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", false);
-        result.put("error", "Invalid username or password");
-        result.put("error_en", "用户名或密码错误");
+        result.put("error", ErrorMessages.getZh("invalid_credentials"));
+        result.put("error_en", ErrorMessages.getEn("invalid_credentials"));
         return ResponseEntity.status(401).body(result);
-    }
-
-    /**
-     * Get client IP address
-     */
-    private String getClientIpAddress(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("X-Real-IP");
-        }
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
-        }
-        // Handle multiple IPs in X-Forwarded-For
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
-        }
-        return ipAddress;
     }
 
     /**
@@ -120,12 +110,11 @@ public class AuthController {
             authService.logout(token);
         }
 
-        // Clear cookie
-        Cookie cookie = new Cookie("token", "");
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        // Clear cookie with same security attributes via Set-Cookie header
+        boolean isSecure = isProductionEnvironment();
+        String cookieHeader = String.format("token=; Path=/; HttpOnly; %s; Max-Age=0; SameSite=Strict",
+                isSecure ? "Secure" : "");
+        response.addHeader("Set-Cookie", cookieHeader);
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
@@ -148,7 +137,8 @@ public class AuthController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", false);
-        result.put("error", "Not authenticated");
+        result.put("error", ErrorMessages.getZh("not_authenticated"));
+        result.put("error_en", ErrorMessages.getEn("not_authenticated"));
         return ResponseEntity.status(401).body(result);
     }
 
@@ -170,7 +160,8 @@ public class AuthController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", false);
-        result.put("error", "Failed to switch storage space");
+        result.put("error", ErrorMessages.getZh("failed_to_switch_storage"));
+        result.put("error_en", ErrorMessages.getEn("failed_to_switch_storage"));
         return ResponseEntity.badRequest().body(result);
     }
 
@@ -201,5 +192,65 @@ public class AuthController {
         result.put("availableStorageSpaces", availableSpaces);
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Change password
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @CookieValue(value = "token", required = false) String token,
+            @RequestBody Map<String, String> request) {
+        User user = authService.getCurrentUser(token);
+
+        if (user == null) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("error", ErrorMessages.getZh("not_authenticated"));
+            result.put("error_en", ErrorMessages.getEn("not_authenticated"));
+            return ResponseEntity.status(401).body(result);
+        }
+
+        String currentPassword = request.get("currentPassword");
+        String newPassword = request.get("newPassword");
+
+        if (currentPassword == null || newPassword == null) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("error", ErrorMessages.getZh("invalid_file_format"));
+            result.put("error_en", ErrorMessages.getEn("invalid_file_format"));
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("error", ErrorMessages.getZh("invalid_current_password"));
+            result.put("error_en", ErrorMessages.getEn("invalid_current_password"));
+            return ResponseEntity.badRequest().body(result);
+        }
+
+        // Change password
+        if (userService.changePassword(user.getUsername(), newPassword)) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            return ResponseEntity.ok(result);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", false);
+        result.put("error", ErrorMessages.getZh("failed_to_update_user"));
+        result.put("error_en", ErrorMessages.getEn("failed_to_update_user"));
+        return ResponseEntity.badRequest().body(result);
+    }
+
+    /**
+     * Check if running in production environment
+     */
+    private boolean isProductionEnvironment() {
+        // Check for common production indicators
+        String env = System.getProperty("spring.profiles.active");
+        return "prod".equalsIgnoreCase(env) || "production".equalsIgnoreCase(env);
     }
 }

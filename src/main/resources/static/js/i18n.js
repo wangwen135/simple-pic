@@ -49,6 +49,7 @@ const i18n = {
             upload_failed: "上传失败",
             please_select_images: "请仅选择图片文件",
             not_logged_in: "未登录",
+            storage: "存储空间",
 
             // Login page
             username: "用户名",
@@ -106,6 +107,7 @@ const i18n = {
             watermark_content: "水印内容",
             watermark_position: "水印位置",
             watermark_opacity: "水印透明度",
+            security_settings: "安全设置",
 
             // Admin - API Keys
             api_key_management: "API 密钥管理",
@@ -135,7 +137,18 @@ const i18n = {
             // Anonymous upload
             anonymous_upload_not_allowed: "匿名上传未启用",
             no_storage_for_anonymous: "没有存储空间允许匿名上传",
-            select_storage_for_upload: "请选择上传存储空间"
+            select_storage_for_upload: "请选择上传存储空间",
+
+            // Change password
+            change_password: "修改密码",
+            current_password: "当前密码",
+            new_password: "新密码",
+            confirm_password: "确认密码",
+            please_fill_all_fields: "请填写所有字段",
+            passwords_not_match: "两次输入的密码不一致",
+            password_too_short: "密码长度至少6位",
+            password_changed: "密码修改成功",
+            password_change_failed: "密码修改失败"
         },
         en: {
             // Common
@@ -168,6 +181,7 @@ const i18n = {
             upload_failed: "Upload failed",
             please_select_images: "Please select image files only",
             not_logged_in: "Not logged in",
+            storage: "Storage Space",
 
             // Login page
             username: "Username",
@@ -254,7 +268,18 @@ const i18n = {
             // Anonymous upload
             anonymous_upload_not_allowed: "Anonymous upload is not enabled",
             no_storage_for_anonymous: "No storage spaces allow anonymous upload",
-            select_storage_for_upload: "Please select a storage space for upload"
+            select_storage_for_upload: "Please select a storage space for upload",
+
+            // Change password
+            change_password: "Change Password",
+            current_password: "Current Password",
+            new_password: "New Password",
+            confirm_password: "Confirm Password",
+            please_fill_all_fields: "Please fill in all fields",
+            passwords_not_match: "Passwords do not match",
+            password_too_short: "Password must be at least 6 characters",
+            password_changed: "Password changed successfully",
+            password_change_failed: "Failed to change password"
         }
     },
 

@@ -38,69 +38,24 @@ public class AuthService {
     // Session storage: token -> LoginSession
     private final Map<String, LoginSession> sessions = new ConcurrentHashMap<>();
 
-    // Session cleanup task
-    private Thread cleanupThread;
-
-    @PostConstruct
-    public void init() {
-        // Start session cleanup thread
-        cleanupThread = new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(60 * 60 * 1000); // Check every hour
-
-                    Iterator<Map.Entry<String, LoginSession>> it = sessions.entrySet().iterator();
-                    while (it.hasNext()) {
-                        Map.Entry<String, LoginSession> entry = it.next();
-                        if (entry.getValue().isExpired()) {
-                            it.remove();
-                            logger.debug("Removed expired session for user: {}", entry.getValue().getUsername());
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        });
-        cleanupThread.setDaemon(true);
-        cleanupThread.start();
-    }
-
     /**
      * Login with username and password
      */
     public String login(String username, String password) {
-        SystemConfig config = configService.getConfig();
-        if (config == null || config.getUsers() == null) {
-            logger.error("Configuration not loaded");
-            return null;
-        }
-
-        for (SystemConfig.User userConfig : config.getUsers()) {
-            if (userConfig.getUsername().equals(username)) {
-                if (passwordEncoder.matches(password, userConfig.getPassword())) {
-                    // Create session
-                    String token = generateToken();
-                    String[] storageSpaces = userConfig.getStorageSpaces().toArray(new String[0]);
-
-                    LoginSession session = new LoginSession(username, userConfig.getRole(), storageSpaces);
-                    sessions.put(token, session);
-
-                    logger.info("User {} logged in successfully", username);
-                    return token;
-                }
-            }
-        }
-
-        logger.warn("Login failed for user: {}", username);
-        return null;
+        return login(username, password, "", true);
     }
 
     /**
      * Login with username, password and IP address (for lockout feature)
      */
     public String login(String username, String password, String ipAddress) {
+        return login(username, password, ipAddress, true);
+    }
+
+    /**
+     * Login with username, password, IP address and remember me option
+     */
+    public String login(String username, String password, String ipAddress, boolean rememberMe) {
         // Check if IP is locked
         if (loginAttemptService.isLocked(ipAddress)) {
             logger.warn("Login attempt from locked IP: {}", ipAddress);
@@ -119,11 +74,11 @@ public class AuthService {
                     // Login successful, clear failed attempts
                     loginAttemptService.loginSucceeded(ipAddress);
 
-                    // Create session
+                    // Create session with remember me setting
                     String token = generateToken();
                     String[] storageSpaces = userConfig.getStorageSpaces().toArray(new String[0]);
 
-                    LoginSession session = new LoginSession(username, userConfig.getRole(), storageSpaces);
+                    LoginSession session = new LoginSession(username, userConfig.getRole(), storageSpaces, rememberMe);
                     sessions.put(token, session);
 
                     logger.info("User {} logged in successfully from IP: {}", username, ipAddress);
@@ -235,11 +190,10 @@ public class AuthService {
     }
 
     /**
-     * Generate random token
+     * Generate cryptographically secure random token
      */
     private String generateToken() {
-        return java.util.UUID.randomUUID().toString().replace("-", "") +
-               System.currentTimeMillis();
+        return com.simplepic.security.SecureTokenGenerator.generateToken();
     }
 
     /**

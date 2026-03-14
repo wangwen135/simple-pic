@@ -1,6 +1,8 @@
 package com.simplepic.interceptor;
 
 import com.simplepic.security.RateLimiter;
+import com.simplepic.util.ErrorMessages;
+import com.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,13 +48,13 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         }
 
         // Get client IP
-        String ip = getClientIp(request);
+        String ip = SimplePicUtils.getClientIpAddress(request);
 
         // Check rate limit
         if (!rateLimiter.tryAcquire(ip, maxRequests, timeWindow)) {
             logger.warn("Rate limit exceeded for IP: {}", ip);
             response.setStatus(429);
-            response.getWriter().write("{\"error\":\"Rate limit exceeded\"}");
+            response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("rate_limit_exceeded") + "\",\"error_en\":\"" + ErrorMessages.getEn("rate_limit_exceeded") + "\"}");
             return false;
         }
 
@@ -66,20 +68,5 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             }
         }
         return false;
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // For forwarded requests, take the first IP
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 }

@@ -4,6 +4,8 @@ import com.simplepic.model.ImageInfo;
 import com.simplepic.model.StorageSpace;
 import com.simplepic.model.SystemConfig;
 import com.simplepic.model.UploadResult;
+import com.simplepic.util.ErrorMessages;
+import com.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -48,31 +51,36 @@ public class ImageService {
      * Upload image
      */
     public UploadResult uploadImage(MultipartFile file, String storageSpace) throws IOException {
-        // Validate file
         if (file.isEmpty()) {
-            return UploadResult.error("File is empty");
+            return UploadResult.error(ErrorMessages.getZh("file_is_empty"));
         }
 
-        String originalFilename = file.getOriginalFilename();
+        return doUploadImage(file.getInputStream(), file.getOriginalFilename(), file.getSize(), storageSpace);
+    }
+
+    /**
+     * Common upload logic
+     */
+    private UploadResult doUploadImage(InputStream inputStream, String originalFilename, long fileSize, String storageSpace) throws IOException {
+        // Validate filename
         if (originalFilename == null) {
-            return UploadResult.error("Invalid filename");
+            return UploadResult.error(ErrorMessages.getZh("invalid_filename"));
         }
 
-        String extension = getExtension(originalFilename);
+        String extension = SimplePicUtils.getFileExtension(originalFilename);
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            return UploadResult.error("File type not allowed. Allowed types: " + String.join(", ", ALLOWED_EXTENSIONS));
+            return UploadResult.error(ErrorMessages.getZh("file_type_not_allowed") + ": " + String.join(", ", ALLOWED_EXTENSIONS));
         }
 
         // Check file size
-        long fileSize = file.getSize();
         if (!hasEnoughSpace(storageSpace, fileSize)) {
-            return UploadResult.error("Storage space quota exceeded");
+            return UploadResult.error(ErrorMessages.getZh("storage_quota_exceeded"));
         }
 
         // Get storage space
         com.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
         if (space == null) {
-            return UploadResult.error("Storage space not found");
+            return UploadResult.error(ErrorMessages.getZh("storage_space_not_found"));
         }
 
         // Generate file path: yyyy/MM/UUID.ext
@@ -94,7 +102,7 @@ public class ImageService {
         File targetFile = new File(targetDir, filename);
 
         // Save file
-        file.transferTo(targetFile);
+        java.nio.file.Files.copy(inputStream, targetFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
         // Apply watermark if enabled
         SystemConfig config = configService.getConfig();
@@ -131,72 +139,10 @@ public class ImageService {
      */
     public UploadResult uploadImage(File file, String storageSpace) throws IOException {
         if (!file.exists()) {
-            return UploadResult.error("File not found");
+            return UploadResult.error(ErrorMessages.getZh("file_not_found"));
         }
 
-        String originalFilename = file.getName();
-        String extension = getExtension(originalFilename);
-        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            return UploadResult.error("File type not allowed");
-        }
-
-        long fileSize = file.length();
-        if (!hasEnoughSpace(storageSpace, fileSize)) {
-            return UploadResult.error("Storage space quota exceeded");
-        }
-
-        com.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
-        if (space == null) {
-            return UploadResult.error("Storage space not found");
-        }
-
-        // Generate file path
-        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
-        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
-        Date now = new Date();
-
-        String year = yearFormat.format(now);
-        String month = monthFormat.format(now);
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        String filename = uuid + "." + extension;
-
-        String relativePath = year + File.separator + month + File.separator + filename;
-        File targetDir = new File(space.getStorageDirectory(), year + File.separator + month);
-        if (!targetDir.exists()) {
-            targetDir.mkdirs();
-        }
-
-        File targetFile = new File(targetDir, filename);
-
-        // Copy file using Java NIO
-        java.nio.file.Files.copy(file.toPath(), targetFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-        // Apply watermark
-        SystemConfig config = configService.getConfig();
-        if (config != null && config.isWatermarkEnabled()) {
-            try {
-                applyWatermark(targetFile, config);
-            } catch (Exception e) {
-                logger.warn("Failed to apply watermark", e);
-            }
-        }
-
-        // Generate thumbnail
-        try {
-            thumbnailService.generateThumbnail(targetFile, storageSpace);
-        } catch (Exception e) {
-            logger.warn("Failed to generate thumbnail", e);
-        }
-
-        String domain = space.getDomain().replaceAll("/$", "");
-        String imageUrl = domain + "/api/image/" + storageSpace + "/" + relativePath.replace(File.separator, "/");
-        String thumbnailUrl = domain + "/api/image/thumb/" + storageSpace + "/" + relativePath.replace(File.separator, "/");
-
-        storageService.clearStatsCache(storageSpace);
-
-        logger.info("Image uploaded (backend): {} ({} bytes)", relativePath, fileSize);
-
-        return UploadResult.success(imageUrl, thumbnailUrl, relativePath.replace(File.separator, "/"), storageSpace);
+        return doUploadImage(new java.io.FileInputStream(file), file.getName(), file.length(), storageSpace);
     }
 
     /**
@@ -266,7 +212,7 @@ public class ImageService {
             if (files != null) {
                 for (File file : files) {
                     if (file.isFile() && isImageFile(file.getName())) {
-                        String relativePath = getRelativePath(file, baseDir);
+                        String relativePath = SimplePicUtils.getRelativePath(file, baseDir);
                         images.add(new ImageInfo(file, storageSpace, relativePath.replace(File.separator, "/")));
                     }
                 }
@@ -300,7 +246,7 @@ public class ImageService {
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory() && !file.getName().equals(".thumbnails")) {
-                    String relativePath = getRelativePath(file, baseDir);
+                    String relativePath = SimplePicUtils.getRelativePath(file, baseDir);
                     directories.add(relativePath.replace(File.separator, "/"));
                 }
             }
@@ -437,7 +383,7 @@ public class ImageService {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile() && isImageFile(file.getName())) {
-                    String relativePath = getRelativePath(file, baseDir);
+                    String relativePath = SimplePicUtils.getRelativePath(file, baseDir);
                     images.add(new ImageInfo(file, storageSpace, relativePath.replace(File.separator, "/")));
                 } else if (file.isDirectory() && !file.getName().equals(".thumbnails")) {
                     images.addAll(findAllImages(file, baseDir, storageSpace));
@@ -458,7 +404,7 @@ public class ImageService {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile() && isImageFile(file.getName())) {
-                    String relativePath = getRelativePath(file, space.getStorageDirectory());
+                    String relativePath = SimplePicUtils.getRelativePath(file, space.getStorageDirectory());
                     thumbnailService.deleteThumbnail(relativePath.replace(File.separator, "/"), space.getName());
                 } else if (file.isDirectory()) {
                     deleteThumbnailsRecursive(file, space);
@@ -488,11 +434,7 @@ public class ImageService {
      * Get file extension
      */
     private String getExtension(String filename) {
-        int lastDot = filename.lastIndexOf('.');
-        if (lastDot > 0 && lastDot < filename.length() - 1) {
-            return filename.substring(lastDot + 1);
-        }
-        return "";
+        return SimplePicUtils.getFileExtension(filename);
     }
 
     /**
@@ -501,20 +443,6 @@ public class ImageService {
     private boolean isImageFile(String filename) {
         String lower = filename.toLowerCase();
         return ALLOWED_EXTENSIONS.contains(lower.substring(lower.lastIndexOf('.') + 1));
-    }
-
-    /**
-     * Get relative path
-     */
-    private String getRelativePath(File file, File baseDir) {
-        String basePath = baseDir.getAbsolutePath();
-        String filePath = file.getAbsolutePath();
-
-        if (filePath.startsWith(basePath)) {
-            return filePath.substring(basePath.length() + 1);
-        }
-
-        return file.getName();
     }
 
     /**

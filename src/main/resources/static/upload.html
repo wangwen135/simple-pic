@@ -4,215 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Upload</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        :root {
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f1f5f9;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: #e2e8f0;
-            --accent-color: #3b82f6;
-        }
-
-        [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --text-primary: #ffffff;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .gradient-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-        }
-
-        [data-theme="light"] .gradient-bg {
-            background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 50%, #f8fafc 100%);
-        }
-
-        .glass {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        [data-theme="light"] .glass {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .drop-zone {
-            border: 2px dashed rgba(59, 130, 246, 0.5);
-            transition: all 0.3s ease;
-        }
-
-        .drop-zone.dragover {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
-            transform: scale(1.02);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-        }
-
-        .link-format {
-            transition: all 0.2s ease;
-        }
-
-        .link-format:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        .link-format.active {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: rgba(59, 130, 246, 0.5);
-        }
-
-        .toast {
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .preview-image {
-            object-fit: cover;
-        }
-
-        /* Storage space selector */
-        .storage-selector {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            transition: all 0.2s ease;
-        }
-
-        .storage-selector:hover {
-            background: rgba(30, 41, 59, 0.8);
-            border-color: rgba(59, 130, 246, 0.5);
-        }
-
-        .storage-selector select {
-            background: transparent;
-            color: var(--text-primary);
-            border: none;
-            outline: none;
-        }
-
-        .storage-selector select option {
-            background: #1e293b;
-            color: var(--text-primary);
-        }
-
-        [data-theme="light"] .storage-selector select option {
-            background: #ffffff;
-            color: var(--text-primary);
-        }
-
-        .admin-link {
-            transition: all 0.2s ease;
-            border-radius: 6px;
-            padding: 6px 12px;
-        }
-
-        [data-theme="dark"] .admin-link:hover {
-            background: rgba(59, 130, 246, 0.2);
-            color: #ffffff;
-            text-decoration: none;
-        }
-
-        [data-theme="light"] .admin-link:hover {
-            background: rgba(59, 130, 246, 0.15);
-            color: #2563eb;
-            text-decoration: none;
-        }
-
-        /* 未登录状态链接样式 */
-        .login-link {
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-            cursor: pointer;
-            text-decoration: underline;
-            text-decoration-color: rgba(59, 130, 246, 0.5);
-        }
-
-        [data-theme="dark"] .login-link:hover {
-            color: #3b82f6;
-            text-decoration-color: #3b82f6;
-        }
-
-        [data-theme="light"] .login-link:hover {
-            color: #2563eb;
-            text-decoration-color: #2563eb;
-        }
-
-        .theme-btn, .lang-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            transition: all 0.2s ease;
-        }
-
-        [data-theme="light"] .theme-btn,
-        [data-theme="light"] .lang-btn {
-            background: rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            color: var(--text-primary);
-        }
-
-        .theme-btn:hover, .lang-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-        }
-
-        .history-item {
-            background: rgba(30, 41, 59, 0.5);
-        }
-
-        [data-theme="light"] .history-item {
-            background: rgba(241, 245, 249, 0.8);
-        }
-
-        .history-item:hover {
-            background: rgba(30, 41, 59, 0.8);
-        }
-
-        [data-theme="light"] .history-item:hover {
-            background: rgba(226, 232, 240, 1);
-        }
-    </style>
+    <script src="/js/toast.js"></script>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/lib/inter-font.css">
 </head>
 <body class="gradient-bg min-h-screen">
     <!-- Header -->
-    <header class="glass border-b border-slate-700/50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
+    <header class="glass border-b separator">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-8">
+            <!-- Left: Logo and title -->
+            <div class="flex items-center space-x-3 flex-shrink-0">
                 <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -221,38 +24,54 @@
                 <h1 class="text-xl font-bold" data-i18n="app_title">Simple-Pic</h1>
             </div>
 
-            <div class="flex items-center space-x-3">
+            <!-- Center: Storage space selector -->
+            <div class="flex items-center flex-1 justify-center">
                 <!-- Storage space selector for logged-in users -->
-                <div id="storageSelector" class="storage-selector px-3 py-2 rounded-lg">
-                    <label class="text-xs text-slate-400 mr-2" data-i18n="storage">Storage</label>
-                    <select id="storageSpaceSelect" class="text-sm font-medium">
-                    </select>
+                <div id="storageSelector" class="storage-selector-wrapper hidden">
+                    <span class="storage-label" data-i18n="storage">Storage</span>
+                    <div class="custom-dropdown">
+                        <button id="storageDropdownBtn" class="dropdown-btn">
+                            <span id="storageSelectedValue">default</span>
+                            <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="storageDropdownMenu" class="dropdown-menu hidden">
+                            <div id="storageOptions" class="dropdown-options"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Storage space selector for anonymous users -->
-                <div id="anonymousStorageSelector" class="storage-selector hidden px-3 py-2 rounded-lg">
-                    <label class="text-xs text-slate-400 mr-2" data-i18n="storage">Storage</label>
-                    <select id="anonymousStorageSelect" class="text-sm font-medium">
-                    </select>
-                </div>
-
-                <!-- User info -->
-                <div id="user-info" class="flex items-center">
-                    <a href="/login.html" class="login-link text-sm" data-i18n="not_logged_in">Not logged in</a>
+                <div id="anonymousStorageSelector" class="storage-selector-wrapper hidden">
+                    <span class="storage-label" data-i18n="storage">Storage</span>
+                    <div class="custom-dropdown">
+                        <button id="anonymousDropdownBtn" class="dropdown-btn">
+                            <span id="anonymousSelectedValue">default</span>
+                            <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="anonymousDropdownMenu" class="dropdown-menu hidden">
+                            <div id="anonymousOptions" class="dropdown-options"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <a href="/admin/dashboard.html" id="admin-link" class="admin-link hidden text-slate-300 text-sm" data-i18n="admin_panel">
-                    [Admin Panel]
-                </a>
+            <!-- Right: User info, admin link, theme/lang toggles -->
+            <div class="flex items-center space-x-3 flex-shrink-0">
+                <!-- User info -->
+                <div id="user-info" class="flex items-center mr-2">
+                    <a href="/login.html" class="login-link text-sm" data-i18n="not_logged_in">Not logged in</a>
+                </div>
 
-                <button id="logout-btn" class="hidden px-4 py-2 rounded-lg bg-slate-700 text-white text-sm hover:bg-slate-600 transition-colors" data-i18n="logout">
-                    Logout
+                <button id="admin-link" onclick="window.location.href='/admin/dashboard.html'" class="admin-link admin-btn hidden px-3 py-2 rounded-lg" data-i18n="admin_panel">
+                    管理后台
                 </button>
 
                 <!-- Theme and language toggles -->
-                <button id="langBtn" class="lang-btn px-3 py-2 rounded-lg text-sm font-medium">
+                <button id="langBtn" class="lang-btn px-3 py-2 rounded-lg">
                     <span id="langText">中文</span>
                 </button>
                 <button id="themeBtn" class="theme-btn px-3 py-2 rounded-lg" title="Toggle theme">
@@ -265,36 +84,46 @@
     </header>
 
     <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Warning message for anonymous users without storage -->
+        <div id="warning-message" class="hidden glass rounded-xl p-4 mb-6 border-l-4 border-yellow-500">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <p class="text-sm text-warning" id="warning-text"></p>
+            </div>
+        </div>
+
         <!-- Upload area -->
         <div id="dropZone" class="drop-zone rounded-2xl p-12 text-center cursor-pointer mb-8">
             <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
             <div class="space-y-4">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-500/20">
-                    <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xl font-semibold mb-2" data-i18n="drop_images_here">Drop images here</p>
-                    <p class="text-slate-400" data-i18n="or_click_to_select">or click to select • Paste from clipboard (Ctrl+V)</p>
+                    <p class="text-xl font-semibold mb-2 text-primary" data-i18n="drop_images_here">Drop images here</p>
+                    <p class="text-secondary" data-i18n="or_click_to_select">or click to select • Paste from clipboard (Ctrl+V)</p>
                 </div>
             </div>
         </div>
 
         <!-- Link format selector -->
         <div class="glass rounded-xl p-6 mb-8">
-            <h3 class="text-lg font-semibold mb-4" data-i18n="link_format">Link Format</h3>
+            <h3 class="text-lg font-semibold mb-4 text-primary" data-i18n="link_format">Link Format</h3>
             <div class="flex flex-wrap gap-3">
-                <button class="link-format active px-4 py-2 rounded-lg border border-slate-600 text-sm" data-format="markdown" data-i18n="markdown">
+                <button class="link-format active px-4 py-2 rounded-lg border border-input text-primary text-sm" data-format="markdown" data-i18n="markdown">
                     Markdown
                 </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="direct" data-i18n="direct_link">
+                <button class="link-format px-4 py-2 rounded-lg border border-input text-secondary text-sm" data-format="direct" data-i18n="direct_link">
                     Direct Link
                 </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="html">
+                <button class="link-format px-4 py-2 rounded-lg border border-input text-secondary text-sm" data-format="html">
                     HTML
                 </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm" data-format="bbcode">
+                <button class="link-format px-4 py-2 rounded-lg border border-input text-secondary text-sm" data-format="bbcode">
                     BBCode
                 </button>
             </div>
@@ -303,19 +132,49 @@
         <!-- Upload history -->
         <div class="glass rounded-xl p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold" data-i18n="recent_uploads">Recent Uploads</h3>
-                <button id="clear-history" class="text-sm text-slate-400 hover:text-white transition-colors" data-i18n="clear_history">
+                <h3 class="text-lg font-semibold text-primary" data-i18n="recent_uploads">Recent Uploads</h3>
+                <button id="clear-history" class="text-sm text-muted hover:text-primary transition-colors" data-i18n="clear_history">
                     Clear History
                 </button>
             </div>
             <div id="upload-history" class="space-y-3 max-h-96 overflow-y-auto">
-                <p class="text-slate-500 text-center py-8" data-i18n="no_uploads_yet">No uploads yet</p>
+                <p class="text-muted text-center py-8" data-i18n="no_uploads_yet">No uploads yet</p>
             </div>
         </div>
     </div>
 
+    <!-- User menu container (outside header for proper z-index) -->
+<div id="user-menu-container" class="hidden fixed z-[10000]"></div>
+
     <!-- Toast container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 space-y-2 z-[10000]"></div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="modal glass rounded-xl p-6 max-w-md w-full mx-4">
+            <h2 class="text-xl font-semibold mb-4 text-primary" data-i18n="change_password">Change Password</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="current_password">Current Password</label>
+                    <input type="password" id="current-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="new_password">New Password</label>
+                    <input type="password" id="new-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeChangePasswordModal()" class="px-4 py-2 rounded-lg btn-secondary text-sm" data-i18n="cancel">Cancel</button>
+                <button onclick="submitChangePassword()" class="px-4 py-2 rounded-lg btn-primary text-sm text-white" data-i18n="confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const dropZone = document.getElementById('dropZone');
@@ -323,9 +182,15 @@
         const uploadHistory = document.getElementById('upload-history');
         const linkFormats = document.querySelectorAll('.link-format');
         const storageSelector = document.getElementById('storageSelector');
-        const storageSpaceSelect = document.getElementById('storageSpaceSelect');
+        const storageDropdownBtn = document.getElementById('storageDropdownBtn');
+        const storageDropdownMenu = document.getElementById('storageDropdownMenu');
+        const storageOptions = document.getElementById('storageOptions');
+        const storageSelectedValue = document.getElementById('storageSelectedValue');
         const anonymousStorageSelector = document.getElementById('anonymousStorageSelector');
-        const anonymousStorageSelect = document.getElementById('anonymousStorageSelect');
+        const anonymousDropdownBtn = document.getElementById('anonymousDropdownBtn');
+        const anonymousDropdownMenu = document.getElementById('anonymousDropdownMenu');
+        const anonymousOptions = document.getElementById('anonymousOptions');
+        const anonymousSelectedValue = document.getElementById('anonymousSelectedValue');
         let currentFormat = 'markdown';
         let uploadHistoryData = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
         let currentUser = null;
@@ -337,11 +202,11 @@
         const moonIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             updateThemeIcon();
             updateLangText();
-            checkAuth();
-            checkAnonymousConfig();
+            await checkAuth();
+            await checkAnonymousConfig();
             renderUploadHistory();
         });
 
@@ -415,25 +280,33 @@
                         anonymousStorageSelector.classList.remove('hidden');
 
                         // Populate storage options
-                        anonymousStorageSelect.innerHTML = availableStorageSpaces.map(space =>
-                            `<option value="${space.name}">${space.name}</option>`
-                        ).join('');
+                        populateDropdown(anonymousOptions, availableStorageSpaces.map(s => s.name), 'anonymous');
 
                         // Select the storage from URL or first one
                         if (storageParam) {
                             const exists = availableStorageSpaces.find(s => s.name === storageParam);
                             if (exists) {
-                                anonymousStorageSelect.value = storageParam;
+                                selectDropdownOption('anonymous', storageParam);
                                 currentStorageSpace = storageParam;
                             } else {
+                                selectDropdownOption('anonymous', availableStorageSpaces[0].name);
                                 currentStorageSpace = availableStorageSpaces[0].name;
                             }
                         } else {
+                            selectDropdownOption('anonymous', availableStorageSpaces[0].name);
                             currentStorageSpace = availableStorageSpaces[0].name;
                         }
                     } else if (!currentUser && availableStorageSpaces.length === 0) {
-                        // No anonymous upload available
-                        showToast(i18n.t('no_storage_for_anonymous'), 'error');
+                        // No anonymous upload available - show warning message in center
+                        const warningMessage = document.getElementById('warning-message');
+                        const warningText = document.getElementById('warning-text');
+                        warningText.textContent = i18n.t('no_storage_for_anonymous');
+                        warningMessage.classList.remove('hidden');
+
+                        // Hide upload area and other controls
+                        dropZone.style.display = 'none';
+                        document.querySelector('.glass.rounded-xl.p-6.mb-8')?.classList.add('hidden');
+                        document.querySelector('.glass.rounded-xl.p-6:not(.mb-8)')?.classList.add('hidden');
                     }
                 }
             } catch (error) {
@@ -441,26 +314,70 @@
             }
         }
 
-        // Storage space selection for logged-in users
-        storageSpaceSelect.addEventListener('change', () => {
-            currentStorageSpace = storageSpaceSelect.value;
-            // Save preference to server
-            fetch('/api/auth/switch-space', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ storageSpace: currentStorageSpace })
-            }).catch(err => console.error('Failed to switch storage space:', err));
-        });
+        // Populate dropdown options
+        function populateDropdown(container, options, type) {
+            container.innerHTML = options.map(opt =>
+                `<div class="dropdown-option" data-value="${opt}" data-type="${type}">${opt}</div>`
+            ).join('');
 
-        // Storage space selection for anonymous users
-        anonymousStorageSelect.addEventListener('change', () => {
-            currentStorageSpace = anonymousStorageSelect.value;
+            // Add click handlers
+            container.querySelectorAll('.dropdown-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    const value = e.target.dataset.value;
+                    const type = e.target.dataset.type;
+                    selectDropdownOption(type, value);
+                });
+            });
+        }
+
+        // Select dropdown option
+        function selectDropdownOption(type, value) {
+            if (type === 'storage') {
+                storageSelectedValue.textContent = value;
+                currentStorageSpace = value;
+                storageDropdownMenu.classList.add('hidden');
+                // Save preference to server
+                fetch('/api/auth/switch-space', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ storageSpace: currentStorageSpace })
+                }).catch(err => console.error('Failed to switch storage space:', err));
+            } else if (type === 'anonymous') {
+                anonymousSelectedValue.textContent = value;
+                currentStorageSpace = value;
+                anonymousDropdownMenu.classList.add('hidden');
+            }
+        }
+
+        // Toggle dropdown
+        function toggleDropdown(type) {
+            const menu = type === 'storage' ? storageDropdownMenu : anonymousDropdownMenu;
+            const isHidden = menu.classList.contains('hidden');
+            // Close all dropdowns first
+            storageDropdownMenu.classList.add('hidden');
+            anonymousDropdownMenu.classList.add('hidden');
+            // Toggle this one
+            if (isHidden) {
+                menu.classList.remove('hidden');
+            }
+        }
+
+        // Dropdown button click handlers
+        storageDropdownBtn.addEventListener('click', () => toggleDropdown('storage'));
+        anonymousDropdownBtn.addEventListener('click', () => toggleDropdown('anonymous'));
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-dropdown')) {
+                storageDropdownMenu.classList.add('hidden');
+                anonymousDropdownMenu.classList.add('hidden');
+            }
         });
 
         async function updateUserInfo() {
             const userInfo = document.getElementById('user-info');
             const adminLink = document.getElementById('admin-link');
-            const logoutBtn = document.getElementById('logout-btn');
+            const storageSelector = document.getElementById('storageSelector');
 
             if (currentUser) {
                 // Get user's storage spaces
@@ -469,20 +386,30 @@
 
                 // Show storage selector for logged-in users
                 storageSelector.classList.remove('hidden');
-                storageSpaceSelect.innerHTML = userSpaces.map(space =>
-                    `<option value="${space}">${space}</option>`
-                ).join('');
+                populateDropdown(storageOptions, userSpaces, 'storage');
 
                 // Select current storage space
                 if (userSpaces.includes(currentStorageSpace)) {
-                    storageSpaceSelect.value = currentStorageSpace;
+                    selectDropdownOption('storage', currentStorageSpace);
+                } else {
+                    selectDropdownOption('storage', userSpaces[0]);
                 }
 
-                userInfo.innerHTML = `<span class="font-medium">${currentUser.username}</span>`;
+                // Update user info with username and storage in same container
+                userInfo.innerHTML = `
+                    <div class="relative">
+                        <button class="flex items-center space-x-1 text-sm font-medium hover:text-accent transition-colors" onclick="toggleUserMenu()">
+                            <span>${currentUser.username}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+
                 if (currentUser.role === 'ADMIN') {
                     adminLink.classList.remove('hidden');
                 }
-                logoutBtn.classList.remove('hidden');
                 anonymousStorageSelector.classList.add('hidden');
             }
         }
@@ -659,15 +586,118 @@
             });
         });
 
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', async () => {
+        // Logout function
+        window.logout = async function() {
             try {
                 await fetch('/api/auth/logout', { method: 'POST' });
                 window.location.href = '/login.html';
             } catch (error) {
                 console.error('Logout failed:', error);
             }
+        };
+
+        // Toggle user menu
+        window.toggleUserMenu = function() {
+            const userInfo = document.getElementById('user-info');
+            const menuContainer = document.getElementById('user-menu-container');
+
+            if (menuContainer.classList.contains('hidden')) {
+                // Show menu
+                menuContainer.innerHTML = `
+                    <div class="glass rounded-lg shadow-lg w-48 py-2">
+                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary" onclick="showChangePasswordModal()">
+                            <span data-i18n="change_password">Change Password</span>
+                        </button>
+                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary" onclick="logout()">
+                            <span data-i18n="logout">Logout</span>
+                        </button>
+                    </div>
+                `;
+
+                // Position menu
+                const rect = userInfo.getBoundingClientRect();
+                menuContainer.style.top = (rect.bottom + 5) + 'px';
+                menuContainer.style.right = (window.innerWidth - rect.right) + 'px';
+
+                menuContainer.classList.remove('hidden');
+                i18n.applyLanguage();
+            } else {
+                menuContainer.classList.add('hidden');
+                menuContainer.innerHTML = '';
+            }
+        };
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const userInfo = document.getElementById('user-info');
+            const menuContainer = document.getElementById('user-menu-container');
+            if (userInfo && !userInfo.contains(e.target) && !menuContainer.contains(e.target)) {
+                menuContainer.classList.add('hidden');
+                menuContainer.innerHTML = '';
+            }
         });
+
+        // Show change password modal
+        window.showChangePasswordModal = function() {
+            document.getElementById('change-password-modal').classList.remove('hidden');
+            document.getElementById('user-menu-container').classList.add('hidden');
+            document.getElementById('user-menu-container').innerHTML = '';
+            // Clear form fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        };
+
+        // Close change password modal
+        window.closeChangePasswordModal = function() {
+            document.getElementById('change-password-modal').classList.add('hidden');
+        };
+
+        // Submit change password
+        window.submitChangePassword = async function() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast(i18n.t('please_fill_all_fields'), 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast(i18n.t('passwords_not_match'), 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showToast(i18n.t('password_too_short'), 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        currentPassword: currentPassword,
+                        newPassword: newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(i18n.t('password_changed'), 'success');
+                    closeChangePasswordModal();
+                } else {
+                    const errorMsg = result.error || i18n.t('password_change_failed');
+                    showToast(errorMsg, 'error');
+                }
+            } catch (error) {
+                showToast(i18n.t('password_change_failed') + ': ' + error.message, 'error');
+            }
+        };
 
         // Toast notification
         function showToast(message, type = 'success') {

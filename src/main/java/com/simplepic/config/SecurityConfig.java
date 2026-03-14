@@ -13,7 +13,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class SecurityConfig {
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(BCryptPasswordEncoder bCryptPasswordEncoder) {
+        return bCryptPasswordEncoder;
     }
 }
