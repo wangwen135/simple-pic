@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.security.SecureRandom;
 import java.util.UUID;
 
 /**
@@ -69,13 +70,15 @@ public class StartupConfig implements CommandLineRunner {
     }
 
     /**
-     * Generate a random password
+     * Generate a cryptographically secure random password
+     * 生成加密安全的随机密码
      */
     private String generateRandomPassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
         StringBuilder password = new StringBuilder();
+        SecureRandom random = new SecureRandom();
         for (int i = 0; i < length; i++) {
-            int index = (int) (Math.random() * chars.length());
+            int index = random.nextInt(chars.length());
             password.append(chars.charAt(index));
         }
         return password.toString();

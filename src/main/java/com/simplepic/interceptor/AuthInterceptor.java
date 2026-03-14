@@ -36,7 +36,11 @@ public class AuthInterceptor implements HandlerInterceptor {
             "/api/auth/config",
             "/login.html",
             "/api/image/",
-            "/admin/login.html"
+            "/admin/login.html",
+            "/favicon.svg",
+            "/lib/",
+            "/css/",
+            "/js/"
     };
 
     // Paths that require admin role
@@ -134,6 +138,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    /**
+     * Check if path is public (doesn't require authentication)
+     * 检查路径是否为公共路径（不需要认证）
+     */
     private boolean isPublicPath(String path) {
         for (String publicPath : PUBLIC_PATHS) {
             if (path.startsWith(publicPath)) {
@@ -143,6 +151,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         return false;
     }
 
+    /**
+     * Check if path requires admin role
+     * 检查路径是否需要管理员角色
+     */
     private boolean isAdminPath(String path) {
         for (String adminPath : ADMIN_PATHS) {
             if (path.startsWith(adminPath)) {
@@ -152,8 +164,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         return false;
     }
 
+    /**
+     * Extract authentication token from request
+     * 从请求中提取认证令牌
+     * Priority: Cookie > Authorization header > Query parameter
+     * 优先级：Cookie > Authorization header > 查询参数
+     */
     private String getTokenFromRequest(HttpServletRequest request) {
-        // Check cookie first
+        // Check cookie first (优先从Cookie获取)
         javax.servlet.http.Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (javax.servlet.http.Cookie cookie : cookies) {
@@ -163,13 +181,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
 
-        // Check header
+        // Check Authorization header (检查Authorization header)
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
 
-        // Check query parameter
+        // Check query parameter (检查查询参数)
         token = request.getParameter("token");
         if (token != null) {
             return token;

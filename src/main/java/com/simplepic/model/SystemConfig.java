@@ -16,6 +16,7 @@ public class SystemConfig {
     private String description;
 
     private boolean anonymousUploadEnabled;
+    private String allowedOrigins; // CORS allowed origins (comma-separated)
 
     private String theme;
     private int itemsPerPage;

@@ -2,6 +2,7 @@ package com.simplepic.config;
 
 import com.simplepic.interceptor.AuthInterceptor;
 import com.simplepic.interceptor.RateLimitInterceptor;
+import com.simplepic.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -23,6 +24,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private RateLimitInterceptor rateLimitInterceptor;
 
+    @Autowired
+    private ConfigService configService;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve static files from classpath, but don't handle root path
@@ -41,12 +45,29 @@ public class WebConfig implements WebMvcConfigurer {
                 .resourceChain(true);
     }
 
+    /**
+     * Configure CORS mappings
+     * 配置跨域资源共享
+     * Reads allowed origins from config file for security
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Get allowed origins from config, fallback to safe defaults
+        com.simplepic.model.SystemConfig config = configService.getConfig();
+        String[] allowedOrigins;
+
+        if (config != null && config.getAllowedOrigins() != null && !config.getAllowedOrigins().isEmpty()) {
+            allowedOrigins = config.getAllowedOrigins().split(",");
+        } else {
+            // Safe default: only allow same origin
+            allowedOrigins = new String[]{"http://localhost:8080"};
+        }
+
         registry.addMapping("/api/**")
-                .allowedOrigins("*")
+                .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
+                .allowCredentials(true)
                 .maxAge(3600);
     }
 

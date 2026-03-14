@@ -105,6 +105,8 @@ public class UserService {
 
     /**
      * Update user
+     * 更新用户
+     * Only updates password if a non-empty password is provided
      */
     public boolean updateUser(String username, String password, Role role, String[] storageSpaces) {
         SystemConfig config = configService.getConfig();
@@ -114,7 +116,10 @@ public class UserService {
 
         for (SystemConfig.User userConfig : config.getUsers()) {
             if (userConfig.getUsername().equals(username)) {
-                userConfig.setPassword(passwordEncoder.encode(password));
+                // Only update password if provided and not empty
+                if (password != null && !password.isEmpty()) {
+                    userConfig.setPassword(passwordEncoder.encode(password));
+                }
                 userConfig.setRole(role.name());
                 userConfig.setStorageSpaces(java.util.Arrays.asList(storageSpaces));
 

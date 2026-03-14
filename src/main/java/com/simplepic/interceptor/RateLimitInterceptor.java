@@ -1,6 +1,8 @@
 package com.simplepic.interceptor;
 
+import com.simplepic.model.SystemConfig;
 import com.simplepic.security.RateLimiter;
+import com.simplepic.service.ConfigService;
 import com.simplepic.util.ErrorMessages;
 import com.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,6 +27,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     @Autowired
     private RateLimiter rateLimiter;
 
+    @Autowired
+    private ConfigService configService;
+
     // Paths that are rate limited
     private static final String[] RATE_LIMITED_PATHS = {
             "/api/image/upload",
@@ -33,9 +39,44 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private int maxRequests = 100;
     private int timeWindow = 60;
 
+    /**
+     * Initialize rate limit configuration from system config
+     * 从系统配置初始化限流配置
+     */
+    @PostConstruct
+    public void init() {
+        loadRateLimitConfig();
+    }
+
+    /**
+     * Load rate limit configuration from system config
+     * 从系统配置加载限流配置
+     */
+    private void loadRateLimitConfig() {
+        SystemConfig config = configService.getConfig();
+        if (config != null && config.isRateLimitEnabled()) {
+            this.maxRequests = config.getMaxRequests() > 0 ? config.getMaxRequests() : 100;
+            this.timeWindow = config.getTimeWindow() > 0 ? config.getTimeWindow() : 60;
+            logger.info("Rate limit configured: {} requests per {} seconds", maxRequests, timeWindow);
+        }
+    }
+
+    /**
+     * Set rate limit configuration (for programmatic updates)
+     * 设置限流配置（用于程序化更新）
+     */
     public void setRateLimitConfig(int maxRequests, int timeWindow) {
         this.maxRequests = maxRequests;
         this.timeWindow = timeWindow;
+        logger.info("Rate limit updated: {} requests per {} seconds", maxRequests, timeWindow);
+    }
+
+    /**
+     * Reload rate limit configuration from system config
+     * 重新加载限流配置
+     */
+    public void reloadRateLimitConfig() {
+        loadRateLimitConfig();
     }
 
     @Override

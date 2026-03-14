@@ -41,6 +41,10 @@ public class ConfigService {
         return configCache;
     }
 
+    /**
+     * Load configuration from file
+     * 从文件加载配置
+     */
     private void loadConfig() {
         File configFile = getConfigFile();
 
@@ -70,6 +74,15 @@ public class ConfigService {
         }
     }
 
+    /**
+     * Parse YAML configuration from list of lines
+     * 从行列表解析YAML配置
+     * Custom YAML parser to handle the configuration structure
+     * 自定义YAML解析器，用于处理配置结构
+     *
+     * @param lines list of YAML lines
+     * @return parsed SystemConfig object
+     */
     private SystemConfig parseYaml(List<String> lines) {
         SystemConfig config = new SystemConfig();
         List<SystemConfig.StorageSpace> storageSpaces = new ArrayList<>();
@@ -153,8 +166,7 @@ public class ConfigService {
                 if (trimmed.startsWith("password:")) {
                     String password = trimmed.substring(9).trim();
                     currentUser.setPassword(password);
-                    logger.debug("Set password for user {}: {}", currentUser.getUsername(),
-                        password != null ? password.substring(0, 10) + "..." : "NULL");
+                    logger.debug("Password set for user: {}", currentUser.getUsername());
                 } else if (trimmed.startsWith("role:")) {
                     currentUser.setRole(trimmed.substring(5).trim());
                 } else if (trimmed.startsWith("storage-spaces:") || trimmed.startsWith("storageSpaces:")) {
@@ -196,6 +208,8 @@ public class ConfigService {
                     config.setDescription(trimmed.substring(12).trim());
                 } else if (trimmed.startsWith("anonymous-upload-enabled:") || trimmed.startsWith("anonymousUploadEnabled:")) {
                     config.setAnonymousUploadEnabled(Boolean.parseBoolean(trimmed.substring(trimmed.indexOf(":") + 1).trim()));
+                } else if (trimmed.startsWith("allowed-origins:") || trimmed.startsWith("allowedOrigins:")) {
+                    config.setAllowedOrigins(trimmed.substring(trimmed.indexOf(":") + 1).trim());
                 }
                 continue;
             }
@@ -277,14 +291,17 @@ public class ConfigService {
         return count;
     }
 
+    /**
+     * Save configuration to file
+     * 保存配置到文件
+     */
     public void saveConfig(SystemConfig config) {
         this.configCache = config;
 
         File configFile = getConfigFile();
 
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))) {
-            // Write UTF-8 BOM to ensure proper encoding
-            writer.write('\uFEFF');
+            // Write YAML content (no BOM - BOM can cause parsing issues)
             writer.write(generateYaml(config));
             configLastModified = System.currentTimeMillis();
 
@@ -294,6 +311,15 @@ public class ConfigService {
         }
     }
 
+    /**
+     * Generate YAML configuration from SystemConfig object
+     * 从SystemConfig对象生成YAML配置
+     * Custom YAML generator to handle the configuration structure
+     * 自定义YAML生成器，用于处理配置结构
+     *
+     * @param config the SystemConfig object
+     * @return YAML string representation
+     */
     private String generateYaml(SystemConfig config) {
         StringBuilder yaml = new StringBuilder();
         yaml.append("simple-pic:\n");
@@ -301,6 +327,9 @@ public class ConfigService {
         yaml.append("    name: ").append(config.getName()).append("\n");
         yaml.append("    description: ").append(config.getDescription()).append("\n");
         yaml.append("    anonymous-upload-enabled: ").append(config.isAnonymousUploadEnabled()).append("\n");
+        if (config.getAllowedOrigins() != null && !config.getAllowedOrigins().isEmpty()) {
+            yaml.append("    allowed-origins: ").append(config.getAllowedOrigins()).append("\n");
+        }
         yaml.append("  storage-spaces:\n");
 
         if (config.getStorageSpaces() != null) {

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="title_upload">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Upload</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
     <script src="/js/toast.js"></script>
@@ -28,7 +29,7 @@
             <div class="flex items-center flex-1 justify-center">
                 <!-- Storage space selector for logged-in users -->
                 <div id="storageSelector" class="storage-selector-wrapper hidden">
-                    <span class="storage-label" data-i18n="storage">Storage</span>
+                    <span class="storage-label text-sm text-slate-400" data-i18n="storage">Storage</span>
                     <div class="custom-dropdown">
                         <button id="storageDropdownBtn" class="dropdown-btn">
                             <span id="storageSelectedValue">default</span>
@@ -44,7 +45,7 @@
 
                 <!-- Storage space selector for anonymous users -->
                 <div id="anonymousStorageSelector" class="storage-selector-wrapper hidden">
-                    <span class="storage-label" data-i18n="storage">Storage</span>
+                    <span class="storage-label text-sm text-slate-400" data-i18n="storage">Storage</span>
                     <div class="custom-dropdown">
                         <button id="anonymousDropdownBtn" class="dropdown-btn">
                             <span id="anonymousSelectedValue">default</span>
@@ -66,12 +67,12 @@
                     <a href="/login.html" class="login-link text-sm" data-i18n="not_logged_in">Not logged in</a>
                 </div>
 
-                <button id="admin-link" onclick="window.location.href='/admin/dashboard.html'" class="admin-link admin-btn hidden px-3 py-2 rounded-lg" data-i18n="admin_panel">
+                <button id="admin-link" onclick="window.location.href='/admin/dashboard.html'" class="admin-link admin-btn hidden px-3 py-2 rounded-lg text-sm" data-i18n="admin_panel">
                     管理后台
                 </button>
 
                 <!-- Theme and language toggles -->
-                <button id="langBtn" class="lang-btn px-3 py-2 rounded-lg">
+                <button id="langBtn" class="lang-btn px-3 py-2 rounded-lg text-sm">
                     <span id="langText">中文</span>
                 </button>
                 <button id="themeBtn" class="theme-btn px-3 py-2 rounded-lg" title="Toggle theme">
@@ -150,7 +151,7 @@
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 space-y-2 z-[10000]"></div>
 
     <!-- Change Password Modal -->
-    <div id="change-password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div id="change-password-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
         <div class="modal glass rounded-xl p-6 max-w-md w-full mx-4">
             <h2 class="text-xl font-semibold mb-4 text-primary" data-i18n="change_password">Change Password</h2>
 
@@ -396,16 +397,18 @@
                 }
 
                 // Update user info with username and storage in same container
+                // Use textContent for username to prevent XSS
                 userInfo.innerHTML = `
                     <div class="relative">
                         <button class="flex items-center space-x-1 text-sm font-medium hover:text-accent transition-colors" onclick="toggleUserMenu()">
-                            <span>${currentUser.username}</span>
+                            <span class="username-span"></span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
                     </div>
                 `;
+                userInfo.querySelector('.username-span').textContent = currentUser.username;
 
                 if (currentUser.role === 'ADMIN') {
                     adminLink.classList.remove('hidden');
@@ -546,12 +549,22 @@
                 return;
             }
 
-            uploadHistory.innerHTML = uploadHistoryData.map(item => `
+            uploadHistory.innerHTML = uploadHistoryData.map(item => {
+                // Escape HTML special characters in item.name to prevent XSS
+                const escapeHtml = (str) => {
+                    const div = document.createElement('div');
+                    div.textContent = str;
+                    return div.innerHTML;
+                };
+                const escapedName = escapeHtml(item.name);
+                const escapedLink = escapeHtml(item.links[currentFormat]);
+
+                return `
                 <div class="history-item flex items-center space-x-4 p-3 rounded-lg transition-colors">
-                    <img src="${item.thumbnailUrl}" alt="${item.name}" class="w-12 h-12 rounded-lg preview-image object-cover">
+                    <img src="${item.thumbnailUrl}" alt="${escapedName}" class="w-12 h-12 rounded-lg preview-image object-cover">
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">${item.name}</p>
-                        <p class="text-xs text-slate-400 truncate">${item.links[currentFormat]}</p>
+                        <p class="text-sm font-medium truncate">${escapedName}</p>
+                        <p class="text-xs text-slate-400 truncate">${escapedLink}</p>
                     </div>
                     <button onclick="copyLink('${item.links[currentFormat].replace(/'/g, "\\'")}')" class="p-2 rounded-lg hover:bg-slate-700 transition-colors" title="Copy link">
                         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -559,7 +572,8 @@
                         </svg>
                     </button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Copy link from history
@@ -605,10 +619,16 @@
                 // Show menu
                 menuContainer.innerHTML = `
                     <div class="glass rounded-lg shadow-lg w-48 py-2">
-                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary" onclick="showChangePasswordModal()">
+                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary flex items-center space-x-2" onclick="showChangePasswordModal()">
+                            <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
                             <span data-i18n="change_password">Change Password</span>
                         </button>
-                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary" onclick="logout()">
+                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary flex items-center space-x-2" onclick="logout()">
+                            <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
                             <span data-i18n="logout">Logout</span>
                         </button>
                     </div>

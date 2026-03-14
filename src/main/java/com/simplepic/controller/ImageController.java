@@ -10,6 +10,7 @@ import com.simplepic.service.ImageService;
 import com.simplepic.service.ThumbnailService;
 import com.simplepic.util.ErrorMessages;
 import com.simplepic.util.SimplePicUtils;
+import com.simplepic.util.StorageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +54,12 @@ public class ImageController {
     @Autowired
     private ConfigService configService;
 
+    @Autowired
+    private StorageUtils storageUtils;
+
     /**
      * Upload image
+     * 上传图片
      */
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadImage(
@@ -62,26 +67,16 @@ public class ImageController {
             @CookieValue(value = "token", required = false) String token,
             @RequestParam(value = "storageSpace", required = false) String storageSpace) {
         try {
-            // Get storage space from session or parameter
+            // Get current user
+            com.simplepic.model.User user = authService.getCurrentUser(token);
+
+            // Determine storage space
             if (storageSpace == null || storageSpace.isEmpty()) {
-                com.simplepic.model.User user = authService.getCurrentUser(token);
                 if (user != null && user.getCurrentStorageSpace() != null) {
                     storageSpace = user.getCurrentStorageSpace();
                 } else {
-                    // Anonymous upload check
-                    com.simplepic.model.SystemConfig config = configService.getConfig();
-                    if (config.isAnonymousUploadEnabled()) {
-                        // Find first storage space that allows anonymous upload
-                        if (config.getStorageSpaces() != null) {
-                            for (com.simplepic.model.SystemConfig.StorageSpace space : config.getStorageSpaces()) {
-                                if (space.isAllowAnonymous()) {
-                                    storageSpace = space.getName();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
+                    // Find first storage space that allows anonymous upload
+                    storageSpace = storageUtils.findAnonymousUploadSpace();
                     if (storageSpace == null) {
                         storageSpace = "default";
                     }
@@ -89,36 +84,15 @@ public class ImageController {
             }
 
             // Verify anonymous upload is allowed if not authenticated
-            if (token == null || token.isEmpty()) {
-                com.simplepic.model.User user = authService.getCurrentUser(token);
-                if (user == null) {
-                    com.simplepic.model.SystemConfig config = configService.getConfig();
-                    if (!config.isAnonymousUploadEnabled()) {
-                        Map<String, Object> response = new HashMap<>();
-                        response.put("success", false);
-                        response.put("error", ErrorMessages.getZh("anonymous_upload_not_enabled"));
-                        response.put("error_en", ErrorMessages.getEn("anonymous_upload_not_enabled"));
-                        return ResponseEntity.status(403).body(response);
-                    }
+            if (user == null) {
+                com.simplepic.model.SystemConfig config = configService.getConfig();
+                if (!config.isAnonymousUploadEnabled()) {
+                    return ResponseEntity.status(403).body(createErrorResponse("anonymous_upload_not_enabled"));
+                }
 
-                    // Check if the specific storage space allows anonymous upload
-                    boolean spaceAllowsAnonymous = false;
-                    if (config.getStorageSpaces() != null) {
-                        for (com.simplepic.model.SystemConfig.StorageSpace space : config.getStorageSpaces()) {
-                            if (space.getName().equals(storageSpace) && space.isAllowAnonymous()) {
-                                spaceAllowsAnonymous = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!spaceAllowsAnonymous) {
-                        Map<String, Object> response = new HashMap<>();
-                        response.put("success", false);
-                        response.put("error", ErrorMessages.getZh("storage_no_anonymous"));
-                        response.put("error_en", ErrorMessages.getEn("storage_no_anonymous"));
-                        return ResponseEntity.status(403).body(response);
-                    }
+                // Check if the specific storage space allows anonymous upload
+                if (!storageUtils.isAnonymousUploadAllowed(storageSpace)) {
+                    return ResponseEntity.status(403).body(createErrorResponse("storage_no_anonymous"));
                 }
             }
 
@@ -134,12 +108,32 @@ public class ImageController {
             }
         } catch (IOException e) {
             logger.error("Upload failed", e);
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", ErrorMessages.getZh("upload_failed") + ": " + e.getMessage());
-            response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
+            return ResponseEntity.status(500).body(createUploadFailedResponse(e.getMessage()));
         }
+    }
+
+    /**
+     * Create error response
+     * 创建错误响应
+     */
+    private Map<String, Object> createErrorResponse(String errorKey) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", ErrorMessages.getZh(errorKey));
+        response.put("error_en", ErrorMessages.getEn(errorKey));
+        return response;
+    }
+
+    /**
+     * Create upload failed response
+     * 创建上传失败响应
+     */
+    private Map<String, Object> createUploadFailedResponse(String errorMessage) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", ErrorMessages.getZh("upload_failed") + ": " + errorMessage);
+        response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + errorMessage);
+        return response;
     }
 
     /**
@@ -210,6 +204,7 @@ public class ImageController {
 
     /**
      * Get thumbnail
+     * 获取缩略图
      */
     @GetMapping("/thumb/{storageSpace}/**")
     public ResponseEntity<Resource> getThumbnail(
@@ -217,6 +212,15 @@ public class ImageController {
             HttpServletRequest request) {
         String path = request.getRequestURI();
         path = path.substring("/api/image/thumb/".length() + storageSpace.length() + 1);
+
+        // Validate path to prevent traversal attacks (same as getImage)
+        if (!SimplePicUtils.isPathSafe(path)) {
+            logger.warn("Invalid thumbnail path requested: {}", path);
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Normalize path
+        path = SimplePicUtils.normalizePath(path);
 
         File thumbnailFile = thumbnailService.getThumbnail(path, storageSpace);
 

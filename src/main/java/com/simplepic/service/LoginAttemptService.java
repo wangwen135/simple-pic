@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -27,13 +28,33 @@ public class LoginAttemptService {
     private final Map<String, Long> lockoutCache = new ConcurrentHashMap<>();
 
     private final ConfigService configService;
+    private final ScheduledExecutorService scheduler;
 
     public LoginAttemptService(ConfigService configService) {
         this.configService = configService;
 
         // 定期清理过期的锁定记录（每分钟执行一次）
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(this::cleanExpiredLockouts, 1, 1, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Cleanup method called when bean is destroyed
+     * Bean销毁时的清理方法
+     */
+    @PreDestroy
+    public void destroy() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+            try {
+                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    scheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                scheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**
@@ -131,7 +152,10 @@ public class LoginAttemptService {
     }
 
     /**
+     * Clean up expired lockout records
      * 清理过期的锁定记录
+     * Runs periodically to remove lockout records that have passed their expiration time
+     * 定期运行以移除已过期的锁定记录
      */
     private void cleanExpiredLockouts() {
         SystemConfig config = configService.getConfig();
