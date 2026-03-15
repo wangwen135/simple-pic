@@ -19,6 +19,16 @@ const i18n = {
     // Translation dictionaries
     translations: {
         zh: {
+            // Page titles
+            title_upload: "上传图片 - Simple-Pic",
+            title_login: "登录 - Simple-Pic",
+            title_dashboard: "管理后台 - Simple-Pic",
+            title_images: "图片管理 - Simple-Pic",
+            title_storage: "存储管理 - Simple-Pic",
+            title_users: "用户管理 - Simple-Pic",
+            title_system: "系统设置 - Simple-Pic",
+            title_apikey: "API密钥管理 - Simple-Pic",
+
             // Common
             app_title: "Simple-Pic",
             app_description: "Simple local image hosting",
@@ -74,9 +84,12 @@ const i18n = {
             // Admin - Storage
             storage_management: "存储管理",
             storage_name: "存储名称",
+            storage_name_hint: "英文字母、数字、下划线、中划线",
             storage_path: "存储路径",
+            storage_path_hint: "绝对路径或相对路径，不存在将自动创建",
             max_size: "最大容量",
             domain: "域名",
+            domain_hint: "完整的 URL，如 http://localhost:8080 或 https://example.com",
             used_size: "已用大小",
             free_size: "可用大小",
             image_count: "图片数量",
@@ -85,6 +98,20 @@ const i18n = {
             edit_storage: "编辑存储空间",
             delete_storage: "删除存储空间",
             allow_anonymous: "允许匿名上传",
+            unit_mb: "MB",
+            unit_gb: "GB",
+            unit_tb: "TB",
+
+            // Storage validation errors
+            error_name_required: "请输入存储空间名称",
+            error_name_invalid: "存储空间名称只能包含字母、数字、下划线、中划线和中文",
+            error_name_exists: "存储空间名称已存在",
+            error_path_required: "请输入存储路径",
+            error_size_required: "请输入最大容量",
+            error_domain_required: "请输入域名",
+            error_domain_invalid: "域名格式不正确，必须以 http:// 或 https:// 开头",
+            error_create_failed: "创建存储空间失败",
+            error_save_failed: "保存存储空间失败",
 
             // Admin - Users
             user_management: "用户管理",
@@ -95,6 +122,7 @@ const i18n = {
             admin: "管理员",
             user: "普通用户",
             assigned_storage: "分配存储空间",
+            admin_has_all_storage: "管理员拥有全部存储空间的权限",
             password_optional: "密码（留空不修改）",
 
             // Admin - System
@@ -137,6 +165,7 @@ const i18n = {
             // Anonymous upload
             anonymous_upload_not_allowed: "匿名上传未启用",
             no_storage_for_anonymous: "没有存储空间允许匿名上传",
+            no_storage_assigned: "您没有被分配任何存储空间，请联系管理员",
             select_storage_for_upload: "请选择上传存储空间",
 
             // Change password
@@ -151,6 +180,16 @@ const i18n = {
             password_change_failed: "密码修改失败"
         },
         en: {
+            // Page titles
+            title_upload: "Upload Images - Simple-Pic",
+            title_login: "Login - Simple-Pic",
+            title_dashboard: "Admin Dashboard - Simple-Pic",
+            title_images: "Image Management - Simple-Pic",
+            title_storage: "Storage Management - Simple-Pic",
+            title_users: "User Management - Simple-Pic",
+            title_system: "System Settings - Simple-Pic",
+            title_apikey: "API Key Management - Simple-Pic",
+
             // Common
             app_title: "Simple-Pic",
             app_description: "Simple local image hosting",
@@ -206,9 +245,12 @@ const i18n = {
             // Admin - Storage
             storage_management: "Storage Management",
             storage_name: "Storage Name",
+            storage_name_hint: "Letters, numbers, underscores, hyphens only",
             storage_path: "Storage Path",
+            storage_path_hint: "Absolute or relative path, will be created if not exists",
             max_size: "Max Size",
             domain: "Domain",
+            domain_hint: "Full URL, e.g. http://localhost:8080 or https://example.com",
             used_size: "Used Size",
             free_size: "Free Size",
             image_count: "Image Count",
@@ -217,6 +259,20 @@ const i18n = {
             edit_storage: "Edit Storage Space",
             delete_storage: "Delete Storage Space",
             allow_anonymous: "Allow Anonymous Upload",
+            unit_mb: "MB",
+            unit_gb: "GB",
+            unit_tb: "TB",
+
+            // Storage validation errors
+            error_name_required: "Please enter storage space name",
+            error_name_invalid: "Storage name can only contain letters, numbers, underscores, hyphens and Chinese characters",
+            error_name_exists: "Storage space name already exists",
+            error_path_required: "Please enter storage path",
+            error_size_required: "Please enter max size",
+            error_domain_required: "Please enter domain",
+            error_domain_invalid: "Invalid domain format, must start with http:// or https://",
+            error_create_failed: "Failed to create storage space",
+            error_save_failed: "Failed to save storage space",
 
             // Admin - Users
             user_management: "User Management",
@@ -227,6 +283,7 @@ const i18n = {
             admin: "Admin",
             user: "User",
             assigned_storage: "Assigned Storage Spaces",
+            admin_has_all_storage: "Admin has access to all storage spaces",
             password_optional: "Password (leave empty to keep unchanged)",
 
             // Admin - System
@@ -268,6 +325,7 @@ const i18n = {
             // Anonymous upload
             anonymous_upload_not_allowed: "Anonymous upload is not enabled",
             no_storage_for_anonymous: "No storage spaces allow anonymous upload",
+            no_storage_assigned: "You have not been assigned any storage space, please contact the administrator",
             select_storage_for_upload: "Please select a storage space for upload",
 
             // Change password
@@ -333,6 +391,12 @@ const i18n = {
             const key = el.getAttribute('data-i18n-placeholder');
             el.placeholder = this.t(key);
         });
+
+        // Update page title if data-i18n-title attribute exists on document
+        const titleKey = document.documentElement.getAttribute('data-i18n-title');
+        if (titleKey) {
+            document.title = this.t(titleKey);
+        }
     },
 
     /**

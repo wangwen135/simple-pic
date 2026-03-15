@@ -41,8 +41,8 @@
 
     /* Buttons */
     --btn-primary-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    --btn-secondary-bg: #f1f5f9;
-    --btn-secondary-hover: #e2e8f0;
+    --btn-secondary-bg: #cbd5e1;
+    --btn-secondary-hover: #94a3b8;
 
     /* Stat cards */
     --stat-card-bg: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
@@ -218,12 +218,6 @@ header.glass {
     transition: all 0.2s ease;
 }
 
-.theme-btn span,
-.lang-btn span {
-    font-size: 14px;
-    font-weight: 500;
-}
-
 [data-theme="light"] .theme-btn,
 [data-theme="light"] .lang-btn,
 [data-theme="light"] .admin-btn,
@@ -362,12 +356,6 @@ header.glass {
     gap: 10px;
 }
 
-.storage-selector-wrapper .storage-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-muted);
-}
-
 /* Custom dropdown */
 .custom-dropdown {
     position: relative;
@@ -380,12 +368,11 @@ header.glass {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 8px 14px;
     background-color: var(--bg-input);
     border: 1px solid var(--input-border);
     border-radius: 10px;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -464,8 +451,7 @@ header.glass {
 
 .dropdown-option {
     padding: 12px 14px;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.15s ease;

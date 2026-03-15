@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="title_dashboard">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Admin Dashboard</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
     <script src="/js/toast.js"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
 </head>
-<body class="gradient-bg min-h-screen">
+<body class="gradient-bg h-screen">
     <!-- Header -->
     <header class="glass border-b separator h-16 flex items-center justify-between px-6 sticky top-0 z-50">
         <div class="flex items-center space-x-3">
@@ -30,19 +31,18 @@
                 <span data-i18n="upload">Upload</span>
             </a>
 
-            <div class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info">
-                <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span id="username" class="text-sm text-primary">admin</span>
+            <!-- User info with dropdown -->
+            <div id="user-info" class="flex items-center">
+                <div class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info">
+                    <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span id="username" class="text-sm text-primary">admin</span>
+                    <svg class="w-3 h-3 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
             </div>
-
-            <button onclick="logout()" class="logout-btn flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                </svg>
-                <span class="text-sm" data-i18n="logout">Logout</span>
-            </button>
 
             <div class="w-px h-6 separator"></div>
 
@@ -59,7 +59,7 @@
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 min-h-screen sidebar p-4 border-r separator pt-6">
+        <aside class="w-64 h-screen sidebar p-4 border-r separator pt-6">
             <nav class="space-y-1">
                 <a href="/admin/dashboard.html" class="sidebar-link active flex items-center space-x-3 px-3 py-2 rounded-lg text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,6 +181,39 @@
         </main>
     </div>
 
+    <!-- User menu container (outside header for proper z-index) -->
+    <div id="user-menu-container" class="hidden fixed z-[10000]"></div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 space-y-2 z-[10000]"></div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+        <div class="modal glass rounded-xl p-6 max-w-md w-full mx-4">
+            <h2 class="text-xl font-semibold mb-4 text-primary" data-i18n="change_password">Change Password</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="current_password">Current Password</label>
+                    <input type="password" id="current-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="new_password">New Password</label>
+                    <input type="password" id="new-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" data-i18n="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeChangePasswordModal()" class="px-4 py-2 rounded-lg btn-secondary text-sm" data-i18n="cancel">Cancel</button>
+                <button onclick="submitChangePassword()" class="px-4 py-2 rounded-lg btn-primary text-sm text-white" data-i18n="confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Theme icons
         const sunIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
@@ -201,10 +234,145 @@
                 const data = await response.json();
                 if (data.success && data.user) {
                     document.getElementById('username').textContent = data.user.username;
+                    // Add click handler to user info for dropdown
+                    const userInfo = document.getElementById('user-info');
+                    userInfo.addEventListener('click', toggleUserMenu);
+                    userInfo.style.cursor = 'pointer';
                 }
             } catch (error) {
                 console.error('Failed to load user info');
             }
+        }
+
+        // Toggle user menu
+        window.toggleUserMenu = function() {
+            const userInfo = document.getElementById('user-info');
+            const menuContainer = document.getElementById('user-menu-container');
+
+            if (menuContainer.classList.contains('hidden')) {
+                // Show menu
+                menuContainer.innerHTML = `
+                    <div class="glass rounded-lg shadow-lg w-48 py-2">
+                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary flex items-center space-x-2" onclick="showChangePasswordModal()">
+                            <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                            <span data-i18n="change_password">Change Password</span>
+                        </button>
+                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary flex items-center space-x-2" onclick="logout()">
+                            <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span data-i18n="logout">Logout</span>
+                        </button>
+                    </div>
+                `;
+
+                // Position menu
+                const rect = userInfo.getBoundingClientRect();
+                menuContainer.style.top = (rect.bottom + 5) + 'px';
+                menuContainer.style.right = (window.innerWidth - rect.right - 20) + 'px';
+
+                menuContainer.classList.remove('hidden');
+                i18n.applyLanguage();
+            } else {
+                menuContainer.classList.add('hidden');
+                menuContainer.innerHTML = '';
+            }
+        };
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const userInfo = document.getElementById('user-info');
+            const menuContainer = document.getElementById('user-menu-container');
+            if (userInfo && !userInfo.contains(e.target) && !menuContainer.contains(e.target)) {
+                menuContainer.classList.add('hidden');
+                menuContainer.innerHTML = '';
+            }
+        });
+
+        // Show change password modal
+        window.showChangePasswordModal = function() {
+            document.getElementById('change-password-modal').classList.remove('hidden');
+            document.getElementById('user-menu-container').classList.add('hidden');
+            document.getElementById('user-menu-container').innerHTML = '';
+            // Clear form fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        };
+
+        // Close change password modal
+        window.closeChangePasswordModal = function() {
+            document.getElementById('change-password-modal').classList.add('hidden');
+        };
+
+        // Submit change password
+        window.submitChangePassword = async function() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast(i18n.t('please_fill_all_fields'), 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast(i18n.t('passwords_not_match'), 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showToast(i18n.t('password_too_short'), 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        currentPassword: currentPassword,
+                        newPassword: newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(i18n.t('password_changed'), 'success');
+                    closeChangePasswordModal();
+                } else {
+                    const errorMsg = result.error || i18n.t('password_change_failed');
+                    showToast(errorMsg, 'error');
+                }
+            } catch (error) {
+                showToast(i18n.t('password_change_failed') + ': ' + error.message, 'error');
+            }
+        };
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast px-4 py-3 rounded-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         // Theme toggle
@@ -266,14 +434,6 @@
                     </div>
                 </div>
             `).join('');
-        }
-
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         async function logout() {

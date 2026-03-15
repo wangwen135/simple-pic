@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="title_storage">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Storage</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
     <script src="/js/toast.js"></script>
-    <script src="/js/confirm.js"></script>
+    <script src="/js/modal.js"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
 </head>
-<body class="gradient-bg min-h-screen">
+<body class="gradient-bg h-screen">
     <!-- Header -->
     <header class="glass border-b separator h-16 flex items-center justify-between px-6 sticky top-0 z-50">
         <div class="flex items-center space-x-3">
@@ -60,7 +61,7 @@
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 min-h-screen sidebar p-4 border-r separator pt-6">
+        <aside class="w-64 h-screen sidebar p-4 border-r separator pt-6">
             <nav class="space-y-1">
                 <a href="/admin/dashboard.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,37 +114,6 @@
             </div>
         </main>
     </div>
-    <div id="create-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="modal rounded-xl p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold text-primary mb-4" id="modal-title" data-i18n="create_storage">Create Storage Space</h2>
-            <div class="space-y-4 mb-4">
-                <div>
-                    <label class="block text-secondary text-sm mb-1" data-i18n="storage_name">Name</label>
-                    <input type="text" id="create-name" class="w-full px-4 py-2 input-field rounded-lg" placeholder="storage-name">
-                </div>
-                <div>
-                    <label class="block text-secondary text-sm mb-1" data-i18n="storage_path">Path</label>
-                    <input type="text" id="create-path" class="w-full px-4 py-2 input-field rounded-lg" placeholder="./storage/custom">
-                </div>
-                <div>
-                    <label class="block text-secondary text-sm mb-1" data-i18n="max_size">Max Size</label>
-                    <input type="text" id="create-size" class="w-full px-4 py-2 input-field rounded-lg" placeholder="10GB">
-                </div>
-                <div>
-                    <label class="block text-secondary text-sm mb-1" data-i18n="domain">Domain</label>
-                    <input type="text" id="create-domain" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://localhost:8080">
-                </div>
-                <div>
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" id="create-anonymous" class="w-4 h-4 rounded text-blue-600">
-                        <span class="text-secondary" data-i18n="allow_anonymous">Allow Anonymous Upload</span>
-                    </label>
-                </div>
-            </div>
-            <button onclick="saveStorage()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" id="save-btn" data-i18n="save">Create</button>
-            <button onclick="hideCreateModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">Cancel</button>
-        </div>
-    </div>
     <script>
         const sunIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
         const moonIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
@@ -195,6 +165,7 @@
             try {
                 const response = await fetch('/api/admin/storages');
                 const storages = await response.json();
+                allStorages = storages;
                 renderStorages(storages);
             } catch (error) {
                 console.error('Failed to load storages:', error);
@@ -227,21 +198,70 @@
             i18n.applyLanguage();
         }
 
+        let allStorages = [];
+        let currentModalInstance = null;
+
+        function getFormContent() {
+            return `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-secondary text-sm mb-1" data-i18n="storage_name">Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="create-name" class="w-full px-4 py-2 input-field rounded-lg" placeholder="storage-name">
+                        <p class="text-xs text-muted mt-1" data-i18n="storage_name_hint">英文字母、数字、下划线、中划线</p>
+                    </div>
+                    <div>
+                        <label class="block text-secondary text-sm mb-1" data-i18n="storage_path">Path <span class="text-red-500">*</span></label>
+                        <input type="text" id="create-path" class="w-full px-4 py-2 input-field rounded-lg" placeholder="./storage/custom">
+                        <p class="text-xs text-muted mt-1" data-i18n="storage_path_hint">绝对路径或相对路径，不存在将自动创建</p>
+                    </div>
+                    <div>
+                        <label class="block text-secondary text-sm mb-1" data-i18n="max_size">Max Size <span class="text-red-500">*</span></label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="create-size-value" class="flex-1 px-4 py-2 input-field rounded-lg" placeholder="10" min="1">
+                            <select id="create-size-unit" class="px-4 py-2 input-field rounded-lg">
+                                <option value="MB" data-i18n="unit_mb">MB</option>
+                                <option value="GB" selected data-i18n="unit_gb">GB</option>
+                                <option value="TB" data-i18n="unit_tb">TB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-secondary text-sm mb-1" data-i18n="domain">Domain <span class="text-red-500">*</span></label>
+                        <input type="text" id="create-domain" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://localhost:8080">
+                        <p class="text-xs text-muted mt-1" data-i18n="domain_hint">完整的 URL，如 http://localhost:8080 或 https://example.com</p>
+                    </div>
+                    <div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="create-anonymous" class="w-4 h-4 rounded text-blue-600">
+                            <span class="text-secondary" data-i18n="allow_anonymous">Allow Anonymous Upload</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        }
+
         function showCreateModal() {
             isEditing = false;
-            document.getElementById('modal-title').textContent = i18n.t('create_storage');
+            currentModalInstance = Modal.show({
+                title: i18n.t('create_storage'),
+                content: getFormContent(),
+                confirmText: i18n.t('save'),
+                cancelText: i18n.t('cancel'),
+                onConfirm: () => saveStorage(),
+                size: 'medium'
+            });
+
+            // Initialize form values
             document.getElementById('create-name').value = '';
             document.getElementById('create-name').disabled = false;
             document.getElementById('create-path').value = '';
-            document.getElementById('create-size').value = '';
+            document.getElementById('create-size-value').value = '10';
+            document.getElementById('create-size-unit').value = 'GB';
             document.getElementById('create-domain').value = '';
             document.getElementById('create-anonymous').checked = false;
-            document.getElementById('save-btn').textContent = i18n.t('save');
-            document.getElementById('create-modal').classList.remove('hidden');
-        }
 
-        function hideCreateModal() {
-            document.getElementById('create-modal').classList.add('hidden');
+            // Apply language
+            i18n.applyLanguage();
         }
 
         async function editStorage(name) {
@@ -252,27 +272,123 @@
                 if (storage) {
                     currentStorageData = storage;
                     isEditing = true;
-                    document.getElementById('modal-title').textContent = i18n.t('edit_storage');
+
+                    currentModalInstance = Modal.show({
+                        title: i18n.t('edit_storage'),
+                        content: getFormContent(),
+                        confirmText: i18n.t('save'),
+                        cancelText: i18n.t('cancel'),
+                        onConfirm: () => saveStorage(),
+                        size: 'medium'
+                    });
+
+                    // Initialize form values
                     document.getElementById('create-name').value = storage.name;
                     document.getElementById('create-name').disabled = true;
                     document.getElementById('create-path').value = storage.path;
-                    document.getElementById('create-size').value = storage.maxSizeBytes ? formatBytes(storage.maxSizeBytes) : '10GB';
+
+                    // Parse size value and unit
+                    if (storage.maxSizeBytes) {
+                        const sizeInfo = parseSizeBytes(storage.maxSizeBytes);
+                        document.getElementById('create-size-value').value = sizeInfo.value;
+                        document.getElementById('create-size-unit').value = sizeInfo.unit;
+                    } else {
+                        document.getElementById('create-size-value').value = '10';
+                        document.getElementById('create-size-unit').value = 'GB';
+                    }
+
                     document.getElementById('create-domain').value = storage.domain;
                     document.getElementById('create-anonymous').checked = storage.allowAnonymous || false;
-                    document.getElementById('save-btn').textContent = i18n.t('save');
-                    document.getElementById('create-modal').classList.remove('hidden');
+
+                    // Apply language
+                    i18n.applyLanguage();
                 }
             } catch (error) {
                 console.error('Failed to load storage:', error);
             }
         }
 
+        // Parse bytes to value and unit
+        function parseSizeBytes(bytes) {
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            const value = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+            return { value: value, unit: sizes[i] };
+        }
+
+        // Validate domain format
+        function isValidDomain(domain) {
+            if (!domain) return false;
+            // Check if it starts with http:// or https://
+            if (!domain.match(/^https?:\/\//i)) {
+                return false;
+            }
+            try {
+                const url = new URL(domain);
+                return url.protocol === 'http:' || url.protocol === 'https:';
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Validate storage name
+        function isValidStorageName(name) {
+            if (!name) return false;
+            // Only allow letters, numbers, underscore, hyphen, and Chinese characters
+            return /^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/.test(name);
+        }
+
+        // Format size value to string
+        function formatSizeToString() {
+            const value = document.getElementById('create-size-value').value;
+            const unit = document.getElementById('create-size-unit').value;
+            return value + unit;
+        }
+
         async function saveStorage() {
-            const name = document.getElementById('create-name').value;
-            const path = document.getElementById('create-path').value;
-            const maxSize = document.getElementById('create-size').value;
-            const domain = document.getElementById('create-domain').value;
+            const name = document.getElementById('create-name').value.trim();
+            const path = document.getElementById('create-path').value.trim();
+            const domain = document.getElementById('create-domain').value.trim();
             const allowAnonymous = document.getElementById('create-anonymous').checked;
+            const maxSize = formatSizeToString();
+
+            // Validation
+            if (!name) {
+                Toast.error(i18n.t('error_name_required'));
+                return false;
+            }
+
+            if (!isValidStorageName(name)) {
+                Toast.error(i18n.t('error_name_invalid'));
+                return false;
+            }
+
+            // Check for duplicate name when creating new storage
+            if (!isEditing && allStorages.some(s => s.name === name)) {
+                Toast.error(i18n.t('error_name_exists'));
+                return false;
+            }
+
+            if (!path) {
+                Toast.error(i18n.t('error_path_required'));
+                return false;
+            }
+
+            if (!maxSize) {
+                Toast.error(i18n.t('error_size_required'));
+                return false;
+            }
+
+            if (!domain) {
+                Toast.error(i18n.t('error_domain_required'));
+                return false;
+            }
+
+            if (!isValidDomain(domain)) {
+                Toast.error(i18n.t('error_domain_invalid'));
+                return false;
+            }
 
             if (isEditing) {
                 try {
@@ -284,14 +400,16 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        hideCreateModal();
                         loadStorages();
                         Toast.success(i18n.t('success'));
+                        return true;
                     } else {
-                        Toast.error(result.error);
+                        Toast.error(result.error || i18n.t('error_save_failed'));
+                        return false;
                     }
                 } catch (error) {
-                    Toast.error('Failed to update storage');
+                    Toast.error(i18n.t('error_save_failed'));
+                    return false;
                 }
             } else {
                 try {
@@ -303,14 +421,16 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        hideCreateModal();
                         loadStorages();
                         Toast.success(i18n.t('success'));
+                        return true;
                     } else {
-                        Toast.error(result.error);
+                        Toast.error(result.error || i18n.t('error_create_failed'));
+                        return false;
                     }
                 } catch (error) {
-                    Toast.error('Failed to create storage');
+                    Toast.error(i18n.t('error_create_failed'));
+                    return false;
                 }
             }
         }
@@ -324,22 +444,32 @@
         }
 
         async function deleteStorage(name) {
-            const confirmed = await Confirm.danger(i18n.t('confirm_delete'));
-            if (!confirmed) return;
+            Modal.confirm({
+                title: i18n.t('delete_storage'),
+                content: `<p class="text-primary">${i18n.t('confirm_delete')} "${name}"?</p>`,
+                confirmText: i18n.t('delete'),
+                cancelText: i18n.t('cancel'),
+                onConfirm: async () => {
+                    try {
+                        const response = await fetch(`/api/admin/storages/${name}`, { method: 'DELETE' });
+                        const result = await response.json();
 
-            try {
-                const response = await fetch(`/api/admin/storages/${name}`, { method: 'DELETE' });
-                const result = await response.json();
-
-                if (result.success) {
-                    loadStorages();
-                    Toast.success(i18n.t('success'));
-                } else {
-                    Toast.error(result.error);
-                }
-            } catch (error) {
-                Toast.error('Failed to delete storage');
-            }
+                        if (result.success) {
+                            loadStorages();
+                            Toast.success(i18n.t('success'));
+                            return true;
+                        } else {
+                            Toast.error(result.error);
+                            return false;
+                        }
+                    } catch (error) {
+                        Toast.error('Failed to delete storage');
+                        return false;
+                    }
+                },
+                size: 'small',
+                closable: false
+            });
         }
 
         async function logout() {

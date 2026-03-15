@@ -24,6 +24,9 @@ public class StorageService {
     @Autowired
     private ConfigService configService;
 
+    @Autowired
+    private UserService userService;
+
     private final Map<String, StorageStats> statsCache = new ConcurrentHashMap<>();
     private final Map<String, Long> lastStatsUpdate = new ConcurrentHashMap<>();
 
@@ -81,6 +84,36 @@ public class StorageService {
     }
 
     /**
+     * Validate storage space name
+     */
+    private boolean isValidStorageSpaceName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        // Only allow letters, numbers, underscore, hyphen, and Chinese characters
+        return name.matches("^[\\u4e00-\\u9fa5a-zA-Z0-9_-]+$");
+    }
+
+    /**
+     * Validate domain format
+     */
+    private boolean isValidDomain(String domain) {
+        if (domain == null || domain.trim().isEmpty()) {
+            return false;
+        }
+        // Must start with http:// or https://
+        if (!domain.matches("^https?://.*")) {
+            return false;
+        }
+        try {
+            new java.net.URL(domain);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Create storage space
      */
     public boolean createStorageSpace(String name, String path, String maxSize, String domain, boolean allowAnonymous) {
@@ -89,10 +122,39 @@ public class StorageService {
             return false;
         }
 
+        // Validate name
+        if (!isValidStorageSpaceName(name)) {
+            logger.warn("Invalid storage space name: {}", name);
+            return false;
+        }
+
         // Check if storage space already exists
         if (getStorageSpace(name) != null) {
             logger.warn("Storage space {} already exists", name);
             return false;
+        }
+
+        // Validate domain
+        if (!isValidDomain(domain)) {
+            logger.warn("Invalid domain: {}", domain);
+            return false;
+        }
+
+        // Validate path and create directory if not exists
+        if (path == null || path.trim().isEmpty()) {
+            logger.warn("Path is empty");
+            return false;
+        }
+
+        File storageDir = new File(path);
+        if (!storageDir.exists()) {
+            try {
+                storageDir.mkdirs();
+                logger.info("Created storage directory: {}", path);
+            } catch (Exception e) {
+                logger.error("Failed to create storage directory: {}", path, e);
+                return false;
+            }
         }
 
         SystemConfig.StorageSpace spaceConfig = new SystemConfig.StorageSpace();
@@ -107,17 +169,28 @@ public class StorageService {
         }
         config.getStorageSpaces().add(spaceConfig);
 
-        configService.saveConfig(config);
-
-        // Create directories
-        File storageDir = new File(path);
-        if (!storageDir.exists()) {
-            storageDir.mkdirs();
+        // Automatically assign new storage space to all admin users
+        if (config.getUsers() != null) {
+            for (SystemConfig.User user : config.getUsers()) {
+                if ("ADMIN".equals(user.getRole()) && !user.getStorageSpaces().contains(name)) {
+                    user.getStorageSpaces().add(name);
+                    logger.info("Automatically assigned storage space {} to admin user {}", name, user.getUsername());
+                }
+            }
         }
 
+        configService.saveConfig(config);
+
+        // Create thumbnails directory if not exists
         File thumbnailsDir = new File(path, ".thumbnails");
         if (!thumbnailsDir.exists()) {
-            thumbnailsDir.mkdirs();
+            try {
+                thumbnailsDir.mkdirs();
+                logger.info("Created thumbnails directory: {}", thumbnailsDir.getAbsolutePath());
+            } catch (Exception e) {
+                logger.error("Failed to create thumbnails directory: {}", thumbnailsDir.getAbsolutePath(), e);
+                // Continue anyway, this is not critical
+            }
         }
 
         logger.info("Storage space {} created", name);
@@ -138,6 +211,41 @@ public class StorageService {
         SystemConfig config = configService.getConfig();
         if (config == null || config.getStorageSpaces() == null) {
             return false;
+        }
+
+        // Validate domain
+        if (!isValidDomain(domain)) {
+            logger.warn("Invalid domain: {}", domain);
+            return false;
+        }
+
+        // Validate path and create directory if not exists
+        if (path == null || path.trim().isEmpty()) {
+            logger.warn("Path is empty");
+            return false;
+        }
+
+        File storageDir = new File(path);
+        if (!storageDir.exists()) {
+            try {
+                storageDir.mkdirs();
+                logger.info("Created storage directory: {}", path);
+            } catch (Exception e) {
+                logger.error("Failed to create storage directory: {}", path, e);
+                return false;
+            }
+        }
+
+        // Create thumbnails directory if not exists
+        File thumbnailsDir = new File(path, ".thumbnails");
+        if (!thumbnailsDir.exists()) {
+            try {
+                thumbnailsDir.mkdirs();
+                logger.info("Created thumbnails directory: {}", thumbnailsDir.getAbsolutePath());
+            } catch (Exception e) {
+                logger.error("Failed to create thumbnails directory: {}", thumbnailsDir.getAbsolutePath(), e);
+                // Continue anyway, this is not critical
+            }
         }
 
         for (SystemConfig.StorageSpace spaceConfig : config.getStorageSpaces()) {

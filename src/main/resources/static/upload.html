@@ -8,6 +8,7 @@
     <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
     <script src="/js/toast.js"></script>
+    <script src="/js/modal.js"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
 </head>
@@ -150,33 +151,6 @@
     <!-- Toast container -->
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 space-y-2 z-[10000]"></div>
 
-    <!-- Change Password Modal -->
-    <div id="change-password-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
-        <div class="modal glass rounded-xl p-6 max-w-md w-full mx-4">
-            <h2 class="text-xl font-semibold mb-4 text-primary" data-i18n="change_password">Change Password</h2>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2" data-i18n="current_password">Current Password</label>
-                    <input type="password" id="current-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2" data-i18n="new_password">New Password</label>
-                    <input type="password" id="new-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2" data-i18n="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm-password" class="input-field w-full px-4 py-3 rounded-lg" placeholder="">
-                </div>
-            </div>
-
-            <div class="flex justify-end space-x-3 mt-6">
-                <button onclick="closeChangePasswordModal()" class="px-4 py-2 rounded-lg btn-secondary text-sm" data-i18n="cancel">Cancel</button>
-                <button onclick="submitChangePassword()" class="px-4 py-2 rounded-lg btn-primary text-sm text-white" data-i18n="confirm">Confirm</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -195,7 +169,7 @@
         let currentFormat = 'markdown';
         let uploadHistoryData = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
         let currentUser = null;
-        let currentStorageSpace = 'default';
+        let currentStorageSpace = null;
         let availableStorageSpaces = [];
 
         // Theme icons
@@ -308,6 +282,17 @@
                         dropZone.style.display = 'none';
                         document.querySelector('.glass.rounded-xl.p-6.mb-8')?.classList.add('hidden');
                         document.querySelector('.glass.rounded-xl.p-6:not(.mb-8)')?.classList.add('hidden');
+                    } else if (currentUser && availableStorageSpaces.length === 0) {
+                        // Logged in user but no storage spaces assigned
+                        const warningMessage = document.getElementById('warning-message');
+                        const warningText = document.getElementById('warning-text');
+                        warningText.textContent = i18n.t('no_storage_assigned');
+                        warningMessage.classList.remove('hidden');
+
+                        // Hide upload area and other controls
+                        dropZone.style.display = 'none';
+                        document.querySelector('.glass.rounded-xl.p-6.mb-8')?.classList.add('hidden');
+                        document.querySelector('.glass.rounded-xl.p-6:not(.mb-8)')?.classList.add('hidden');
                     }
                 }
             } catch (error) {
@@ -383,17 +368,29 @@
             if (currentUser) {
                 // Get user's storage spaces
                 const userStorageSpaces = await getUserStorageSpaces();
-                const userSpaces = userStorageSpaces.length > 0 ? userStorageSpaces : [currentStorageSpace];
 
-                // Show storage selector for logged-in users
-                storageSelector.classList.remove('hidden');
-                populateDropdown(storageOptions, userSpaces, 'storage');
+                if (userStorageSpaces.length === 0) {
+                    // User has no storage spaces assigned
+                    const warningMessage = document.getElementById('warning-message');
+                    const warningText = document.getElementById('warning-text');
+                    warningText.textContent = i18n.t('no_storage_assigned');
+                    warningMessage.classList.remove('hidden');
 
-                // Select current storage space
-                if (userSpaces.includes(currentStorageSpace)) {
-                    selectDropdownOption('storage', currentStorageSpace);
+                    // Hide upload area and other controls
+                    dropZone.style.display = 'none';
+                    document.querySelector('.glass.rounded-xl.p-6.mb-8')?.classList.add('hidden');
+                    document.querySelector('.glass.rounded-xl.p-6:not(.mb-8)')?.classList.add('hidden');
                 } else {
-                    selectDropdownOption('storage', userSpaces[0]);
+                    // Show storage selector for logged-in users
+                    storageSelector.classList.remove('hidden');
+                    populateDropdown(storageOptions, userStorageSpaces, 'storage');
+
+                    // Select current storage space
+                    if (userStorageSpaces.includes(currentStorageSpace)) {
+                        selectDropdownOption('storage', currentStorageSpace);
+                    } else {
+                        selectDropdownOption('storage', userStorageSpaces[0]);
+                    }
                 }
 
                 // Update user info with username and storage in same container
@@ -659,64 +656,77 @@
 
         // Show change password modal
         window.showChangePasswordModal = function() {
-            document.getElementById('change-password-modal').classList.remove('hidden');
             document.getElementById('user-menu-container').classList.add('hidden');
             document.getElementById('user-menu-container').innerHTML = '';
-            // Clear form fields
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-        };
 
-        // Close change password modal
-        window.closeChangePasswordModal = function() {
-            document.getElementById('change-password-modal').classList.add('hidden');
-        };
+            Modal.show({
+                title: i18n.t('change_password'),
+                content: `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-primary" data-i18n="current_password">Current Password</label>
+                            <input type="password" id="current-password" class="input-field w-full px-4 py-3 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-primary" data-i18n="new_password">New Password</label>
+                            <input type="password" id="new-password" class="input-field w-full px-4 py-3 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-primary" data-i18n="confirm_password">Confirm Password</label>
+                            <input type="password" id="confirm-password" class="input-field w-full px-4 py-3 rounded-lg">
+                        </div>
+                    </div>
+                `,
+                confirmText: i18n.t('confirm'),
+                cancelText: i18n.t('cancel'),
+                onConfirm: async () => {
+                    const currentPassword = document.getElementById('current-password').value;
+                    const newPassword = document.getElementById('new-password').value;
+                    const confirmPassword = document.getElementById('confirm-password').value;
 
-        // Submit change password
-        window.submitChangePassword = async function() {
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
+                    // Validation
+                    if (!currentPassword || !newPassword || !confirmPassword) {
+                        showToast(i18n.t('please_fill_all_fields'), 'error');
+                        return false;
+                    }
 
-            // Validation
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showToast(i18n.t('please_fill_all_fields'), 'error');
-                return;
-            }
+                    if (newPassword !== confirmPassword) {
+                        showToast(i18n.t('passwords_not_match'), 'error');
+                        return false;
+                    }
 
-            if (newPassword !== confirmPassword) {
-                showToast(i18n.t('passwords_not_match'), 'error');
-                return;
-            }
+                    if (newPassword.length < 6) {
+                        showToast(i18n.t('password_too_short'), 'error');
+                        return false;
+                    }
 
-            if (newPassword.length < 6) {
-                showToast(i18n.t('password_too_short'), 'error');
-                return;
-            }
+                    try {
+                        const response = await fetch('/api/auth/change-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                currentPassword: currentPassword,
+                                newPassword: newPassword
+                            })
+                        });
 
-            try {
-                const response = await fetch('/api/auth/change-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        currentPassword: currentPassword,
-                        newPassword: newPassword
-                    })
-                });
+                        const result = await response.json();
 
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast(i18n.t('password_changed'), 'success');
-                    closeChangePasswordModal();
-                } else {
-                    const errorMsg = result.error || i18n.t('password_change_failed');
-                    showToast(errorMsg, 'error');
-                }
-            } catch (error) {
-                showToast(i18n.t('password_change_failed') + ': ' + error.message, 'error');
-            }
+                        if (result.success) {
+                            showToast(i18n.t('password_changed'), 'success');
+                            return true;
+                        } else {
+                            const errorMsg = result.error || i18n.t('password_change_failed');
+                            showToast(errorMsg, 'error');
+                            return false;
+                        }
+                    } catch (error) {
+                        showToast(i18n.t('password_change_failed') + ': ' + error.message, 'error');
+                        return false;
+                    }
+                },
+                size: 'medium'
+            });
         };
 
         // Toast notification

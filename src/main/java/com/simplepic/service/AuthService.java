@@ -76,7 +76,21 @@ public class AuthService {
 
                     // Create session with remember me setting
                     String token = generateToken();
-                    String[] storageSpaces = userConfig.getStorageSpaces().toArray(new String[0]);
+                    String[] storageSpaces;
+
+                    // Admin users get all available storage spaces
+                    if ("ADMIN".equals(userConfig.getRole())) {
+                        List<String> allSpaces = new ArrayList<>();
+                        if (config.getStorageSpaces() != null) {
+                            for (SystemConfig.StorageSpace space : config.getStorageSpaces()) {
+                                allSpaces.add(space.getName());
+                            }
+                        }
+                        storageSpaces = allSpaces.toArray(new String[0]);
+                    } else {
+                        // Regular users get their assigned storage spaces
+                        storageSpaces = userConfig.getStorageSpaces().toArray(new String[0]);
+                    }
 
                     LoginSession session = new LoginSession(username, userConfig.getRole(), storageSpaces, rememberMe);
                     sessions.put(token, session);
@@ -121,6 +135,9 @@ public class AuthService {
      * Get session by token
      */
     public LoginSession getSession(String token) {
+        if (token == null) {
+            return null;
+        }
         LoginSession session = sessions.get(token);
         if (session != null) {
             if (session.isExpired()) {
@@ -151,8 +168,23 @@ public class AuthService {
             if (userConfig.getUsername().equals(session.getUsername())) {
                 User user = new User();
                 user.setUsername(userConfig.getUsername());
+                user.setPassword(userConfig.getPassword());
                 user.setRole(Role.fromString(userConfig.getRole()));
-                user.setStorageSpaces(userConfig.getStorageSpaces().toArray(new String[0]));
+
+                // Admin users get all available storage spaces
+                if ("ADMIN".equals(userConfig.getRole())) {
+                    List<String> allStorageSpaces = new ArrayList<>();
+                    if (config.getStorageSpaces() != null) {
+                        for (SystemConfig.StorageSpace space : config.getStorageSpaces()) {
+                            allStorageSpaces.add(space.getName());
+                        }
+                    }
+                    user.setStorageSpaces(allStorageSpaces.toArray(new String[0]));
+                } else {
+                    // Regular users get their assigned storage spaces
+                    user.setStorageSpaces(userConfig.getStorageSpaces().toArray(new String[0]));
+                }
+
                 user.setCurrentStorageSpace(session.getCurrentStorageSpace());
                 return user;
             }

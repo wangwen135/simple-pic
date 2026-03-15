@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="title_login">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - Login</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
     <script src="/js/toast.js"></script>
@@ -126,6 +127,12 @@
             updateLangText();
             loadSystemInfo();
             checkAnonymousUpload();
+
+            // Auto focus on username input
+            const usernameInput = document.getElementById('username');
+            if (usernameInput) {
+                usernameInput.focus();
+            }
         });
 
         // Theme toggle

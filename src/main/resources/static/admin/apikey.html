@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="title_apikey">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-Pic - API Keys</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <script src="/lib/tailwindcss.js"></script>
     <script src="/js/i18n.js"></script>
     <script src="/js/toast.js"></script>
-    <script src="/js/confirm.js"></script>
+    <script src="/js/modal.js"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
 </head>
-<body class="gradient-bg min-h-screen">
+<body class="gradient-bg h-screen">
     <!-- Header -->
     <header class="glass border-b separator h-16 flex items-center justify-between px-6 sticky top-0 z-50">
         <div class="flex items-center space-x-3">
@@ -60,7 +61,7 @@
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside class="w-64 min-h-screen sidebar p-4 border-r separator pt-6">
+        <aside class="w-64 h-screen sidebar p-4 border-r separator pt-6">
             <nav class="space-y-1">
                 <a href="/admin/dashboard.html" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,22 +229,32 @@
         }
 
         async function deleteApiKey(index) {
-            const confirmed = await Confirm.danger(i18n.t('confirm_delete'));
-            if (!confirmed) return;
+            Modal.confirm({
+                title: i18n.t('delete_api_key'),
+                content: `<p class="text-primary">${i18n.t('confirm_delete')}?</p>`,
+                confirmText: i18n.t('delete'),
+                cancelText: i18n.t('cancel'),
+                onConfirm: async () => {
+                    try {
+                        const response = await fetch(`/api/admin/apikeys/${index}`, { method: 'DELETE' });
+                        const result = await response.json();
 
-            try {
-                const response = await fetch(`/api/admin/apikeys/${index}`, { method: 'DELETE' });
-                const result = await response.json();
-
-                if (result.success) {
-                    loadApiKeys();
-                    Toast.success(i18n.t('success'));
-                } else {
-                    Toast.error(result.error);
-                }
-            } catch (error) {
-                Toast.error('Failed to delete API key');
-            }
+                        if (result.success) {
+                            loadApiKeys();
+                            Toast.success(i18n.t('success'));
+                            return true;
+                        } else {
+                            Toast.error(result.error);
+                            return false;
+                        }
+                    } catch (error) {
+                        Toast.error('Failed to delete API key');
+                        return false;
+                    }
+                },
+                size: 'small',
+                closable: false
+            });
         }
 
         async function logout() {

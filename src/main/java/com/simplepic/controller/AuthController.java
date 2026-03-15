@@ -129,9 +129,16 @@ public class AuthController {
         User user = authService.getCurrentUser(token);
 
         if (user != null) {
+            // Create safe user info without password
+            Map<String, Object> safeUserInfo = new HashMap<>();
+            safeUserInfo.put("username", user.getUsername());
+            safeUserInfo.put("role", user.getRole() != null ? user.getRole().toString() : null);
+            safeUserInfo.put("storageSpaces", user.getStorageSpaces());
+            safeUserInfo.put("currentStorageSpace", user.getCurrentStorageSpace());
+
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
-            result.put("user", user);
+            result.put("user", safeUserInfo);
             return ResponseEntity.ok(result);
         }
 
