@@ -93,10 +93,8 @@ const Modal = {
         if (confirmBtn && onConfirm) {
             confirmBtn.onclick = async () => {
                 const result = onConfirm();
-                if (result instanceof Promise) {
-                    await result;
-                }
-                if (result !== false) {
+                const finalResult = result instanceof Promise ? await result : result;
+                if (finalResult !== false) {
                     this.close();
                 }
             };

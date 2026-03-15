@@ -453,7 +453,7 @@
         async function handleFiles(files) {
             for (let file of files) {
                 if (!file.type.startsWith('image/')) {
-                    showToast(i18n.t('please_select_images'), 'error');
+                    Toast.error(i18n.t('please_select_images'));
                     continue;
                 }
 
@@ -481,12 +481,12 @@
                     addToHistory(result, file);
                     const link = getLink(result);
                     await copyToClipboard(link);
-                    showToast(i18n.t('image_uploaded'), 'success');
+                    Toast.success(i18n.t('image_uploaded'));
                 } else {
-                    showToast(result.error || i18n.t('upload_failed'), 'error');
+                    Toast.error(result.error || i18n.t('upload_failed'));
                 }
             } catch (error) {
-                showToast(i18n.t('upload_failed') + ': ' + error.message, 'error');
+                Toast.error(i18n.t('upload_failed') + ': ' + error.message);
             }
         }
 
@@ -576,7 +576,7 @@
         // Copy link from history
         window.copyLink = async function(link) {
             await copyToClipboard(link);
-            showToast(i18n.t('link_copied'), 'success');
+            Toast.success(i18n.t('link_copied'));
         };
 
         // Clear history
@@ -584,7 +584,7 @@
             uploadHistoryData = [];
             localStorage.removeItem('uploadHistory');
             renderUploadHistory();
-            showToast(i18n.t('history_cleared'), 'success');
+            Toast.success(i18n.t('history_cleared'));
         });
 
         // Link format selection
@@ -686,17 +686,17 @@
 
                     // Validation
                     if (!currentPassword || !newPassword || !confirmPassword) {
-                        showToast(i18n.t('please_fill_all_fields'), 'error');
+                        Toast.error(i18n.t('please_fill_all_fields'));
                         return false;
                     }
 
                     if (newPassword !== confirmPassword) {
-                        showToast(i18n.t('passwords_not_match'), 'error');
+                        Toast.error(i18n.t('passwords_not_match'));
                         return false;
                     }
 
                     if (newPassword.length < 6) {
-                        showToast(i18n.t('password_too_short'), 'error');
+                        Toast.error(i18n.t('password_too_short'));
                         return false;
                     }
 
@@ -713,35 +713,21 @@
                         const result = await response.json();
 
                         if (result.success) {
-                            showToast(i18n.t('password_changed'), 'success');
+                            Toast.success(i18n.t('password_changed'));
                             return true;
                         } else {
                             const errorMsg = result.error || i18n.t('password_change_failed');
-                            showToast(errorMsg, 'error');
+                            Toast.error(errorMsg);
                             return false;
                         }
                     } catch (error) {
-                        showToast(i18n.t('password_change_failed') + ': ' + error.message, 'error');
+                        Toast.error(i18n.t('password_change_failed') + ': ' + error.message);
                         return false;
                     }
                 },
                 size: 'medium'
             });
         };
-
-        // Toast notification
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast px-4 py-3 rounded-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
     </script>
 </body>
 </html>

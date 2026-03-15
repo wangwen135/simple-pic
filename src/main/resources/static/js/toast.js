@@ -13,7 +13,7 @@ const Toast = {
         if (!this.container) {
             this.container = document.createElement('div');
             this.container.id = 'toast-container';
-            this.container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-[10000] flex flex-col gap-2';
+            this.container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-[10001] flex flex-col gap-2';
             document.body.appendChild(this.container);
         }
     },

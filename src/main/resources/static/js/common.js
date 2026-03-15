@@ -300,20 +300,17 @@ async function submitChangePassword() {
 
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-        const msg = typeof i18n !== 'undefined' ? i18n.t('please_fill_all_fields') : 'Please fill all fields';
-        showToast(msg, 'error');
+        Toast.error(typeof i18n !== 'undefined' ? i18n.t('please_fill_all_fields') : 'Please fill all fields');
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        const msg = typeof i18n !== 'undefined' ? i18n.t('passwords_not_match') : 'Passwords do not match';
-        showToast(msg, 'error');
+        Toast.error(typeof i18n !== 'undefined' ? i18n.t('passwords_not_match') : 'Passwords do not match');
         return;
     }
 
     if (newPassword.length < 6) {
-        const msg = typeof i18n !== 'undefined' ? i18n.t('password_too_short') : 'Password is too short';
-        showToast(msg, 'error');
+        Toast.error(typeof i18n !== 'undefined' ? i18n.t('password_too_short') : 'Password is too short');
         return;
     }
 
@@ -330,16 +327,13 @@ async function submitChangePassword() {
         const result = await response.json();
 
         if (result.success) {
-            const successMsg = typeof i18n !== 'undefined' ? i18n.t('password_changed') : 'Password changed successfully';
-            showToast(successMsg, 'success');
+            Toast.success(typeof i18n !== 'undefined' ? i18n.t('password_changed') : 'Password changed successfully');
             closeChangePasswordModal();
         } else {
-            const errorMsg = result.error || (typeof i18n !== 'undefined' ? i18n.t('password_change_failed') : 'Failed to change password');
-            showToast(errorMsg, 'error');
+            Toast.error(result.error || (typeof i18n !== 'undefined' ? i18n.t('password_change_failed') : 'Failed to change password'));
         }
     } catch (error) {
-        const errorMsg = typeof i18n !== 'undefined' ? i18n.t('password_change_failed') : 'Failed to change password';
-        showToast(errorMsg + ': ' + error.message, 'error');
+        Toast.error((typeof i18n !== 'undefined' ? i18n.t('password_change_failed') : 'Failed to change password') + ': ' + error.message);
     }
 }
 
@@ -356,28 +350,6 @@ async function logout() {
         // Still redirect even if API call fails
         window.location.href = '/login.html';
     }
-}
-
-/**
- * Show toast notification
- * 显示提示消息
- * @param {string} message - Message to display
- * @param {string} type - Toast type ('success' or 'error')
- * @param {string} containerId - Toast container element ID
- */
-function showToast(message, type = 'success', containerId = 'toast-container') {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast px-4 py-3 rounded-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
 }
 
 /**
@@ -407,6 +379,5 @@ window.showChangePasswordModal = showChangePasswordModal;
 window.closeChangePasswordModal = closeChangePasswordModal;
 window.submitChangePassword = submitChangePassword;
 window.logout = logout;
-window.showToast = showToast;
 window.initCommon = initCommon;
 window.THEME_ICONS = THEME_ICONS;

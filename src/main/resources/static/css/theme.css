@@ -461,8 +461,6 @@ header.glass {
 .dropdown-option:hover {
     background-color: var(--accent-color);
     color: white;
-    border-left-color: white;
-    padding-left: 16px;
 }
 
 .dropdown-option:active {
@@ -502,4 +500,36 @@ header.glass {
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
+}
+
+/* Background particles */
+.particle {
+    position: absolute;
+    background: var(--accent-color);
+    border-radius: 50%;
+    opacity: 0.1;
+    animation: particleFloat 20s infinite ease-in-out;
+}
+
+[data-theme="dark"] .particle {
+    opacity: 0.15;
+}
+
+@keyframes particleFloat {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.1;
+    }
+    25% {
+        transform: translate(80px, -60px) scale(1.15);
+        opacity: 0.18;
+    }
+    50% {
+        transform: translate(-50px, 80px) scale(0.85);
+        opacity: 0.06;
+    }
+    75% {
+        transform: translate(-70px, -50px) scale(1.1);
+        opacity: 0.14;
+    }
 }

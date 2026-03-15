@@ -36,5 +36,5 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   level:
-    com.simplepic: INFO
+    com.wwh.simplepic: INFO
     org.springframework: WARN

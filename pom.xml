@@ -12,7 +12,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.simplepic</groupId>
+    <groupId>com.wwh</groupId>
     <artifactId>simple-pic</artifactId>
     <version>1.0.0</version>
     <name>Simple-Pic</name>
