@@ -123,7 +123,7 @@ public class StorageUtils {
         if (config != null && config.getStorageSpaces() != null) {
             for (SystemConfig.StorageSpace space : config.getStorageSpaces()) {
                 if (space.getName().equals(storageSpaceName)) {
-                    return space.getDomain();
+                    return space.getUrlPrefix();
                 }
             }
         }

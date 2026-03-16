@@ -51,12 +51,12 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
                             <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                             </svg>
                         </div>
                     </div>
-                    <p class="text-3xl font-bold text-primary" id="active-sessions">0</p>
-                    <p class="text-muted text-sm" data-i18n="active_sessions">Active Sessions</p>
+                    <p class="text-3xl font-bold text-primary" id="storage-count">0</p>
+                    <p class="text-muted text-sm">存储空间数量</p>
                 </div>
 
                 <div class="stat-card rounded-xl p-6">
@@ -152,7 +152,7 @@
 
                 document.getElementById('total-images').textContent = data.totalImages || 0;
                 document.getElementById('total-used').textContent = formatBytes(data.totalUsed);
-                document.getElementById('active-sessions').textContent = data.activeSessions || 0;
+                document.getElementById('storage-count').textContent = (data.storageStats || []).length;
                 document.getElementById('total-storage').textContent = formatBytes(data.totalSpace);
                 document.getElementById('system-name').textContent = data.systemName || 'Simple-Pic';
                 document.getElementById('system-description').textContent = data.systemDescription || '';
@@ -176,7 +176,7 @@
                         <div class="progress-fill h-2 rounded-full" style="width: ${Math.min(space.usagePercentage, 100)}%"></div>
                     </div>
                     <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted">${space.getFormattedUsedSize()} / ${space.getFormattedTotalSize()}</span>
+                        <span class="text-muted">${space.formattedUsedSize || formatBytes(space.usedSize)} / ${space.formattedTotalSize || formatBytes(space.totalSize)}</span>
                         <span class="text-secondary">${space.usagePercentage.toFixed(1)}%</span>
                     </div>
                 </div>

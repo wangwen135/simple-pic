@@ -80,7 +80,7 @@ public class StorageService {
      * Create storage space
      */
     public boolean createStorageSpace(String name, String path, String maxSize, String domain) {
-        return createStorageSpace(name, path, maxSize, domain, null, false);
+        return createStorageSpace(name, path, maxSize, domain, false);
     }
 
     /**

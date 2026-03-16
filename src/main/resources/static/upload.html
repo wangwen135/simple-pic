@@ -11,6 +11,194 @@
     <script src="/js/modal.js"></script>
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
+    <style>
+        /* 方案D：格式选择器样式 */
+        .format-selector-d {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+        }
+
+        .format-option-d {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .format-option-d:hover {
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+        }
+
+        .format-option-d.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        /* 历史记录项样式 */
+        .history-item-d {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            background: rgba(241, 245, 249, 0.9);
+            border-radius: 12px;
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] .history-item-d {
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        .history-item-d:hover {
+            background: rgba(226, 232, 240, 1);
+        }
+
+        [data-theme="dark"] .history-item-d:hover {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .history-item-d.is-new {
+            position: relative;
+        }
+
+        .history-item-d img {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .history-info-d {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-info-d .filename {
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .history-info-d .code-preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hover-clear-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .history-meta-d {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .history-meta-d .time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .copy-btn-d {
+            padding: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .copy-btn-d svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .copy-btn-d:hover {
+            color: var(--accent-color);
+            background: transparent;
+        }
+
+        .first-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #8b5cf6 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            margin-left: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .format-selector-d {
+                flex-wrap: wrap;
+            }
+
+            .format-option-d {
+                flex: 1;
+                min-width: calc(50% - 8px);
+                justify-content: center;
+            }
+
+            .history-item-d {
+                flex-wrap: wrap;
+            }
+
+            .history-item-d img {
+                width: 50px;
+                height: 50px;
+            }
+
+            .history-meta-d {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+                margin-top: 8px;
+            }
+        }
+
+        /* 滚动条样式 */
+        #upload-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #upload-history::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #upload-history::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        #upload-history::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
 </head>
 <body class="gradient-bg min-h-screen">
     <!-- Header -->
@@ -112,30 +300,24 @@
             </div>
         </div>
 
-        <!-- Link format selector -->
+        <!-- Link format selector (方案D样式) -->
         <div class="glass rounded-xl p-6 mb-8">
-            <h3 class="text-lg font-semibold mb-4 text-primary" data-i18n="link_format">Link Format</h3>
-            <div class="flex flex-wrap gap-3">
-                <button class="link-format active px-4 py-2 rounded-lg border border-input text-primary text-sm" data-format="markdown" data-i18n="markdown">
-                    Markdown
-                </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-input text-secondary text-sm" data-format="direct" data-i18n="direct_link">
-                    Direct Link
-                </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-input text-secondary text-sm" data-format="html">
-                    HTML
-                </button>
-                <button class="link-format px-4 py-2 rounded-lg border border-input text-secondary text-sm" data-format="bbcode">
-                    BBCode
-                </button>
+            <div class="format-selector-d">
+                <div class="format-option-d active" data-format="markdown" data-i18n="markdown">Markdown</div>
+                <div class="format-option-d" data-format="direct" data-i18n="direct_link">Direct</div>
+                <div class="format-option-d" data-format="html">HTML</div>
+                <div class="format-option-d" data-format="bbcode">BBCode</div>
             </div>
         </div>
 
         <!-- Upload history -->
         <div class="glass rounded-xl p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-primary" data-i18n="recent_uploads">Recent Uploads</h3>
-                <button id="clear-history" class="text-sm text-muted hover:text-primary transition-colors" data-i18n="clear_history">
+                <div class="flex items-baseline gap-2">
+                    <h3 class="text-lg font-semibold text-primary" data-i18n="recent_uploads">Recent Uploads</h3>
+                    <span class="text-xs text-muted" data-i18n="recent_uploads_local_only">Saved locally in browser only</span>
+                </div>
+                <button id="clear-history" class="text-sm text-muted hover-clear-btn transition-colors" data-i18n="clear_history">
                     Clear History
                 </button>
             </div>
@@ -146,7 +328,7 @@
     </div>
 
     <!-- User menu container (outside header for proper z-index) -->
-<div id="user-menu-container" class="hidden fixed z-[10000]"></div>
+    <div id="user-menu-container" class="hidden fixed z-[10000]"></div>
 
     <!-- Toast container -->
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 space-y-2 z-[10000]"></div>
@@ -155,7 +337,7 @@
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const uploadHistory = document.getElementById('upload-history');
-        const linkFormats = document.querySelectorAll('.link-format');
+        const formatOptions = document.querySelectorAll('.format-option-d');
         const storageSelector = document.getElementById('storageSelector');
         const storageDropdownBtn = document.getElementById('storageDropdownBtn');
         const storageDropdownMenu = document.getElementById('storageDropdownMenu');
@@ -168,6 +350,7 @@
         const anonymousSelectedValue = document.getElementById('anonymousSelectedValue');
         let currentFormat = 'markdown';
         let uploadHistoryData = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
+        let newUploadUrls = new Set(); // Track new uploads in current session
         let currentUser = null;
         let currentStorageSpace = null;
         let availableStorageSpaces = [];
@@ -480,8 +663,13 @@
                 if (result.success) {
                     addToHistory(result, file);
                     const link = getLink(result);
-                    await copyToClipboard(link);
-                    Toast.success(i18n.t('image_uploaded'));
+                    const copied = await copyToClipboard(link);
+                    if (copied) {
+                        Toast.success(i18n.t('image_uploaded_and_copied'));
+                    } else {
+                        Toast.success(i18n.t('image_uploaded'));
+                        setTimeout(() => Toast.error(i18n.t('copy_failed')), 1500);
+                    }
                 } else {
                     Toast.error(result.error || i18n.t('upload_failed'));
                 }
@@ -506,30 +694,55 @@
             }
         }
 
-        // Copy to clipboard
+        // Copy to clipboard with fallback
         async function copyToClipboard(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch (error) {
-                console.error('Failed to copy to clipboard:', error);
+            // Try modern API first
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (error) {
+                    console.error('Failed to copy with navigator.clipboard:', error);
+                    // Fall through to fallback method
+                }
             }
+
+            // Fallback: use textarea method
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                if (successful) {
+                    return true;
+                }
+            } catch (error) {
+                console.error('Failed to copy with fallback method:', error);
+            }
+
+            return false;
         }
 
         // Add to history
         function addToHistory(result, file) {
             const historyItem = {
                 url: result.url,
-                thumbnailUrl: result.thumbnailUrl,
                 path: result.path,
                 name: file.name,
-                timestamp: Date.now(),
-                links: {
-                    markdown: result.markdown,
-                    direct: result.directLink,
-                    html: result.html,
-                    bbcode: result.bbcode
-                }
+                timestamp: Date.now()
             };
+
+            // Clear previous NEW marks and mark only this one as new
+            newUploadUrls.clear();
+            newUploadUrls.add(result.url);
 
             uploadHistoryData.unshift(historyItem);
             if (uploadHistoryData.length > 50) {
@@ -539,14 +752,49 @@
             renderUploadHistory();
         }
 
-        // Render upload history
+        // Generate link based on current format from URL
+        function generateLinkFromUrl(url) {
+            switch (currentFormat) {
+                case 'markdown':
+                    return `![image](${url})`;
+                case 'direct':
+                    return url;
+                case 'html':
+                    return `<img src="${url}" alt="image" />`;
+                case 'bbcode':
+                    return `[img]${url}[/img]`;
+                default:
+                    return url;
+            }
+        }
+
+        // Format time for display
+        function formatTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+
+            if (diff < 60000) {
+                return i18n.getLanguage() === 'zh' ? '刚刚' : 'Just now';
+            } else if (diff < 3600000) {
+                const minutes = Math.floor(diff / 60000);
+                return i18n.getLanguage() === 'zh' ? `${minutes}分钟前` : `${minutes}m ago`;
+            } else if (diff < 86400000) {
+                const hours = Math.floor(diff / 3600000);
+                return i18n.getLanguage() === 'zh' ? `${hours}小时前` : `${hours}h ago`;
+            } else {
+                const days = Math.floor(diff / 86400000);
+                return i18n.getLanguage() === 'zh' ? `${days}天前` : `${days}d ago`;
+            }
+        }
+
+        // Render upload history (方案D样式)
         function renderUploadHistory() {
             if (uploadHistoryData.length === 0) {
                 uploadHistory.innerHTML = `<p class="text-slate-500 text-center py-8" data-i18n="no_uploads_yet">${i18n.t('no_uploads_yet')}</p>`;
                 return;
             }
 
-            uploadHistory.innerHTML = uploadHistoryData.map(item => {
+            uploadHistory.innerHTML = uploadHistoryData.map((item, index) => {
                 // Escape HTML special characters in item.name to prevent XSS
                 const escapeHtml = (str) => {
                     const div = document.createElement('div');
@@ -554,26 +802,48 @@
                     return div.innerHTML;
                 };
                 const escapedName = escapeHtml(item.name);
-                const escapedLink = escapeHtml(item.links[currentFormat]);
+                const link = generateLinkFromUrl(item.url);
+                const escapedLink = escapeHtml(link);
+                // Show NEW badge only for the first item that was newly uploaded in this session
+                const isNewUpload = index === 0 && newUploadUrls.has(item.url);
+                const timeStr = formatTime(item.timestamp);
 
                 return `
-                <div class="history-item flex items-center space-x-4 p-3 rounded-lg transition-colors">
-                    <img src="${item.thumbnailUrl}" alt="${escapedName}" class="w-12 h-12 rounded-lg preview-image object-cover">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">${escapedName}</p>
-                        <p class="text-xs text-slate-400 truncate">${escapedLink}</p>
+                <div class="history-item-d ${isNewUpload ? 'is-new' : ''}" onclick="openImageInNewTab('${item.url}')">
+                    <img src="${item.url}" alt="${escapedName}" class="preview-image object-cover pointer-events-none">
+                    <div class="history-info-d">
+                        <div class="filename">
+                            ${escapedName}
+                            ${isNewUpload ? '<span class="first-badge">NEW</span>' : ''}
+                        </div>
+                        <div class="code-preview">${escapedLink}</div>
                     </div>
-                    <button onclick="copyLink('${item.links[currentFormat].replace(/'/g, "\\'")}')" class="p-2 rounded-lg hover:bg-slate-700 transition-colors" title="Copy link">
-                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                        </svg>
-                    </button>
+                    <div class="history-meta-d">
+                        <span class="time">${timeStr}</span>
+                        <button class="copy-btn-d" onclick="event.stopPropagation(); copyHistoryLink(${index})">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             `;
             }).join('');
         }
 
-        // Copy link from history
+        // Copy link from history using index to avoid escaping issues
+        window.copyHistoryLink = async function(index) {
+            const link = generateLinkFromUrl(uploadHistoryData[index].url);
+            await copyToClipboard(link);
+            Toast.success(i18n.t('link_copied'));
+        };
+
+        // Open image in new tab
+        window.openImageInNewTab = function(url) {
+            window.open(url, '_blank');
+        };
+
+        // Copy link from history (deprecated, kept for compatibility)
         window.copyLink = async function(link) {
             await copyToClipboard(link);
             Toast.success(i18n.t('link_copied'));
@@ -587,10 +857,10 @@
             Toast.success(i18n.t('history_cleared'));
         });
 
-        // Link format selection
-        linkFormats.forEach(btn => {
+        // Link format selection (方案D样式)
+        formatOptions.forEach(btn => {
             btn.addEventListener('click', () => {
-                linkFormats.forEach(b => b.classList.remove('active'));
+                formatOptions.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentFormat = btn.dataset.format;
                 renderUploadHistory();
@@ -664,15 +934,15 @@
                 content: `
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium mb-2 text-primary" data-i18n="current_password">Current Password</label>
+                            <label class="block text-sm font-medium mb-2 text-primary"><span class="text-red-500">*</span> <span data-i18n="current_password">Current Password</span></label>
                             <input type="password" id="current-password" class="input-field w-full px-4 py-3 rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2 text-primary" data-i18n="new_password">New Password</label>
+                            <label class="block text-sm font-medium mb-2 text-primary"><span class="text-red-500">*</span> <span data-i18n="new_password">New Password</span></label>
                             <input type="password" id="new-password" class="input-field w-full px-4 py-3 rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-2 text-primary" data-i18n="confirm_password">Confirm Password</label>
+                            <label class="block text-sm font-medium mb-2 text-primary"><span class="text-red-500">*</span> <span data-i18n="confirm_password">Confirm Password</span></label>
                             <input type="password" id="confirm-password" class="input-field w-full px-4 py-3 rounded-lg">
                         </div>
                     </div>

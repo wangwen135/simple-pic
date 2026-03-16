@@ -13,9 +13,11 @@ const Toast = {
         if (!this.container) {
             this.container = document.createElement('div');
             this.container.id = 'toast-container';
-            this.container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-[10001] flex flex-col gap-2';
+            this.container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-[10002] flex flex-col gap-2';
             document.body.appendChild(this.container);
         }
+        // Ensure container is always last in body (above modals)
+        document.body.appendChild(this.container);
     },
 
     /**

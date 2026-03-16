@@ -114,31 +114,25 @@ public class ImageService {
             }
         }
 
-        // Generate thumbnail
-        try {
-            thumbnailService.generateThumbnail(targetFile, storageSpace);
-        } catch (Exception e) {
-            logger.warn("Failed to generate thumbnail", e);
-        }
-
         // Generate URLs: urlPrefix + relativePath
         String urlPrefix = space.getUrlPrefix();
         if (urlPrefix == null || urlPrefix.isEmpty()) {
-            urlPrefix = "";
+            // Use default image path when urlPrefix is not configured
+            urlPrefix = "/image/" + storageSpace;
         } else {
             urlPrefix = urlPrefix.replaceAll("/$", "");
         }
 
         String relativePathUrl = relativePath.replace(File.separator, "/");
         String imageUrl = urlPrefix + "/" + relativePathUrl;
-        String thumbnailUrl = urlPrefix + "/.thumbnails/" + relativePathUrl;
 
         // Clear storage stats cache
         storageService.clearStatsCache(storageSpace);
 
         logger.info("Image uploaded: {} ({} bytes)", relativePath, fileSize);
 
-        return UploadResult.success(imageUrl, thumbnailUrl, relativePath.replace(File.separator, "/"), storageSpace);
+        // Use original URL for both url and thumbnailUrl (thumbnails removed)
+        return UploadResult.success(imageUrl, imageUrl, relativePath.replace(File.separator, "/"), storageSpace);
     }
 
     /**
@@ -164,8 +158,6 @@ public class ImageService {
         File imageFile = new File(space.getStorageDirectory(), path.replace("/", File.separator));
         if (imageFile.exists()) {
             if (imageFile.delete()) {
-                // Also delete thumbnail
-                thumbnailService.deleteThumbnail(path, storageSpace);
                 storageService.clearStatsCache(storageSpace);
                 logger.info("Image deleted: {}", path);
                 return true;
@@ -294,10 +286,6 @@ public class ImageService {
 
         File dir = new File(space.getStorageDirectory(), path.replace("/", File.separator));
         if (dir.exists() && dir.isDirectory()) {
-            // Delete all thumbnails first
-            deleteThumbnailsRecursive(dir, space);
-
-            // Delete directory
             if (deleteDirectoryRecursive(dir)) {
                 storageService.clearStatsCache(storageSpace);
                 logger.info("Directory deleted: {}", path);
@@ -399,25 +387,6 @@ public class ImageService {
         }
 
         return images;
-    }
-
-    /**
-     * Delete thumbnails recursively
-     */
-    private void deleteThumbnailsRecursive(File dir, com.wwh.simplepic.model.StorageSpace space) {
-        File thumbnailsDir = space.getThumbnailsDirectory();
-        File[] files = dir.listFiles();
-
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile() && isImageFile(file.getName())) {
-                    String relativePath = SimplePicUtils.getRelativePath(file, space.getStorageDirectory());
-                    thumbnailService.deleteThumbnail(relativePath.replace(File.separator, "/"), space.getName());
-                } else if (file.isDirectory()) {
-                    deleteThumbnailsRecursive(file, space);
-                }
-            }
-        }
     }
 
     /**

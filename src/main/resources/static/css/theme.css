@@ -275,7 +275,7 @@ header.glass {
 /* History item */
 .history-item {
     background: var(--history-item-bg);
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .history-item:hover {

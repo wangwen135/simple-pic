@@ -22,7 +22,6 @@ public class ImageInfo {
     private long size;
     private long lastModified;
     private String storageSpace;
-    private boolean hasThumbnail;
 
     public ImageInfo(File file, String storageSpace, String relativePath) {
         this.path = relativePath;
@@ -30,11 +29,6 @@ public class ImageInfo {
         this.size = file.length();
         this.lastModified = file.lastModified();
         this.storageSpace = storageSpace;
-
-        // Check if thumbnail exists
-        File thumbnailDir = new File(file.getParentFile().getParentFile(), ".thumbnails");
-        File thumbnailFile = new File(thumbnailDir, relativePath.replace("/", File.separator));
-        this.hasThumbnail = thumbnailFile.exists();
     }
 
     public String getFormattedSize() {

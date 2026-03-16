@@ -31,6 +31,7 @@ public class ThumbnailService {
 
     /**
      * Generate thumbnail for an image
+     * Note: WebP thumbnails are saved as PNG format due to lack of WebP writer support
      */
     public File generateThumbnail(File imageFile, String storageSpace) throws IOException {
         com.wwh.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
@@ -49,8 +50,14 @@ public class ThumbnailService {
             thumbnailDir.mkdirs();
         }
 
+        // For WebP files, save thumbnail as PNG (no WebP writer available)
+        String thumbnailPath = relativePath;
+        if (relativePath.toLowerCase().endsWith(".webp")) {
+            thumbnailPath = relativePath.substring(0, relativePath.lastIndexOf('.')) + ".png";
+        }
+
         // Create thumbnail file
-        File thumbnailFile = new File(space.getThumbnailsDirectory(), relativePath);
+        File thumbnailFile = new File(space.getThumbnailsDirectory(), thumbnailPath);
 
         // Generate thumbnail
         Thumbnails.of(imageFile)
@@ -64,6 +71,7 @@ public class ThumbnailService {
 
     /**
      * Get thumbnail file
+     * Note: WebP thumbnails are saved as PNG format
      */
     public File getThumbnail(String path, String storageSpace) {
         com.wwh.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
@@ -71,7 +79,13 @@ public class ThumbnailService {
             return null;
         }
 
-        File thumbnailFile = new File(space.getThumbnailsDirectory(), path.replace("/", File.separator));
+        // For WebP files, check for .png thumbnail
+        String thumbnailPath = path.replace("/", File.separator);
+        if (path.toLowerCase().endsWith(".webp")) {
+            thumbnailPath = thumbnailPath.substring(0, thumbnailPath.lastIndexOf('.')) + ".png";
+        }
+
+        File thumbnailFile = new File(space.getThumbnailsDirectory(), thumbnailPath);
         if (thumbnailFile.exists()) {
             return thumbnailFile;
         }
@@ -139,6 +153,7 @@ public class ThumbnailService {
 
     /**
      * Delete thumbnail
+     * Note: WebP thumbnails are saved as PNG format
      */
     public boolean deleteThumbnail(String path, String storageSpace) {
         com.wwh.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
@@ -146,7 +161,13 @@ public class ThumbnailService {
             return false;
         }
 
-        File thumbnailFile = new File(space.getThumbnailsDirectory(), path.replace("/", File.separator));
+        // For WebP files, delete .png thumbnail
+        String thumbnailPath = path.replace("/", File.separator);
+        if (path.toLowerCase().endsWith(".webp")) {
+            thumbnailPath = thumbnailPath.substring(0, thumbnailPath.lastIndexOf('.')) + ".png";
+        }
+
+        File thumbnailFile = new File(space.getThumbnailsDirectory(), thumbnailPath);
         if (thumbnailFile.exists()) {
             return thumbnailFile.delete();
         }

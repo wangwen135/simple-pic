@@ -77,7 +77,8 @@ public class AuthController {
             int maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
             boolean isSecure = isProductionEnvironment();
             // Set SameSite cookie attribute for CSRF protection via header
-            String cookieHeader = String.format("token=%s; Path=/; HttpOnly; %s; Max-Age=%d; SameSite=Strict",
+            // Use Lax to allow cookies to be sent on same-site navigations
+            String cookieHeader = String.format("token=%s; Path=/; HttpOnly; %s; Max-Age=%d; SameSite=Lax",
                     token,
                     isSecure ? "Secure" : "",
                     maxAge);
@@ -112,7 +113,7 @@ public class AuthController {
 
         // Clear cookie with same security attributes via Set-Cookie header
         boolean isSecure = isProductionEnvironment();
-        String cookieHeader = String.format("token=; Path=/; HttpOnly; %s; Max-Age=0; SameSite=Strict",
+        String cookieHeader = String.format("token=; Path=/; HttpOnly; %s; Max-Age=0; SameSite=Lax",
                 isSecure ? "Secure" : "");
         response.addHeader("Set-Cookie", cookieHeader);
 
@@ -191,7 +192,7 @@ public class AuthController {
                 if (space.isAllowAnonymous()) {
                     Map<String, String> spaceInfo = new HashMap<>();
                     spaceInfo.put("name", space.getName());
-                    spaceInfo.put("domain", space.getDomain());
+                    spaceInfo.put("domain", space.getUrlPrefix());
                     availableSpaces.add(spaceInfo);
                 }
             }

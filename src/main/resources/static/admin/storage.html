@@ -135,10 +135,24 @@
                     </div>
                     <div>
                         <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="domain">URL Prefix</span></label>
-                        <input type="text" id="create-url-prefix" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://192.168.31.88:8080/image/笔记/">
-                        <p class="text-xs text-muted mt-1" data-i18n="domain_hint">完整的 URL，如 http://192.168.31.88:8080/image/笔记/</p>
-                        <p class="text-xs text-muted">访问地址前缀。上传后返回的图片地址 = 此前缀 + 相对存储路径</p>
-                        <p class="text-xs text-muted">nginx 配置: location /image/笔记/ { alias /path/to/storage/; }</p>
+
+                        <!-- Current system URL prefix example -->
+                        <div class="flex items-center justify-between bg-slate-800/50 px-3 py-2 rounded-lg mb-2">
+                            <span class="text-xs text-muted" data-i18n="current_app_url_prefix">本系统访问路径前缀：</span>
+                            <span id="url-prefix-example" class="text-xs text-blue-400 font-mono"></span>
+                            <button type="button" onclick="applyUrlPrefix()" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors" data-i18n="apply">应用</button>
+                        </div>
+
+                        <input type="text" id="create-url-prefix" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://192.168.31.88:8080/image/note/">
+
+                        <!-- Description content -->
+                        <div class="text-xs text-muted mt-2 space-y-1">
+                            <p data-i18n="url_prefix_description_1">上传图片后会根据这个配置来返回图片的访问URL地址</p>
+                            <p data-i18n="url_prefix_description_2">返回的图片URL地址为：[访问路径前缀]+[文件相对存储路径]</p>
+                            <p data-i18n="url_prefix_description_3">当前系统获取图片的api地址为：/image/{存储空间名称}/{文件相对地址}</p>
+                            <p data-i18n="url_prefix_description_4">文件相对地址为：./4位年份/2位月份/UUID文件名</p>
+                            <a href="#" onclick="showNginxConfig(); return false;" class="text-blue-400 hover:text-blue-300" data-i18n="other_mount_methods">&lt;其他挂载方式说明&gt;</a>
+                        </div>
                     </div>
                     <div>
                         <label class="flex items-center space-x-2">
@@ -148,6 +162,81 @@
                     </div>
                 </div>
             `;
+        }
+
+        // Update URL prefix example
+        function updateUrlPrefixExample() {
+            const nameInput = document.getElementById('create-name');
+            const exampleSpan = document.getElementById('url-prefix-example');
+            if (!nameInput || !exampleSpan) return;
+
+            const storageName = nameInput.value || '[存储空间名称]';
+            const baseUrl = window.location.origin;
+            exampleSpan.textContent = `${baseUrl}/images/${storageName}`;
+        }
+
+        // Apply URL prefix to input field
+        function applyUrlPrefix() {
+            const nameInput = document.getElementById('create-name');
+            const urlPrefixInput = document.getElementById('create-url-prefix');
+            if (!nameInput || !urlPrefixInput) return;
+
+            const storageName = nameInput.value.trim();
+            if (!storageName) {
+                Toast.error(i18n.t('error_name_required'));
+                return;
+            }
+
+            const baseUrl = window.location.origin;
+            urlPrefixInput.value = `${baseUrl}/images/${storageName}/`;
+        }
+
+        // Show nginx configuration explanation
+        function showNginxConfig() {
+            const nameInput = document.getElementById('create-name');
+            const storageName = nameInput ? nameInput.value : 'your-storage-name';
+            const storagePath = document.getElementById('create-path')?.value || '/path/to/storage';
+
+            const content = `
+                <div class="text-left space-y-4">
+                    <h3 class="text-lg font-bold text-primary mb-3">${i18n.t('nginx_config_title')}</h3>
+
+                    <div>
+                        <p class="text-secondary mb-2">${i18n.t('nginx_basic_config')}：</p>
+                        <pre class="bg-slate-800 p-3 rounded text-xs text-green-400 overflow-x-auto"><code>location /images/${storageName}/ {
+    alias ${storagePath}/;
+}</code></pre>
+                    </div>
+
+                    <div>
+                        <p class="text-secondary mb-2">${i18n.t('nginx_advanced_config')}：</p>
+                        <pre class="bg-slate-800 p-3 rounded text-xs text-green-400 overflow-x-auto"><code>location /images/${storageName}/ {
+    alias ${storagePath}/;
+
+    # 可选：启用文件浏览器
+    autoindex on;
+
+    # 可选：设置缓存
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+
+    # 可选：允许跨域
+    add_header Access-Control-Allow-Origin *;
+}</code></pre>
+                    </div>
+
+                    <div class="text-xs text-muted">
+                        <p class="text-yellow-400">⚠️ ${i18n.t('nginx_config_warning')}</p>
+                    </div>
+                </div>
+            `;
+
+            Modal.alert({
+                title: i18n.t('nginx_config_title'),
+                content: content,
+                confirmText: i18n.t('close'),
+                size: 'xlarge'
+            });
         }
 
         function showCreateModal() {
@@ -169,6 +258,15 @@
             document.getElementById('create-size-unit').value = 'GB';
             document.getElementById('create-url-prefix').value = '';
             document.getElementById('create-anonymous').checked = false;
+
+            // Initialize URL prefix example
+            updateUrlPrefixExample();
+            // Add name input listener
+            const nameInput = document.getElementById('create-name');
+            if (nameInput) {
+                nameInput.removeEventListener('input', updateUrlPrefixExample);
+                nameInput.addEventListener('input', updateUrlPrefixExample);
+            }
 
             // Apply language
             i18n.applyLanguage();
@@ -209,6 +307,15 @@
 
                     document.getElementById('create-url-prefix').value = storage.urlPrefix || '';
                     document.getElementById('create-anonymous').checked = storage.allowAnonymous || false;
+
+                    // Initialize URL prefix example
+                    updateUrlPrefixExample();
+                    // Add name input listener
+                    const nameInput = document.getElementById('create-name');
+                    if (nameInput) {
+                        nameInput.removeEventListener('input', updateUrlPrefixExample);
+                        nameInput.addEventListener('input', updateUrlPrefixExample);
+                    }
 
                     // Apply language
                     i18n.applyLanguage();

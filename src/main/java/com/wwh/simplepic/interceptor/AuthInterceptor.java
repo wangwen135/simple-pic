@@ -5,6 +5,7 @@ import com.wwh.simplepic.model.SystemConfig;
 import com.wwh.simplepic.service.AuthService;
 import com.wwh.simplepic.service.ConfigService;
 import com.wwh.simplepic.util.ErrorMessages;
+import com.wwh.simplepic.util.StorageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Autowired
     private ConfigService configService;
 
+    @Autowired
+    private StorageUtils storageUtils;
+
     // Paths that don't require authentication
     private static final String[] PUBLIC_PATHS = {
             "/api/auth/login",
@@ -38,6 +42,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             "/api/image/",
             "/admin/login.html",
             "/favicon.svg",
+            "/favicon.ico",
             "/lib/",
             "/css/",
             "/js/"
@@ -67,7 +72,16 @@ public class AuthInterceptor implements HandlerInterceptor {
             LoginSession session = token != null ? authService.getSession(token) : null;
 
             if (session == null) {
-                response.sendRedirect("/login.html");
+                // Not logged in, check if anonymous upload is available
+                SystemConfig config = configService.getConfig();
+                boolean canAnonymousUpload = config.isAnonymousUploadEnabled()
+                        && storageUtils.findAnonymousUploadSpace() != null;
+
+                if (canAnonymousUpload) {
+                    response.sendRedirect("/upload.html");
+                } else {
+                    response.sendRedirect("/login.html");
+                }
             } else {
                 response.sendRedirect("/upload.html");
             }
@@ -110,6 +124,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
             // Return 401 for API requests
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("unauthorized") + "\",\"error_en\":\"" + ErrorMessages.getEn("unauthorized") + "\"}");
             return false;
         }
@@ -121,6 +136,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return false;
             }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("invalid_or_expired_token") + "\",\"error_en\":\"" + ErrorMessages.getEn("invalid_or_expired_token") + "\"}");
             return false;
         }
@@ -128,6 +144,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         // Check admin role for admin paths
         if (isAdminPath(path) && !"ADMIN".equals(session.getRole())) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("forbidden") + "\",\"error_en\":\"" + ErrorMessages.getEn("forbidden") + "\"}");
             return false;
         }
