@@ -12,28 +12,225 @@
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
     <script src="/js/admin-components.js"></script>
+    <style>
+        /* Image styles */
+        .image-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #4b5563;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .image-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        }
+        .image-card.selected {
+            ring: 2px;
+            ring-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        /* Lazy load fade in */
+        .lazy-image {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .lazy-image.loaded {
+            opacity: 1;
+        }
+        /* View toggle buttons */
+        .view-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        /* Action buttons on hover */
+        .action-buttons {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .image-card:hover .action-buttons,
+        tr:hover .action-buttons {
+            opacity: 1;
+        }
+        /* Link format selector */
+        .link-format-btn {
+            transition: all 0.2s;
+        }
+        .link-format-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
 </head>
 <body class="gradient-bg h-screen overflow-hidden flex flex-col">
     <!-- Component containers -->
     <div id="header-container" class="flex-shrink-0"></div>
     <div class="flex flex-1 overflow-hidden">
         <div id="sidebar-container" class="flex-shrink-0"></div>
-        <main class="flex-1 overflow-y-auto p-8">
-            <div class="flex items-center justify-between mb-8">
-                <h1 class="text-3xl font-bold" data-i18n="image_management">Images</h1>
-                <button onclick="showUploadModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors" data-i18n="upload">Upload Image</button>
-            </div>
-            <div class="glass rounded-xl p-6 mb-6">
-                <div class="flex items-center space-x-4 mb-4">
-                    <select id="storageSpace" class="px-4 py-2 input-field rounded-lg" onchange="loadImages()">
-                        <option value="default">default</option>
+        <main class="flex-1 overflow-y-auto p-6" id="main-content">
+            <!-- Toolbar -->
+            <div class="glass rounded-xl p-4 mb-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Storage space selector with label -->
+                    <span class="text-sm text-secondary" data-i18n="storage">存储空间</span>
+                    <select id="storageSpace" class="px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.loadImages()">
+                        <option value="" disabled selected>Loading...</option>
                     </select>
-                    <div id="breadcrumb" class="flex items-center space-x-2 text-muted">
-                        <span class="text-primary cursor-pointer hover:text-accent" onclick="navigate('')">Root</span>
+
+                    <!-- Search box -->
+                    <div class="relative flex-1 min-w-[200px]">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="searchInput" data-i18n-placeholder="search" placeholder="搜索..." class="w-full pl-10 pr-4 py-2 input-field rounded-lg text-sm" oninput="ImageManager.handleSearch(this.value)">
+                    </div>
+
+                    <!-- Filter button -->
+                    <div class="relative">
+                        <button onclick="ImageManager.toggleFilterPanel()" class="px-3 py-2 input-field rounded-lg text-sm flex items-center gap-2 hover:bg-elevated">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                            </svg>
+                            <span data-i18n="filter">筛选</span>
+                        </button>
+                        <div id="filterPanel" class="hidden absolute right-0 mt-2 w-64 glass rounded-lg shadow-xl z-50 p-4">
+                            <div class="mb-3">
+                                <label class="block text-sm text-secondary mb-1" data-i18n="file_type">文件类型</label>
+                                <select id="fileTypeFilter" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.applyFilters()">
+                                    <option value="all" data-i18n="all">全部</option>
+                                    <option value="image" data-i18n="images">图片</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm text-secondary mb-1" data-i18n="sort_by">排序</label>
+                                <select id="sortBy" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.applyFilters()">
+                                    <option value="date" data-i18n="date">日期</option>
+                                    <option value="name" data-i18n="name">名称</option>
+                                    <option value="size" data-i18n="size">大小</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-secondary mb-1" data-i18n="sort_order">排序方式</label>
+                                <select id="sortOrder" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.applyFilters()">
+                                    <option value="desc">降序</option>
+                                    <option value="asc">升序</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View toggle -->
+                    <div class="flex rounded-lg overflow-hidden border border-slate-600">
+                        <button onclick="ImageManager.setViewMode('grid')" class="view-btn px-3 py-2 text-sm hover:bg-slate-700" id="gridViewBtn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="ImageManager.setViewMode('list')" class="view-btn px-3 py-2 text-sm hover:bg-slate-700" id="listViewBtn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div id="images-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                <!-- Action buttons -->
+                <div class="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-slate-700">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="selectAll" class="image-checkbox" onchange="ImageManager.toggleSelectAll()">
+                        <span class="text-sm text-secondary" data-i18n="select_all">全选</span>
+                    </label>
+                    <button onclick="ImageManager.batchMove()" class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed" id="batchMoveBtn" disabled>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        </svg>
+                        <span data-i18n="batch_move">批量移动</span>
+                    </button>
+                    <button onclick="ImageManager.batchDelete()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed" id="batchDeleteBtn" disabled>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        <span data-i18n="batch_delete">批量删除</span>
+                    </button>
+                    <button onclick="ImageManager.refresh()" class="px-3 py-2 input-field rounded-lg text-sm flex items-center gap-1 hover:bg-elevated">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span data-i18n="refresh">刷新</span>
+                    </button>
+                    <div class="flex-1"></div>
+                    <button onclick="ImageManager.showCreateDirModal()" class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span data-i18n="new_directory">新建目录</span>
+                    </button>
+                    <button onclick="ImageManager.showUploadModal()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        <span data-i18n="upload">上传</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Breadcrumb -->
+            <div class="glass rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-between">
+                    <div id="breadcrumb" class="flex items-center gap-2 text-sm">
+                        <span class="text-primary">Root</span>
+                    </div>
+                    <div id="directoryStats" class="text-sm text-muted"></div>
+                </div>
+            </div>
+
+            <!-- Content area -->
+            <div class="glass rounded-xl p-6 min-h-[400px]">
+                <!-- Grid view -->
+                <div id="gridView" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     <p class="text-muted col-span-full text-center py-8">Loading...</p>
+                </div>
+
+                <!-- List view -->
+                <div id="listView" class="hidden overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="text-left py-3 px-4 w-12"></th>
+                                <th class="text-left py-3 px-4" data-i18n="file_name">文件名</th>
+                                <th class="text-left py-3 px-4" data-i18n="date">日期</th>
+                                <th class="text-left py-3 px-4" data-i18n="size">大小</th>
+                                <th class="text-left py-3 px-4" data-i18n="dimensions">尺寸</th>
+                                <th class="text-right py-3 px-4" data-i18n="actions">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listViewBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div id="emptyState" class="hidden text-center py-16">
+                    <svg class="w-16 h-16 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <p class="text-muted" data-i18n="no_images">暂无图片</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="glass rounded-xl p-4 mt-4 flex items-center justify-between">
+                <div class="text-sm text-muted">
+                    <span id="paginationInfo">第 1 页，共 1 页</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="ImageManager.goToPage(1)" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="firstPageBtn" data-i18n="first_page">首页</button>
+                    <button onclick="ImageManager.prevPage()" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="prevPageBtn">上一页</button>
+                    <button onclick="ImageManager.nextPage()" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="nextPageBtn">下一页</button>
+                    <button onclick="ImageManager.goToPage('last')" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="lastPageBtn" data-i18n="last_page">末页</button>
                 </div>
             </div>
         </main>
@@ -42,20 +239,136 @@
     <!-- Modal container -->
     <div id="modal-container"></div>
 
-    <div id="upload-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="modal rounded-xl p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold text-primary mb-4" data-i18n="upload">Upload Image</h2>
-            <div class="mb-4">
-                <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="select_file">Select File</span></label>
-                <input type="file" id="upload-file" accept="image/*" class="w-full px-4 py-2 input-field rounded-lg">
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="modal rounded-xl p-6 w-full max-w-lg">
+            <h2 class="text-xl font-bold text-primary mb-4" data-i18n="upload">上传图片</h2>
+
+            <!-- Upload target info -->
+            <div class="mb-4 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+                    </svg>
+                    <span class="text-sm text-slate-600 dark:text-slate-400">存储空间</span>
+                    <span id="uploadStorageName" class="px-2 py-0.5 bg-blue-500 text-white text-sm font-medium rounded-md">--</span>
+                </div>
+                <div class="flex items-center gap-2 pl-6">
+                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span class="text-sm text-slate-600 dark:text-slate-400">目录</span>
+                    <span id="uploadCurrentPath" class="text-sm text-slate-800 dark:text-slate-200 font-mono">/</span>
+                </div>
             </div>
-            <button onclick="uploadImage()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" data-i18n="upload">Upload</button>
-            <button onclick="hideUploadModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">Cancel</button>
+
+            <div class="mb-4">
+                <div id="uploadDropZone" class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors">
+                    <svg class="w-12 h-12 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-muted mb-2" data-i18n="drag_drop_or_click">拖拽文件到此处或点击选择</p>
+                    <input type="file" id="uploadFileInput" accept="image/*" multiple class="hidden">
+                    <button onclick="document.getElementById('uploadFileInput').click()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg" data-i18n="select_files">选择文件</button>
+                </div>
+            </div>
+
+            <div id="uploadQueue" class="mb-4 max-h-48 overflow-y-auto hidden">
+                <p class="text-sm text-secondary mb-2" data-i18n="upload_queue">上传队列：</p>
+                <div id="uploadQueueList"></div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="ImageManager.startUpload()" class="flex-1 px-4 py-2 btn-primary text-white rounded-lg" data-i18n="start_upload">开始上传</button>
+                <button onclick="ImageManager.hideUploadModal()" class="flex-1 px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Directory Modal -->
+    <div id="createDirModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="modal rounded-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold text-primary mb-4" data-i18n="new_directory">新建目录</h2>
+            <div class="mb-2 text-sm text-muted">
+                将在 <span class="text-blue-400" id="createDirLocation">--</span> 下创建
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-secondary mb-1"><span class="text-red-500">*</span> <span data-i18n="directory_name">目录名</span></label>
+                <input type="text" id="newDirName" class="w-full px-4 py-2 input-field rounded-lg" placeholder="输入目录名">
+            </div>
+            <button onclick="ImageManager.createDirectory()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" data-i18n="create">创建</button>
+            <button onclick="ImageManager.hideCreateDirModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">取消</button>
+        </div>
+    </div>
+
+    <!-- Rename Directory Modal -->
+    <div id="renameDirModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="modal rounded-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold text-primary mb-4" data-i18n="rename_directory">重命名目录</h2>
+            <div class="mb-4">
+                <label class="block text-sm text-secondary mb-1"><span class="text-red-500">*</span> <span data-i18n="new_name">新名称</span></label>
+                <input type="text" id="renameDirNewName" class="w-full px-4 py-2 input-field rounded-lg" placeholder="输入新名称">
+            </div>
+            <button onclick="ImageManager.renameDirectory()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" data-i18n="rename">重命名</button>
+            <button onclick="ImageManager.hideRenameDirModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">取消</button>
+        </div>
+    </div>
+
+    <!-- Rename Image Modal -->
+    <div id="renameImageModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="modal rounded-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold text-primary mb-4" data-i18n="rename_image">重命名图片</h2>
+            <div class="mb-4 p-3 bg-amber-900/30 rounded-lg text-sm text-amber-300">
+                <p data-i18n="confirm_rename_warning">警告：重命名后，原访问路径将失效，需要使用新路径访问图片。</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-secondary mb-1"><span class="text-red-500">*</span> <span data-i18n="new_name">新文件名</span></label>
+                <input type="text" id="renameImageNewName" class="w-full px-4 py-2 input-field rounded-lg" placeholder="输入新文件名（含扩展名）">
+            </div>
+            <button onclick="ImageManager.doRenameImage()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" data-i18n="rename">重命名</button>
+            <button onclick="ImageManager.hideRenameImageModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">取消</button>
+        </div>
+    </div>
+
+    <!-- Path Selector Modal -->
+    <div id="pathSelectorModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="modal rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-bold text-primary mb-4" data-i18n="select_target_directory">选择目标目录</h2>
+            <div id="pathSelectorBreadcrumb" class="flex items-center gap-2 text-sm mb-4 text-primary"></div>
+            <div id="pathSelectorContent" class="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto"></div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="ImageManager.confirmPathSelection()" class="flex-1 px-4 py-2 btn-primary text-white rounded-lg" data-i18n="confirm">确认</button>
+                <button onclick="ImageManager.hidePathSelector()" class="flex-1 px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-50">
+        <button class="absolute top-4 right-4 text-white hover:text-gray-300 z-10" onclick="ImageManager.hidePreviewModal()">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <img id="previewImage" src="" alt="Preview" class="max-w-[90vw] max-h-[80vh] object-contain">
+
+        <!-- Link format selector -->
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 glass rounded-xl p-4 w-[90vw] max-w-lg">
+            <div class="flex gap-2 mb-3">
+                <button onclick="ImageManager.selectLinkFormat('direct')" class="link-format-btn flex-1 px-3 py-2 rounded-lg text-sm" data-format="direct">直接链接</button>
+                <button onclick="ImageManager.selectLinkFormat('markdown')" class="link-format-btn flex-1 px-3 py-2 rounded-lg text-sm" data-format="markdown">Markdown</button>
+                <button onclick="ImageManager.selectLinkFormat('html')" class="link-format-btn flex-1 px-3 py-2 rounded-lg text-sm" data-format="html">HTML</button>
+                <button onclick="ImageManager.selectLinkFormat('bbcode')" class="link-format-btn flex-1 px-3 py-2 rounded-lg text-sm" data-format="bbcode">BBCode</button>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="linkPreview" class="flex-1 px-3 py-2 input-field rounded-lg text-sm" readonly>
+                <button onclick="ImageManager.copySelectedLink()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm" data-i18n="copy">复制</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Show loading immediately to prevent flash
+        // Show loading immediately
         (function() {
             const loading = document.createElement('div');
             loading.id = 'admin-loading-overlay';
@@ -72,154 +385,1373 @@
             document.body.appendChild(loading);
         })();
 
-        let currentPath = '';
-        let currentStorage = 'default';
+        /**
+         * Image Manager - 简洁图片管理
+         */
+        const ImageManager = {
+            // State
+            state: {
+                currentStorage: 'default',
+                currentPath: '',
+                viewMode: 'grid',
+                selectedImages: new Set(),
+                page: 1,
+                pageSize: 50,
+                total: 0,
+                totalPages: 1,
+                searchQuery: '',
+                filters: {
+                    fileType: 'all',
+                    sortBy: 'date',
+                    sortOrder: 'desc'
+                },
+                images: [],
+                directories: [],
+                renameTarget: null,
+                renameImagePath: null,
+                uploadFiles: [],
+                pathSelectorCallback: null,
+                pathSelectorCurrentPath: '',
+                currentPreviewPath: null,
+                currentPreviewStorage: null,
+                currentLinkFormat: 'direct',
+                storageSpaces: []
+            },
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Initialize admin layout
-            await AdminComponents.init('images');
+            // Lazy loading observer
+            lazyObserver: null,
 
-            // Load images
-            loadImages();
+            /**
+             * Initialize
+             */
+            async init() {
+                await AdminComponents.init('images');
 
-            // Hide loading after data loaded
-            const loading = document.getElementById('admin-loading-overlay');
-            if (loading) {
-                loading.style.opacity = '0';
-                setTimeout(() => loading.remove(), 200);
+                // Load saved preferences
+                this.loadPreferences();
+
+                // Load storage spaces first
+                await this.loadStorages();
+
+                // Load images after storages are loaded
+                await this.loadImages();
+
+                // Setup lazy loading
+                this.setupLazyLoading();
+
+                // Update UI
+                this.updateViewModeButtons();
+                this.hideLoading();
+
+                // Setup ESC key handler
+                this.setupKeyboardShortcuts();
+            },
+
+            /**
+             * Setup keyboard shortcuts
+             */
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hidePreviewModal();
+                    }
+                });
+            },
+
+            /**
+             * Load user preferences
+             */
+            loadPreferences() {
+                try {
+                    const prefs = localStorage.getItem('imageManagerPrefs');
+                    if (prefs) {
+                        const parsed = JSON.parse(prefs);
+                        this.state.viewMode = parsed.viewMode || 'grid';
+                        this.state.pageSize = parsed.pageSize || 50;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load preferences:', e);
+                }
+            },
+
+            /**
+             * Save user preferences
+             */
+            savePreferences() {
+                try {
+                    localStorage.setItem('imageManagerPrefs', JSON.stringify({
+                        viewMode: this.state.viewMode,
+                        pageSize: this.state.pageSize
+                    }));
+                } catch (e) {
+                    console.warn('Failed to save preferences:', e);
+                }
+            },
+
+            /**
+             * Load storage spaces
+             */
+            async loadStorages() {
+                try {
+                    const response = await fetch('/api/admin/storages');
+                    const storages = await response.json();
+                    this.state.storageSpaces = storages;
+                    const select = document.getElementById('storageSpace');
+                    select.innerHTML = storages.map(s =>
+                        `<option value="${s.name}">${s.name}</option>`
+                    ).join('');
+                    // Set to first available storage
+                    if (storages.length > 0) {
+                        this.state.currentStorage = storages[0].name;
+                        select.value = this.state.currentStorage;
+                    }
+                } catch (error) {
+                    console.error('Failed to load storages:', error);
+                    Toast.error('加载存储空间失败');
+                }
+            },
+
+            /**
+             * Load images
+             */
+            async loadImages() {
+                const select = document.getElementById('storageSpace');
+                this.state.currentStorage = select.value || this.state.storageSpaces[0]?.name || 'default';
+                this.state.selectedImages.clear();
+                this.updateSelectAllCheckbox();
+
+                try {
+                    const params = new URLSearchParams({
+                        storageSpace: this.state.currentStorage,
+                        path: this.state.currentPath,
+                        page: this.state.page,
+                        pageSize: this.state.pageSize,
+                        search: this.state.searchQuery,
+                        sortBy: this.state.filters.sortBy,
+                        sortOrder: this.state.filters.sortOrder,
+                        fileType: this.state.filters.fileType
+                    });
+
+                    const response = await fetch(`/image/list?${params}`);
+                    const data = await response.json();
+
+                    this.state.images = data.images || [];
+                    this.state.directories = data.directories || [];
+                    this.state.total = data.pagination?.total || 0;
+                    this.state.totalPages = data.pagination?.totalPages || 1;
+
+                    this.render();
+                } catch (error) {
+                    console.error('Failed to load images:', error);
+                    Toast.error('加载图片失败');
+                }
+            },
+
+            /**
+             * Render content
+             */
+            render() {
+                if (this.state.viewMode === 'grid') {
+                    this.renderGridView();
+                } else {
+                    this.renderListView();
+                }
+                this.renderBreadcrumb();
+                this.renderPagination();
+                this.updateBatchActionButtons();
+            },
+
+            /**
+             * Render grid view
+             */
+            renderGridView() {
+                const container = document.getElementById('gridView');
+                const emptyState = document.getElementById('emptyState');
+                const listView = document.getElementById('listView');
+
+                listView.classList.add('hidden');
+                container.classList.remove('hidden');
+
+                if (this.state.directories.length === 0 && this.state.images.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+
+                let html = '';
+
+                // Render directories
+                this.state.directories.forEach(dir => {
+                    const name = dir.split('/').pop();
+                    html += `
+                        <div class="image-card p-4 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer" onclick="ImageManager.navigate('${dir}')">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-10 h-10 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-primary text-sm truncate">${name}</p>
+                                    <p class="text-muted text-xs">文件夹</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Render images - use img.storageSpace for correct path
+                this.state.images.forEach(img => {
+                    const isSelected = this.state.selectedImages.has(img.path);
+                    const storage = img.storageSpace || this.state.currentStorage;
+                    const imageUrl = `/image/${storage}/${img.path}`;
+
+                    html += `
+                        <div class="image-card ${isSelected ? 'selected' : ''} p-3 rounded-lg card-item hover:bg-elevated transition-colors" data-path="${img.path}">
+                            <div class="relative mb-2 group">
+                                <img data-src="${imageUrl}" alt="${img.name}" class="lazy-image w-full aspect-square object-cover rounded-lg cursor-pointer" onclick="ImageManager.previewImage('${img.path}', '${storage}')">
+                                <input type="checkbox" class="image-checkbox absolute top-2 left-2" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); ImageManager.toggleSelect('${img.path}')">
+                                <div class="action-buttons absolute top-2 right-2 flex gap-1">
+                                    <button onclick="event.stopPropagation(); ImageManager.copySingleImageLink('${img.path}', '${storage}')" class="p-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md" title="复制链接">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); ImageManager.showRenameImageModal('${img.path}')" class="p-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md" title="重命名">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); ImageManager.showMoveImageModal('${img.path}')" class="p-1 bg-green-600 hover:bg-green-700 text-white rounded-md" title="移动">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); ImageManager.confirmDeleteImage('${img.path}')" class="p-1 bg-red-600 hover:bg-red-700 text-white rounded-md" title="删除">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-primary text-sm truncate" title="${img.name}">${img.name}</p>
+                            <p class="text-muted text-xs">${img.getFormattedSize ? img.getFormattedSize() : this.formatSize(img.size)}</p>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+                // Trigger lazy loading
+                this.observeImages();
+            },
+
+            /**
+             * Render list view
+             */
+            renderListView() {
+                const container = document.getElementById('listViewBody');
+                const emptyState = document.getElementById('emptyState');
+                const gridView = document.getElementById('gridView');
+                const listView = document.getElementById('listView');
+
+                gridView.classList.add('hidden');
+                listView.classList.remove('hidden');
+
+                if (this.state.directories.length === 0 && this.state.images.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+
+                let html = '';
+
+                // Render directories
+                this.state.directories.forEach(dir => {
+                    const name = dir.split('/').pop();
+                    html += `
+                        <tr class="border-b border-slate-700 hover:bg-elevated cursor-pointer" onclick="ImageManager.navigate('${dir}')">
+                            <td class="py-3 px-4"></td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                    </svg>
+                                    <span class="text-primary">${name}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-muted">-</td>
+                            <td class="py-3 px-4 text-muted">-</td>
+                            <td class="py-3 px-4 text-muted">-</td>
+                            <td class="py-3 px-4 text-right action-buttons">
+                                <button onclick="event.stopPropagation(); ImageManager.showRenameDirModal('${dir}')" class="px-2 py-1 text-amber-600 hover:text-amber-500 text-sm" data-i18n="rename">重命名</button>
+                                <button onclick="event.stopPropagation(); ImageManager.confirmDeleteDirectory('${dir}')" class="px-2 py-1 text-red-600 hover:text-red-500 text-sm">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                // Render images
+                this.state.images.forEach(img => {
+                    const isSelected = this.state.selectedImages.has(img.path);
+                    const storage = img.storageSpace || this.state.currentStorage;
+                    const imageUrl = `/image/${storage}/${img.path}`;
+
+                    html += `
+                        <tr class="border-b border-slate-700 hover:bg-elevated ${isSelected ? 'bg-blue-900/20' : ''}" data-path="${img.path}">
+                            <td class="py-3 px-4">
+                                <input type="checkbox" class="image-checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); ImageManager.toggleSelect('${img.path}')">
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <img src="${imageUrl}" alt="${img.name}" class="w-10 h-10 object-cover rounded cursor-pointer" onclick="ImageManager.previewImage('${img.path}', '${storage}')">
+                                    <span class="text-primary truncate max-w-[200px]" title="${img.name}">${img.name}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-muted">${img.getFormattedDate ? img.getFormattedDate() : this.formatDate(img.lastModified)}</td>
+                            <td class="py-3 px-4 text-muted">${img.getFormattedSize ? img.getFormattedSize() : this.formatSize(img.size)}</td>
+                            <td class="py-3 px-4 text-muted">${img.width && img.height ? `${img.width}×${img.height}` : '-'}</td>
+                            <td class="py-3 px-4 text-right action-buttons">
+                                <button onclick="event.stopPropagation(); ImageManager.copySingleImageLink('${img.path}', '${storage}')" class="px-2 py-1 text-blue-600 hover:text-blue-500 text-sm">复制</button>
+                                <button onclick="event.stopPropagation(); ImageManager.showRenameImageModal('${img.path}')" class="px-2 py-1 text-amber-600 hover:text-amber-500 text-sm">重命名</button>
+                                <button onclick="event.stopPropagation(); ImageManager.showMoveImageModal('${img.path}')" class="px-2 py-1 text-green-600 hover:text-green-500 text-sm">移动</button>
+                                <button onclick="event.stopPropagation(); ImageManager.confirmDeleteImage('${img.path}')" class="px-2 py-1 text-red-600 hover:text-red-500 text-sm">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                container.innerHTML = html;
+            },
+
+            /**
+             * Render breadcrumb
+             */
+            renderBreadcrumb() {
+                const breadcrumb = document.getElementById('breadcrumb');
+                const stats = document.getElementById('directoryStats');
+
+                if (!this.state.currentPath) {
+                    breadcrumb.innerHTML = '<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigate(\'\')">Root</span>';
+                } else {
+                    const parts = this.state.currentPath.split('/');
+                    let html = '<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigate(\'\')">Root</span>';
+                    let accum = '';
+                    parts.forEach((part, index) => {
+                        accum += (index > 0 ? '/' : '') + part;
+                        html += ' <span class="text-slate-500">/</span> ';
+                        if (index === parts.length - 1) {
+                            html += `<span class="text-primary">${part}</span>`;
+                        } else {
+                            html += `<span class="text-blue-400 cursor-pointer hover:text-blue-300" onclick="ImageManager.navigate('${accum}')">${part}</span>`;
+                        }
+                    });
+                    breadcrumb.innerHTML = html;
+                }
+
+                stats.textContent = `${this.state.images.length} 张图片, ${this.formatSize(this.state.images.reduce((sum, img) => sum + (img.size || 0), 0))}`;
+            },
+
+            /**
+             * Render pagination
+             */
+            renderPagination() {
+                const info = document.getElementById('paginationInfo');
+                const prevBtn = document.getElementById('prevPageBtn');
+                const nextBtn = document.getElementById('nextPageBtn');
+                const firstBtn = document.getElementById('firstPageBtn');
+                const lastBtn = document.getElementById('lastPageBtn');
+
+                info.textContent = `第 ${this.state.page} 页，共 ${this.state.totalPages} 页 (${this.state.total} 项)`;
+
+                prevBtn.disabled = this.state.page <= 1;
+                nextBtn.disabled = this.state.page >= this.state.totalPages;
+                firstBtn.disabled = this.state.page <= 1;
+                lastBtn.disabled = this.state.page >= this.state.totalPages;
+            },
+
+            /**
+             * Setup lazy loading
+             */
+            setupLazyLoading() {
+                if ('IntersectionObserver' in window) {
+                    this.lazyObserver = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                if (img.dataset.src) {
+                                    img.src = img.dataset.src;
+                                    img.classList.add('loaded');
+                                    img.removeAttribute('data-src');
+                                }
+                            }
+                        });
+                    }, { rootMargin: '50px' });
+                }
+            },
+
+            /**
+             * Observe images for lazy loading
+             */
+            observeImages() {
+                if (this.lazyObserver) {
+                    document.querySelectorAll('.lazy-image:not(.loaded)').forEach(img => {
+                        this.lazyObserver.observe(img);
+                    });
+                }
+            },
+
+            /**
+             * Navigate to directory
+             */
+            navigate(path) {
+                this.state.currentPath = path;
+                this.state.page = 1;
+                this.loadImages();
+            },
+
+            /**
+             * Toggle view mode
+             */
+            setViewMode(mode) {
+                this.state.viewMode = mode;
+                this.savePreferences();
+                this.updateViewModeButtons();
+                this.render();
+            },
+
+            /**
+             * Update view mode buttons
+             */
+            updateViewModeButtons() {
+                document.getElementById('gridViewBtn').classList.toggle('active', this.state.viewMode === 'grid');
+                document.getElementById('listViewBtn').classList.toggle('active', this.state.viewMode === 'list');
+            },
+
+            /**
+             * Toggle select image
+             */
+            toggleSelect(path) {
+                if (this.state.selectedImages.has(path)) {
+                    this.state.selectedImages.delete(path);
+                } else {
+                    this.state.selectedImages.add(path);
+                }
+                this.render();
+                this.updateSelectAllCheckbox();
+                this.updateBatchActionButtons();
+            },
+
+            /**
+             * Toggle select all
+             */
+            toggleSelectAll() {
+                const selectAll = document.getElementById('selectAll').checked;
+                this.state.selectedImages.clear();
+
+                if (selectAll) {
+                    this.state.images.forEach(img => this.state.selectedImages.add(img.path));
+                }
+
+                this.render();
+                this.updateBatchActionButtons();
+            },
+
+            /**
+             * Update select all checkbox
+             */
+            updateSelectAllCheckbox() {
+                const checkbox = document.getElementById('selectAll');
+                const allSelected = this.state.images.length > 0 &&
+                    this.state.images.every(img => this.state.selectedImages.has(img.path));
+                checkbox.checked = allSelected;
+            },
+
+            /**
+             * Update batch action buttons
+             */
+            updateBatchActionButtons() {
+                const count = this.state.selectedImages.size;
+                const deleteBtn = document.getElementById('batchDeleteBtn');
+                const moveBtn = document.getElementById('batchMoveBtn');
+
+                deleteBtn.disabled = count === 0;
+                deleteBtn.querySelector('span').textContent = `批量删除 (${count})`;
+
+                moveBtn.disabled = count === 0;
+                moveBtn.querySelector('span').textContent = `批量移动 (${count})`;
+            },
+
+            /**
+             * Batch delete
+             */
+            async batchDelete() {
+                if (this.state.selectedImages.size === 0) return;
+
+                const confirmed = await Confirm.danger(`确定删除选中的 ${this.state.selectedImages.size} 张图片吗？`);
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch('/image/batch', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            paths: Array.from(this.state.selectedImages),
+                            storageSpace: this.state.currentStorage
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success || result.successCount > 0) {
+                        Toast.success(`成功删除 ${result.successCount} 张图片`);
+                        this.state.selectedImages.clear();
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('Batch delete failed:', error);
+                    Toast.error('删除失败');
+                }
+            },
+
+            /**
+             * Confirm delete single image
+             */
+            async confirmDeleteImage(path) {
+                const confirmed = await Confirm.danger('确定删除此图片吗？');
+                if (!confirmed) return;
+
+                try {
+                    // Encode path properly for URL
+                    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                    const response = await fetch(`/image/${this.state.currentStorage}/${encodedPath}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Toast.success(i18n.t('success'));
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || i18n.t('failed'));
+                    }
+                } catch (error) {
+                    console.error('Delete failed:', error);
+                    Toast.error(i18n.t('failed'));
+                }
+            },
+
+            /**
+             * Confirm delete directory
+             */
+            async confirmDeleteDirectory(path) {
+                const name = path.split('/').pop();
+                const confirmed = await Confirm.danger(`确定删除目录 "${name}" 及其所有内容吗？`);
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch('/api/admin/directory', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            path: path,
+                            storageSpace: this.state.currentStorage
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Toast.success(i18n.t('success'));
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || i18n.t('failed'));
+                    }
+                } catch (error) {
+                    console.error('Delete directory failed:', error);
+                    Toast.error(i18n.t('failed'));
+                }
+            },
+
+            /**
+             * Batch move
+             */
+            async batchMove() {
+                if (this.state.selectedImages.size === 0) return;
+
+                this.showPathSelector('move', (targetPath) => {
+                    this.doBatchMove(targetPath);
+                });
+            },
+
+            /**
+             * Do batch move
+             */
+            async doBatchMove(targetPath) {
+                if (this.state.selectedImages.size === 0) return;
+
+                const targetDisplay = targetPath || 'Root';
+                const confirmed = await Confirm.confirm(`确定将选中的 ${this.state.selectedImages.size} 张图片移动到 "${targetDisplay}" 吗？`);
+                if (!confirmed) return;
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const imagePath of this.state.selectedImages) {
+                    try {
+                        const response = await fetch('/api/admin/move-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                storageSpace: this.state.currentStorage,
+                                sourcePath: imagePath,
+                                targetPath: targetPath
+                            })
+                        });
+
+                        const result = await response.json();
+                        if (result.success) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        console.error('Move failed:', error);
+                        failCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    Toast.success(`成功移动 ${successCount} 张图片`);
+                    this.state.selectedImages.clear();
+                    await this.loadImages();
+                }
+
+                if (failCount > 0) {
+                    Toast.error(`${failCount} 张图片移动失败`);
+                }
+            },
+
+            /**
+             * Show move image modal
+             */
+            showMoveImageModal(path) {
+                this.showPathSelector('move-single', (targetPath) => {
+                    this.doMoveImage(path, targetPath);
+                });
+            },
+
+            /**
+             * Do move single image
+             */
+            async doMoveImage(path, targetPath) {
+                const targetDisplay = targetPath || 'Root';
+                const confirmed = await Confirm.confirm(`确定将此图片移动到 "${targetDisplay}" 吗？`);
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch('/api/admin/move-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            storageSpace: this.state.currentStorage,
+                            sourcePath: path,
+                            targetPath: targetPath
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Toast.success('移动成功');
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || '移动失败');
+                    }
+                } catch (error) {
+                    console.error('Move failed:', error);
+                    Toast.error('移动失败');
+                }
+            },
+
+            /**
+             * Search
+             */
+            handleSearch(value) {
+                this.state.searchQuery = value;
+                this.state.page = 1;
+                this.loadImages();
+            },
+
+            /**
+             * Toggle filter panel
+             */
+            toggleFilterPanel() {
+                document.getElementById('filterPanel').classList.toggle('hidden');
+            },
+
+            /**
+             * Apply filters
+             */
+            applyFilters() {
+                this.state.filters.fileType = document.getElementById('fileTypeFilter').value;
+                this.state.filters.sortBy = document.getElementById('sortBy').value;
+                this.state.filters.sortOrder = document.getElementById('sortOrder').value;
+                this.state.page = 1;
+                this.loadImages();
+            },
+
+            /**
+             * Pagination
+             */
+            goToPage(page) {
+                if (page === 'last') page = this.state.totalPages;
+                this.state.page = Math.max(1, Math.min(page, this.state.totalPages));
+                this.loadImages();
+            },
+
+            prevPage() {
+                if (this.state.page > 1) {
+                    this.state.page--;
+                    this.loadImages();
+                }
+            },
+
+            nextPage() {
+                if (this.state.page < this.state.totalPages) {
+                    this.state.page++;
+                    this.loadImages();
+                }
+            },
+
+            /**
+             * Refresh
+             */
+            refresh() {
+                this.loadImages();
+            },
+
+            /**
+             * Show upload modal
+             */
+            showUploadModal() {
+                const currentDirDisplay = this.state.currentPath || 'Root';
+                document.getElementById('uploadStorageName').textContent = this.state.currentStorage;
+                document.getElementById('uploadCurrentPath').textContent = currentDirDisplay;
+                document.getElementById('uploadQueue').classList.add('hidden');
+                document.getElementById('uploadModal').classList.remove('hidden');
+                this.renderUploadQueue();
+            },
+
+            /**
+             * Hide upload modal
+             */
+            hideUploadModal() {
+                document.getElementById('uploadModal').classList.add('hidden');
+                this.state.uploadFiles = [];
+                document.getElementById('uploadFileInput').value = '';
+            },
+
+            /**
+             * Render upload queue
+             */
+            renderUploadQueue() {
+                const container = document.getElementById('uploadQueueList');
+                const queueDiv = document.getElementById('uploadQueue');
+
+                if (this.state.uploadFiles.length === 0) {
+                    queueDiv.classList.add('hidden');
+                    return;
+                }
+
+                queueDiv.classList.remove('hidden');
+                container.innerHTML = this.state.uploadFiles.map((f, i) => `
+                    <div class="flex items-center gap-2 py-1" data-file-index="${i}">
+                        <span class="flex-1 text-sm truncate">${f.name}</span>
+                        <span class="text-xs text-muted">${this.formatSize(f.size)}</span>
+                        <button onclick="ImageManager.removeFileFromQueue(${i})" class="text-red-500 hover:text-red-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+            },
+
+            /**
+             * Remove file from queue
+             */
+            removeFileFromQueue(index) {
+                this.state.uploadFiles.splice(index, 1);
+                this.renderUploadQueue();
+            },
+
+            /**
+             * Start upload
+             */
+            async startUpload() {
+                if (this.state.uploadFiles.length === 0) {
+                    Toast.error(i18n.t('please_select_images'));
+                    return;
+                }
+
+                const uploadPath = this.state.currentPath;
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const file of this.state.uploadFiles) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('storageSpace', this.state.currentStorage);
+                        if (uploadPath) {
+                            formData.append('targetPath', uploadPath);
+                        }
+
+                        // Use admin upload API with custom path if specified
+                        const uploadUrl = uploadPath ? '/api/admin/upload-custom' : '/api/admin/upload';
+                        const response = await fetch(uploadUrl, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        // If custom upload not available, move the file after upload
+                        if (!response.ok) {
+                            // Fallback to regular upload
+                            const regularResponse = await fetch('/api/admin/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const result = await regularResponse.json();
+
+                            if (result.success && result.path && uploadPath) {
+                                // Move the uploaded file to the target directory
+                                const moveResponse = await fetch('/api/admin/move-image', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        storageSpace: this.state.currentStorage,
+                                        sourcePath: result.path,
+                                        targetPath: uploadPath
+                                    })
+                                });
+                                const moveResult = await moveResponse.json();
+                                if (moveResult.success) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                }
+                            } else if (result.success) {
+                                successCount++;
+                            } else {
+                                failCount++;
+                            }
+                        } else {
+                            const result = await response.json();
+                            if (result.success) {
+                                successCount++;
+                            } else {
+                                failCount++;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Upload failed:', error);
+                        failCount++;
+                    }
+                }
+
+                this.hideUploadModal();
+
+                if (successCount > 0) {
+                    Toast.success(`成功上传 ${successCount} 个文件`);
+                    await this.loadImages();
+                }
+
+                if (failCount > 0) {
+                    Toast.error(`${failCount} 个文件上传失败`);
+                }
+            },
+
+            /**
+             * Show create directory modal
+             */
+            showCreateDirModal() {
+                const currentDirDisplay = this.state.currentPath || 'Root';
+                document.getElementById('createDirLocation').textContent =
+                    `${this.state.currentStorage} / ${currentDirDisplay}`;
+                document.getElementById('newDirName').value = '';
+                document.getElementById('createDirModal').classList.remove('hidden');
+            },
+
+            /**
+             * Hide create directory modal
+             */
+            hideCreateDirModal() {
+                document.getElementById('createDirModal').classList.add('hidden');
+            },
+
+            /**
+             * Create directory
+             */
+            async createDirectory() {
+                const name = document.getElementById('newDirName').value.trim();
+                if (!name) {
+                    Toast.error('请输入目录名');
+                    return;
+                }
+
+                // Validate directory name
+                if (!/^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/.test(name)) {
+                    Toast.error('目录名只能包含字母、数字、中文、下划线和连字符');
+                    return;
+                }
+
+                const path = this.state.currentPath ? `${this.state.currentPath}/${name}` : name;
+
+                try {
+                    const response = await fetch('/api/admin/directory', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path, storageSpace: this.state.currentStorage })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Toast.success('创建成功');
+                        this.hideCreateDirModal();
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || '创建失败');
+                    }
+                } catch (error) {
+                    console.error('Create directory failed:', error);
+                    Toast.error('创建失败');
+                }
+            },
+
+            /**
+             * Show rename directory modal
+             */
+            showRenameDirModal(path) {
+                this.state.renameTarget = path;
+                const currentName = path.split('/').pop();
+                document.getElementById('renameDirNewName').value = currentName;
+                document.getElementById('renameDirModal').classList.remove('hidden');
+            },
+
+            /**
+             * Hide rename directory modal
+             */
+            hideRenameDirModal() {
+                document.getElementById('renameDirModal').classList.add('hidden');
+                this.state.renameTarget = null;
+            },
+
+            /**
+             * Rename directory
+             */
+            async renameDirectory() {
+                const newName = document.getElementById('renameDirNewName').value.trim();
+                if (!newName) {
+                    Toast.error('请输入新名称');
+                    return;
+                }
+
+                const oldPath = this.state.renameTarget;
+                const parentPath = oldPath.substring(0, oldPath.lastIndexOf('/'));
+                const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+                try {
+                    const response = await fetch('/api/admin/directory', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ oldPath, newPath, storageSpace: this.state.currentStorage })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Toast.success('重命名成功');
+                        this.hideRenameDirModal();
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || '重命名失败');
+                    }
+                } catch (error) {
+                    console.error('Rename directory failed:', error);
+                    Toast.error('重命名失败');
+                }
+            },
+
+            /**
+             * Show rename image modal
+             */
+            showRenameImageModal(path) {
+                this.state.renameImagePath = path;
+                const currentName = path.split('/').pop();
+                document.getElementById('renameImageNewName').value = currentName;
+                document.getElementById('renameImageModal').classList.remove('hidden');
+            },
+
+            /**
+             * Hide rename image modal
+             */
+            hideRenameImageModal() {
+                document.getElementById('renameImageModal').classList.add('hidden');
+                this.state.renameImagePath = null;
+            },
+
+            /**
+             * Do rename image
+             */
+            async doRenameImage() {
+                const newName = document.getElementById('renameImageNewName').value.trim();
+                if (!newName) {
+                    Toast.error('请输入新文件名');
+                    return;
+                }
+
+                const oldPath = this.state.renameImagePath;
+                const parentPath = oldPath.substring(0, oldPath.lastIndexOf('/'));
+                const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+                try {
+                    const response = await fetch('/api/admin/rename-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            storageSpace: this.state.currentStorage,
+                            oldPath: oldPath,
+                            newPath: newPath
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Toast.success('重命名成功');
+                        this.hideRenameImageModal();
+                        await this.loadImages();
+                    } else {
+                        Toast.error(result.error || '重命名失败');
+                    }
+                } catch (error) {
+                    console.error('Rename image failed:', error);
+                    Toast.error('重命名失败');
+                }
+            },
+
+            /**
+             * Show path selector
+             */
+            showPathSelector(type, callback) {
+                this.state.pathSelectorCallback = callback;
+                this.state.pathSelectorCurrentPath = '';
+                document.getElementById('pathSelectorModal').classList.remove('hidden');
+                this.renderPathSelector();
+            },
+
+            /**
+             * Hide path selector
+             */
+            hidePathSelector() {
+                document.getElementById('pathSelectorModal').classList.add('hidden');
+                this.state.pathSelectorCallback = null;
+            },
+
+            /**
+             * Render path selector
+             */
+            async renderPathSelector() {
+                const breadcrumb = document.getElementById('pathSelectorBreadcrumb');
+                const content = document.getElementById('pathSelectorContent');
+
+                // Render breadcrumb
+                if (!this.state.pathSelectorCurrentPath) {
+                    breadcrumb.innerHTML = '<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigatePathSelector(\'\')">Root</span>';
+                } else {
+                    const parts = this.state.pathSelectorCurrentPath.split('/');
+                    let html = '<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigatePathSelector(\'\')">Root</span>';
+                    let accum = '';
+                    parts.forEach((part, index) => {
+                        accum += (index > 0 ? '/' : '') + part;
+                        html += ' <span class="text-slate-500">/</span> ';
+                        if (index === parts.length - 1) {
+                            html += `<span class="text-primary">${part}</span>`;
+                        } else {
+                            html += `<span class="text-blue-400 cursor-pointer hover:text-blue-300" onclick="ImageManager.navigatePathSelector('${accum}')">${part}</span>`;
+                        }
+                    });
+                    breadcrumb.innerHTML = html;
+                }
+
+                // Load directories
+                try {
+                    const response = await fetch(`/image/list?storageSpace=${this.state.currentStorage}&path=${this.state.pathSelectorCurrentPath}`);
+                    const data = await response.json();
+
+                    const dirs = data.directories || [];
+
+                    if (dirs.length === 0 && this.state.pathSelectorCurrentPath !== '') {
+                        content.innerHTML = '<p class="col-span-full text-center text-muted py-4">当前目录为空</p>';
+                        return;
+                    }
+
+                    let html = '';
+
+                    // Add option to select current directory
+                    if (this.state.pathSelectorCurrentPath !== '') {
+                        html += `
+                            <div class="p-3 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer col-span-full" onclick="ImageManager.confirmPathSelection()">
+                                <p class="text-primary text-center">当前目录</p>
+                                <p class="text-muted text-xs text-center">${this.state.pathSelectorCurrentPath || 'Root'}</p>
+                            </div>
+                        `;
+                    }
+
+                    // Add parent directory option
+                    if (this.state.pathSelectorCurrentPath) {
+                        const parentPath = this.state.pathSelectorCurrentPath.substring(0, this.state.pathSelectorCurrentPath.lastIndexOf('/'));
+                        html += `
+                            <div class="p-3 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer flex items-center gap-2" onclick="ImageManager.navigatePathSelector('${parentPath}')">
+                                <svg class="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                <span class="text-primary">..</span>
+                            </div>
+                        `;
+                    }
+
+                    dirs.forEach(dir => {
+                        const name = dir.split('/').pop();
+                        html += `
+                            <div class="p-3 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer flex items-center gap-2" onclick="ImageManager.navigatePathSelector('${dir}')">
+                                <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                                </svg>
+                                <span class="text-primary">${name}</span>
+                            </div>
+                        `;
+                    });
+
+                    content.innerHTML = html;
+                } catch (error) {
+                    console.error('Failed to load directories:', error);
+                    content.innerHTML = '<p class="col-span-full text-center text-red-500 py-4">加载失败</p>';
+                }
+            },
+
+            /**
+             * Navigate path selector
+             */
+            navigatePathSelector(path) {
+                this.state.pathSelectorCurrentPath = path;
+                this.renderPathSelector();
+            },
+
+            /**
+             * Confirm path selection
+             */
+            confirmPathSelection() {
+                if (this.state.pathSelectorCallback) {
+                    this.state.pathSelectorCallback(this.state.pathSelectorCurrentPath);
+                }
+                this.hidePathSelector();
+            },
+
+            /**
+             * Preview image
+             */
+            previewImage(path, storage) {
+                const url = `/image/${storage || this.state.currentStorage}/${path}`;
+                this.state.currentPreviewPath = path;
+                this.state.currentPreviewStorage = storage;
+                document.getElementById('previewImage').src = url;
+                document.getElementById('previewModal').classList.remove('hidden');
+
+                // Set default link format
+                this.selectLinkFormat('direct');
+            },
+
+            /**
+             * Hide preview modal
+             */
+            hidePreviewModal() {
+                document.getElementById('previewModal').classList.add('hidden');
+            },
+
+            /**
+             * Select link format
+             */
+            selectLinkFormat(format) {
+                this.state.currentLinkFormat = format;
+
+                // Update button styles
+                document.querySelectorAll('.link-format-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.format === format);
+                });
+
+                // Update link preview
+                if (!this.state.currentPreviewPath) return;
+
+                const url = `${window.location.origin}/image/${this.state.currentPreviewStorage}/${this.state.currentPreviewPath}`;
+                const linkPreview = document.getElementById('linkPreview');
+
+                switch (format) {
+                    case 'direct':
+                        linkPreview.value = url;
+                        break;
+                    case 'markdown':
+                        linkPreview.value = `
+![${this.state.currentPreviewPath.split('/').pop()}](${url})
+`.trim();
+                        break;
+                    case 'html':
+                        linkPreview.value = `<img src="${url}" alt="${this.state.currentPreviewPath.split('/').pop()}">`;
+                        break;
+                    case 'bbcode':
+                        linkPreview.value = `[img]${url}[/img]`;
+                        break;
+                }
+            },
+
+            /**
+             * Copy text to clipboard with fallback
+             */
+            async copyToClipboard(text) {
+                // Try modern Clipboard API first
+                if (navigator.clipboard && window.isSecureContext) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        return true;
+                    } catch (err) {
+                        console.warn('Clipboard API failed, trying fallback:', err);
+                    }
+                }
+
+                // Fallback: create temporary textarea
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    textarea.remove();
+                    return true;
+                } catch (err) {
+                    textarea.remove();
+                    console.error('Copy failed:', err);
+                    return false;
+                }
+            },
+
+            /**
+             * Copy selected link
+             */
+            async copySelectedLink() {
+                const linkPreview = document.getElementById('linkPreview');
+                const success = await this.copyToClipboard(linkPreview.value);
+                if (success) {
+                    Toast.success('链接已复制');
+                } else {
+                    Toast.error('复制失败');
+                }
+            },
+
+            /**
+             * Copy single image link (direct format for list view)
+             */
+            async copySingleImageLink(path, storage) {
+                const url = `${window.location.origin}/image/${storage}/${path}`;
+                const success = await this.copyToClipboard(url);
+                if (success) {
+                    Toast.success('链接已复制');
+                } else {
+                    Toast.error('复制失败');
+                }
+            },
+
+            /**
+             * Hide loading
+             */
+            hideLoading() {
+                const loading = document.getElementById('admin-loading-overlay');
+                if (loading) {
+                    loading.style.opacity = '0';
+                    setTimeout(() => loading.remove(), 200);
+                }
+            },
+
+            /**
+             * Format size
+             */
+            formatSize(bytes) {
+                if (bytes >= 1024 * 1024 * 1024) {
+                    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+                } else if (bytes >= 1024 * 1024) {
+                    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+                } else if (bytes >= 1024) {
+                    return (bytes / 1024).toFixed(2) + ' KB';
+                }
+                return bytes + ' B';
+            },
+
+            /**
+             * Format date
+             */
+            formatDate(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }) + ' ' + date.toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
             }
+        };
+
+        // File input handler
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('uploadFileInput').addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    ImageManager.state.uploadFiles = files;
+                    ImageManager.renderUploadQueue();
+                }
+            });
         });
 
-        async function loadImages() {
-            currentStorage = document.getElementById('storageSpace').value;
-            try {
-                const response = await fetch(`/api/image/list?storageSpace=${currentStorage}&path=${encodeURIComponent(currentPath)}`);
-                const data = await response.json();
-
-                renderImages(data.images, data.directories);
-                updateBreadcrumb();
-            } catch (error) {
-                console.error('Failed to load images:', error);
-            }
-        }
-
-        function renderImages(images, directories) {
-            const container = document.getElementById('images-container');
-            let html = '';
-
-            // Render directories
-            directories.forEach(dir => {
-                const name = dir.split('/').pop();
-                html += `
-                    <div class="p-4 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer" onclick="navigate('${dir}')">
-                        <div class="flex items-center space-x-3">
-                            <svg class="w-8 h-8 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                            <span class="text-primary">${name}</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // Render images
-            images.forEach(img => {
-                const space = img.storageSpace || currentStorage;
-                const imageUrl = `/api/image/${space}/${img.path}`;
-
-                html += `
-                    <div class="p-4 rounded-lg card-item hover:bg-elevated transition-colors">
-                        <div class="relative mb-3">
-                            <img src="${imageUrl}" alt="${img.name}" class="w-full h-32 object-cover rounded-lg">
-                            <button onclick="deleteImage('${img.path}')" class="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-md">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                        <p class="text-primary text-sm truncate">${img.name}</p>
-                        <p class="text-muted text-xs">${img.getFormattedSize()}</p>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html || '<p class="text-muted col-span-full text-center py-8" data-i18n="no_data">No images found</p>';
-            i18n.applyLanguage();
-        }
-
-        function navigate(path) {
-            currentPath = path;
-            loadImages();
-        }
-
-        function updateBreadcrumb() {
-            const breadcrumb = document.getElementById('breadcrumb');
-            if (!currentPath) {
-                breadcrumb.innerHTML = '<span class="text-white">Root</span>';
-                return;
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for AdminComponents to finish loading
+            if (typeof AdminComponents !== 'undefined' && AdminComponents.init) {
+                await AdminComponents.init('images');
             }
 
-            const parts = currentPath.split('/');
-            let html = '<span class="text-white cursor-pointer hover:text-blue-400" onclick="navigate(\'\')">Root</span>';
-            let accum = '';
-            parts.forEach((part, index) => {
-                accum += (index > 0 ? '/' : '') + part;
-                html += ' <span class="text-slate-500">/</span> ';
-                if (index === parts.length - 1) {
-                    html += `<span class="text-white">${part}</span>`;
-                } else {
-                    html += `<span class="text-blue-400 cursor-pointer hover:text-blue-300" onclick="navigate('${accum}')">${part}</span>`;
-                }
-            });
-            breadcrumb.innerHTML = html;
-        }
-
-        function showUploadModal() {
-            document.getElementById('upload-modal').classList.remove('hidden');
-        }
-
-        function hideUploadModal() {
-            document.getElementById('upload-modal').classList.add('hidden');
-        }
-
-        async function uploadImage() {
-            const fileInput = document.getElementById('upload-file');
-            if (!fileInput.files[0]) return;
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('storageSpace', currentStorage);
-
-            try {
-                const response = await fetch('/api/admin/upload', { method: 'POST', body: formData });
-                const result = await response.json();
-
-                if (result.success) {
-                    hideUploadModal();
-                    loadImages();
-                    Toast.success(i18n.t('success'));
-                } else {
-                    Toast.error(result.error);
-                }
-            } catch (error) {
-                Toast.error('Upload failed');
+            // Wait for Confirm object to be available
+            let retries = 0;
+            while (typeof Confirm === 'undefined' && retries < 50) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                retries++;
             }
-        }
-
-        async function deleteImage(path) {
-            const confirmed = await Confirm.danger(i18n.t('confirm_delete'));
-            if (!confirmed) return;
-
-            try {
-                const response = await fetch(`/api/image/${currentStorage}/${path}`, { method: 'DELETE' });
-                const result = await response.json();
-
-                if (result.success) {
-                    loadImages();
-                    Toast.success(i18n.t('success'));
-                } else {
-                    Toast.error(result.error);
-                }
-            } catch (error) {
-                Toast.error('Delete failed');
+            if (typeof Confirm === 'undefined') {
+                console.error('Confirm object not available after waiting');
             }
-        }
+
+            ImageManager.init();
+        });
     </script>
 </body>
 </html>

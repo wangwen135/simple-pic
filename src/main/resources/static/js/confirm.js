@@ -1,6 +1,6 @@
 /**
  * Confirmation Dialog Component
- * Provides unified confirmation dialog functionality
+ * Provides unified confirmation dialog functionality with i18n support
  */
 
 const Confirm = {
@@ -14,7 +14,7 @@ const Confirm = {
         if (!this.container) {
             this.container = document.createElement('div');
             this.container.id = 'confirm-container';
-            this.container.className = 'fixed inset-0 z-50 flex items-center justify-center';
+            this.container.className = 'fixed inset-0 z-50 flex items-center justify-center pointer-events-none';
             document.body.appendChild(this.container);
         }
     },
@@ -50,11 +50,11 @@ const Confirm = {
             } = options;
 
             const overlay = document.createElement('div');
-            overlay.className = 'absolute inset-0 bg-black/50 transition-opacity';
+            overlay.className = 'fixed inset-0 bg-black/50 transition-opacity pointer-events-auto flex items-center justify-center p-4';
             overlay.style.animation = 'fadeIn 0.2s ease';
 
             const dialog = document.createElement('div');
-            dialog.className = 'relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden';
+            dialog.className = 'relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden';
             dialog.style.animation = 'scaleIn 0.2s ease';
 
             const confirmBtnClass = this.getConfirmButtonClass(type);
@@ -184,11 +184,18 @@ const Confirm = {
     /**
      * Show danger confirm (for delete actions)
      */
-    danger(message, title = 'Confirm', options = {}) {
+    danger(message, title, options = {}) {
+        // Use i18n if available
+        const i18nTitle = typeof i18n !== 'undefined' ? i18n.t('confirm_delete') : 'Confirm';
+        const i18nConfirm = typeof i18n !== 'undefined' ? i18n.t('confirm') : 'Confirm';
+        const i18nCancel = typeof i18n !== 'undefined' ? i18n.t('cancel') : 'Cancel';
+
         return this.show({
             type: 'danger',
-            title,
+            title: title || i18nTitle,
             message,
+            confirmText: i18nConfirm,
+            cancelText: i18nCancel,
             ...options
         });
     },
@@ -196,11 +203,17 @@ const Confirm = {
     /**
      * Show warning confirm
      */
-    warning(message, title = 'Warning', options = {}) {
+    warning(message, title, options = {}) {
+        const i18nTitle = typeof i18n !== 'undefined' ? i18n.t('confirm') : 'Warning';
+        const i18nConfirm = typeof i18n !== 'undefined' ? i18n.t('confirm') : 'Confirm';
+        const i18nCancel = typeof i18n !== 'undefined' ? i18n.t('cancel') : 'Cancel';
+
         return this.show({
             type: 'warning',
-            title,
+            title: title || i18nTitle,
             message,
+            confirmText: i18nConfirm,
+            cancelText: i18nCancel,
             ...options
         });
     },
@@ -208,52 +221,61 @@ const Confirm = {
     /**
      * Show info confirm
      */
-    info(message, title = 'Confirm', options = {}) {
+    info(message, title, options = {}) {
+        const i18nTitle = typeof i18n !== 'undefined' ? i18n.t('confirm') : 'Confirm';
+        const i18nConfirm = typeof i18n !== 'undefined' ? i18n.t('confirm') : 'Confirm';
+        const i18nCancel = typeof i18n !== 'undefined' ? i18n.t('cancel') : 'Cancel';
+
         return this.show({
             type: 'info',
-            title,
+            title: title || i18nTitle,
             message,
+            confirmText: i18nConfirm,
+            cancelText: i18nCancel,
             ...options
         });
     }
 };
 
-// Add animation styles to document
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+// Add animation styles to document (only once)
+if (!document.getElementById('confirm-animations')) {
+    const style = document.createElement('style');
+    style.id = 'confirm-animations';
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
 
-    @keyframes scaleIn {
-        from {
-            transform: scale(0.95);
-            opacity: 0;
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
 
-    @keyframes scaleOut {
-        from {
-            transform: scale(1);
-            opacity: 1;
+        @keyframes scaleOut {
+            from {
+                transform: scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: scale(0.95);
+                opacity: 0;
+            }
         }
-        to {
-            transform: scale(0.95);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
+    `;
+    document.head.appendChild(style);
+}
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
