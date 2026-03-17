@@ -40,6 +40,7 @@ public class ErrorMessages {
         MESSAGES.put("invalid_api_key_index", new String[]{"无效的API密钥索引", "Invalid API key index"});
         MESSAGES.put("failed_to_create_directory", new String[]{"创建目录失败", "Failed to create directory"});
         MESSAGES.put("failed_to_delete_directory", new String[]{"删除目录失败", "Failed to delete directory"});
+        MESSAGES.put("failed_to_rename_directory", new String[]{"重命名目录失败", "Failed to rename directory"});
         MESSAGES.put("failed_to_switch_storage", new String[]{"切换存储空间失败", "Failed to switch storage space"});
 
         // User errors

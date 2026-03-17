@@ -22,6 +22,8 @@ public class ImageInfo {
     private long size;
     private long lastModified;
     private String storageSpace;
+    private Integer width;
+    private Integer height;
 
     public ImageInfo(File file, String storageSpace, String relativePath) {
         this.path = relativePath;

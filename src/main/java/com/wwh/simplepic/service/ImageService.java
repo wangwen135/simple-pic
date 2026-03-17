@@ -55,13 +55,31 @@ public class ImageService {
             return UploadResult.error(ErrorMessages.getZh("file_is_empty"));
         }
 
-        return doUploadImage(file.getInputStream(), file.getOriginalFilename(), file.getSize(), storageSpace);
+        return doUploadImage(file.getInputStream(), file.getOriginalFilename(), file.getSize(), storageSpace, null);
+    }
+
+    /**
+     * Upload image to custom path
+     */
+    public UploadResult uploadImageToPath(MultipartFile file, String storageSpace, String targetPath) throws IOException {
+        if (file.isEmpty()) {
+            return UploadResult.error(ErrorMessages.getZh("file_is_empty"));
+        }
+
+        return doUploadImage(file.getInputStream(), file.getOriginalFilename(), file.getSize(), storageSpace, targetPath);
     }
 
     /**
      * Common upload logic
      */
     private UploadResult doUploadImage(InputStream inputStream, String originalFilename, long fileSize, String storageSpace) throws IOException {
+        return doUploadImage(inputStream, originalFilename, fileSize, storageSpace, null);
+    }
+
+    /**
+     * Common upload logic with optional target path
+     */
+    private UploadResult doUploadImage(InputStream inputStream, String originalFilename, long fileSize, String storageSpace, String targetPath) throws IOException {
         // Validate filename
         if (originalFilename == null) {
             return UploadResult.error(ErrorMessages.getZh("invalid_filename"));
@@ -83,22 +101,37 @@ public class ImageService {
             return UploadResult.error(ErrorMessages.getZh("storage_space_not_found"));
         }
 
-        // Generate file path: yyyy/MM/UUID.ext
-        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
-        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
-        Date now = new Date();
+        // Generate file path
+        // If targetPath is specified, use it; otherwise use yyyy/MM structure
+        String relativePath;
+        File targetDir;
 
-        String year = yearFormat.format(now);
-        String month = monthFormat.format(now);
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        String filename = uuid + "." + extension;
+        if (targetPath != null && !targetPath.isEmpty()) {
+            // Use custom path
+            String uuid = UUID.randomUUID().toString().replace("-", "");
+            String filename = uuid + "." + extension;
+            relativePath = targetPath.replace("/", File.separator) + File.separator + filename;
+            targetDir = new File(space.getStorageDirectory(), targetPath.replace("/", File.separator));
+        } else {
+            // Use default yyyy/MM structure
+            SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+            SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
+            Date now = new Date();
 
-        String relativePath = year + File.separator + month + File.separator + filename;
-        File targetDir = new File(space.getStorageDirectory(), year + File.separator + month);
+            String year = yearFormat.format(now);
+            String month = monthFormat.format(now);
+            String uuid = UUID.randomUUID().toString().replace("-", "");
+            String filename = uuid + "." + extension;
+
+            relativePath = year + File.separator + month + File.separator + filename;
+            targetDir = new File(space.getStorageDirectory(), year + File.separator + month);
+        }
+
         if (!targetDir.exists()) {
             targetDir.mkdirs();
         }
 
+        String filename = relativePath.substring(relativePath.lastIndexOf(File.separator) + 1);
         File targetFile = new File(targetDir, filename);
 
         // Save file
@@ -253,6 +286,103 @@ public class ImageService {
 
         directories.sort(String::compareTo);
         return directories;
+    }
+
+    /**
+     * Rename image file
+     */
+    public boolean renameImage(String oldPath, String newPath, String storageSpace) {
+        com.wwh.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
+        if (space == null) {
+            return false;
+        }
+
+        File oldFile = new File(space.getStorageDirectory(), oldPath.replace("/", File.separator));
+        File newFile = new File(space.getStorageDirectory(), newPath.replace("/", File.separator));
+
+        if (oldFile.exists() && oldFile.isFile() && !newFile.exists()) {
+            // Ensure parent directory exists
+            File parentDir = newFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+
+            if (oldFile.renameTo(newFile)) {
+                // Delete thumbnail if exists
+                File thumbDir = new File(space.getStorageDirectory(), ".thumbnails");
+                File oldThumb = new File(thumbDir, oldPath.replace("/", File.separator));
+                if (oldThumb.exists()) {
+                    oldThumb.delete();
+                }
+
+                storageService.clearStatsCache(storageSpace);
+                logger.info("Image renamed: {} -> {}", oldPath, newPath);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Move image to different directory
+     */
+    public boolean moveImage(String sourcePath, String targetDirPath, String storageSpace) {
+        com.wwh.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
+        if (space == null) {
+            return false;
+        }
+
+        File sourceFile = new File(space.getStorageDirectory(), sourcePath.replace("/", File.separator));
+        String fileName = sourceFile.getName();
+        File targetDir = targetDirPath.isEmpty() ?
+            space.getStorageDirectory() :
+            new File(space.getStorageDirectory(), targetDirPath.replace("/", File.separator));
+        File targetFile = new File(targetDir, fileName);
+
+        if (sourceFile.exists() && sourceFile.isFile()) {
+            // Ensure target directory exists
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+
+            if (sourceFile.renameTo(targetFile)) {
+                // Delete thumbnail if exists
+                File thumbDir = new File(space.getStorageDirectory(), ".thumbnails");
+                File oldThumb = new File(thumbDir, sourcePath.replace("/", File.separator));
+                if (oldThumb.exists()) {
+                    oldThumb.delete();
+                }
+
+                storageService.clearStatsCache(storageSpace);
+                logger.info("Image moved: {} -> {}/{}", sourcePath, targetDirPath, fileName);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Rename directory
+     */
+    public boolean renameDirectory(String oldPath, String newPath, String storageSpace) {
+        com.wwh.simplepic.model.StorageSpace space = storageService.getStorageSpace(storageSpace);
+        if (space == null) {
+            return false;
+        }
+
+        File oldDir = new File(space.getStorageDirectory(), oldPath.replace("/", File.separator));
+        File newDir = new File(space.getStorageDirectory(), newPath.replace("/", File.separator));
+
+        if (oldDir.exists() && oldDir.isDirectory() && !newDir.exists()) {
+            if (oldDir.renameTo(newDir)) {
+                logger.info("Directory renamed: {} -> {}", oldPath, newPath);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

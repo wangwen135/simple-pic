@@ -420,6 +420,38 @@ public class AdminController {
     }
 
     /**
+     * Upload image to custom path (admin)
+     */
+    @PostMapping("/upload-custom")
+    public ResponseEntity<Map<String, Object>> adminUploadCustom(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("storageSpace") String storageSpace,
+            @RequestParam(value = "targetPath", required = false) String targetPath) {
+        try {
+            UploadResult result = imageService.uploadImageToPath(file, storageSpace, targetPath);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", result.isSuccess());
+            response.put("message", result.getMessage());
+            response.put("url", result.getUrl());
+            response.put("path", result.getPath());
+
+            if (result.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (IOException e) {
+            logger.error("Admin upload failed", e);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
      * Create directory
      */
     @PostMapping("/directory")
@@ -435,6 +467,72 @@ public class AdminController {
         if (!success) {
             response.put("error", ErrorMessages.getZh("failed_to_create_directory"));
             response.put("error_en", ErrorMessages.getEn("failed_to_create_directory"));
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Rename directory
+     */
+    @PutMapping("/directory")
+    public ResponseEntity<Map<String, Object>> renameDirectory(@RequestBody Map<String, String> request) {
+        String oldPath = request.get("oldPath");
+        String newPath = request.get("newPath");
+        String storageSpace = request.get("storageSpace");
+
+        boolean success = imageService.renameDirectory(oldPath, newPath, storageSpace);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+
+        if (!success) {
+            response.put("error", ErrorMessages.getZh("failed_to_rename_directory"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_rename_directory"));
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Rename image
+     */
+    @PostMapping("/rename-image")
+    public ResponseEntity<Map<String, Object>> renameImage(@RequestBody Map<String, String> request) {
+        String storageSpace = request.get("storageSpace");
+        String oldPath = request.get("oldPath");
+        String newPath = request.get("newPath");
+
+        boolean success = imageService.renameImage(oldPath, newPath, storageSpace);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+
+        if (!success) {
+            response.put("error", ErrorMessages.getZh("failed_to_rename_directory"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_rename_directory"));
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Move image
+     */
+    @PostMapping("/move-image")
+    public ResponseEntity<Map<String, Object>> moveImage(@RequestBody Map<String, String> request) {
+        String storageSpace = request.get("storageSpace");
+        String sourcePath = request.get("sourcePath");
+        String targetPath = request.get("targetPath");
+
+        boolean success = imageService.moveImage(sourcePath, targetPath, storageSpace);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+
+        if (!success) {
+            response.put("error", ErrorMessages.getZh("failed_to_rename_directory"));
+            response.put("error_en", ErrorMessages.getEn("failed_to_rename_directory"));
         }
 
         return ResponseEntity.ok(response);

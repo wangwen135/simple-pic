@@ -56,7 +56,9 @@
                 </div>
                 <div>
                     <label class="block text-secondary text-sm mb-1" data-i18n="assigned_storage">Storage Spaces</label>
-                    <input type="text" id="create-storages" class="w-full px-4 py-2 input-field rounded-lg" placeholder="default">
+                    <div id="storage-checkboxes" class="space-y-2 max-h-40 overflow-y-auto bg-slate-800/50 p-3 rounded-lg">
+                        <!-- Dynamically populated checkboxes -->
+                    </div>
                 </div>
             </div>
             <button onclick="saveUser()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" id="save-btn" data-i18n="save">Create</button>
@@ -131,6 +133,22 @@
             i18n.applyLanguage();
         }
 
+        async function loadStorageSpacesForSelector(selectedSpaces = []) {
+            try {
+                const response = await fetch('/api/admin/storages');
+                const storages = await response.json();
+                const container = document.getElementById('storage-checkboxes');
+                container.innerHTML = storages.map(s => `
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" value="${s.name}" ${selectedSpaces.includes(s.name) ? 'checked' : ''} class="w-4 h-4 rounded">
+                        <span class="text-sm">${s.name}</span>
+                    </label>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load storages:', error);
+            }
+        }
+
         function showCreateModal() {
             isEditing = false;
             document.getElementById('modal-title').textContent = i18n.t('create_user');
@@ -138,17 +156,18 @@
             document.getElementById('create-username').value = '';
             document.getElementById('create-password').value = '';
             document.getElementById('create-role').value = 'USER';
-            document.getElementById('create-storages').value = 'default';
             document.getElementById('create-username').disabled = false;
             document.getElementById('save-btn').textContent = i18n.t('save');
             document.getElementById('create-modal').classList.remove('hidden');
+            // Load storage spaces with default selected
+            loadStorageSpacesForSelector(['default']);
         }
 
         function hideCreateModal() {
             document.getElementById('create-modal').classList.add('hidden');
         }
 
-        function editUser(username) {
+        async function editUser(username) {
             isEditing = true;
             document.getElementById('modal-title').textContent = i18n.t('edit_user');
             document.getElementById('edit-username').value = username;
@@ -156,13 +175,27 @@
             document.getElementById('create-username').disabled = true;
             document.getElementById('save-btn').textContent = i18n.t('save');
             document.getElementById('create-modal').classList.remove('hidden');
+
+            // Load user data and storage spaces
+            try {
+                const response = await fetch('/api/admin/users');
+                const users = await response.json();
+                const user = users.find(u => u.username === username);
+                if (user) {
+                    document.getElementById('create-role').value = user.role;
+                    await loadStorageSpacesForSelector(user.storageSpaces || []);
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+            }
         }
 
         async function saveUser() {
             const username = document.getElementById('create-username').value;
             const password = document.getElementById('create-password').value;
             const role = document.getElementById('create-role').value;
-            const storageSpaces = document.getElementById('create-storages').value.split(',').map(s => s.trim());
+            const checkedBoxes = document.querySelectorAll('#storage-checkboxes input[type="checkbox"]:checked');
+            const storageSpaces = Array.from(checkedBoxes).map(cb => cb.value);
 
             const url = isEditing ? `/api/admin/users/${username}` : '/api/admin/users';
             const method = isEditing ? 'PUT' : 'POST';
