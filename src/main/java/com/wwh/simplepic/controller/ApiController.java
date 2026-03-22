@@ -7,6 +7,7 @@ import com.wwh.simplepic.service.AuthService;
 import com.wwh.simplepic.service.ConfigService;
 import com.wwh.simplepic.service.ImageService;
 import com.wwh.simplepic.util.ErrorMessages;
+import com.wwh.simplepic.util.ResponseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,46 +54,30 @@ public class ApiController {
             }
 
             if (token == null || token.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("error", ErrorMessages.getZh("api_token_required"));
-                response.put("error_en", ErrorMessages.getEn("api_token_required"));
-                return ResponseEntity.status(401).body(response);
+                return ResponseEntity.status(401).body(ResponseUtils.error("api_token_required"));
             }
 
             // Validate token
             String storageSpace = validateToken(token);
             if (storageSpace == null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("error", ErrorMessages.getZh("invalid_api_token"));
-                response.put("error_en", ErrorMessages.getEn("invalid_api_token"));
-                return ResponseEntity.status(401).body(response);
+                return ResponseEntity.status(401).body(ResponseUtils.error("invalid_api_token"));
             }
 
             // Upload image
             UploadResult result = imageService.uploadImage(file, storageSpace);
 
             if (result.isSuccess()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
+                Map<String, Object> response = ResponseUtils.success();
                 response.put("url", result.getUrl());
                 response.put("path", result.getPath());
                 response.put("storageSpace", result.getStorageSpace());
                 return ResponseEntity.ok(response);
             } else {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("error", result.getMessage());
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest().body(ResponseUtils.errorMessage(result.getMessage()));
             }
         } catch (Exception e) {
             logger.error("API upload failed", e);
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", ErrorMessages.getZh("upload_failed") + ": " + e.getMessage());
-            response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
+            return ResponseEntity.status(500).body(ResponseUtils.errorWithDetail("upload_failed", e.getMessage()));
         }
     }
 
@@ -119,7 +104,7 @@ public class ApiController {
      */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> healthCheck() {
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> response = ResponseUtils.success();
         response.put("status", "ok");
         response.put("service", "Simple-Pic");
         return ResponseEntity.ok(response);

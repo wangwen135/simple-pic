@@ -7,6 +7,7 @@ import com.wwh.simplepic.service.AuthService;
 import com.wwh.simplepic.service.ConfigService;
 import com.wwh.simplepic.service.UserService;
 import com.wwh.simplepic.util.ErrorMessages;
+import com.wwh.simplepic.util.ResponseUtils;
 import com.wwh.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,10 +63,7 @@ public class AuthController {
         // Check if IP is locked
         if (authService.isIPLocked(ipAddress)) {
             long remainingMinutes = authService.getRemainingLockoutMinutes(ipAddress);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("error", ErrorMessages.getZh("ip_locked"));
-            result.put("error_en", ErrorMessages.getEn("ip_locked"));
+            Map<String, Object> result = ResponseUtils.error("ip_locked");
             result.put("remainingMinutes", remainingMinutes);
             return ResponseEntity.status(429).body(result);
         }
@@ -85,8 +83,7 @@ public class AuthController {
             response.addHeader("Set-Cookie", cookieHeader);
 
             User user = userService.getUser(username);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
+            Map<String, Object> result = ResponseUtils.success();
             result.put("token", token);
             result.put("user", user);
 
@@ -94,11 +91,7 @@ public class AuthController {
             return ResponseEntity.ok(result);
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", false);
-        result.put("error", ErrorMessages.getZh("invalid_credentials"));
-        result.put("error_en", ErrorMessages.getEn("invalid_credentials"));
-        return ResponseEntity.status(401).body(result);
+        return ResponseEntity.status(401).body(ResponseUtils.error("invalid_credentials"));
     }
 
     /**
@@ -117,9 +110,7 @@ public class AuthController {
                 isSecure ? "Secure" : "");
         response.addHeader("Set-Cookie", cookieHeader);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ResponseUtils.success());
     }
 
     /**
@@ -137,17 +128,10 @@ public class AuthController {
             safeUserInfo.put("storageSpaces", user.getStorageSpaces());
             safeUserInfo.put("currentStorageSpace", user.getCurrentStorageSpace());
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("user", safeUserInfo);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ResponseUtils.success("user", safeUserInfo));
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", false);
-        result.put("error", ErrorMessages.getZh("not_authenticated"));
-        result.put("error_en", ErrorMessages.getEn("not_authenticated"));
-        return ResponseEntity.status(401).body(result);
+        return ResponseEntity.status(401).body(ResponseUtils.error("not_authenticated"));
     }
 
     /**
@@ -160,17 +144,10 @@ public class AuthController {
         String storageSpace = request.get("storageSpace");
 
         if (authService.switchStorageSpace(token, storageSpace)) {
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("storageSpace", storageSpace);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ResponseUtils.success("storageSpace", storageSpace));
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", false);
-        result.put("error", ErrorMessages.getZh("failed_to_switch_storage"));
-        result.put("error_en", ErrorMessages.getEn("failed_to_switch_storage"));
-        return ResponseEntity.badRequest().body(result);
+        return ResponseEntity.badRequest().body(ResponseUtils.error("failed_to_switch_storage"));
     }
 
     /**
@@ -179,11 +156,6 @@ public class AuthController {
     @GetMapping("/config")
     public ResponseEntity<Map<String, Object>> getAuthConfig() {
         SystemConfig config = configService.getConfig();
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("anonymousUploadEnabled", config.isAnonymousUploadEnabled());
-        result.put("systemName", config.getName());
-        result.put("systemDescription", config.getDescription());
 
         // Get storage spaces that allow anonymous upload
         List<Map<String, String>> availableSpaces = new ArrayList<>();
@@ -197,6 +169,11 @@ public class AuthController {
                 }
             }
         }
+
+        Map<String, Object> result = ResponseUtils.success();
+        result.put("anonymousUploadEnabled", config.isAnonymousUploadEnabled());
+        result.put("systemName", config.getName());
+        result.put("systemDescription", config.getDescription());
         result.put("availableStorageSpaces", availableSpaces);
 
         return ResponseEntity.ok(result);
@@ -212,45 +189,27 @@ public class AuthController {
         User user = authService.getCurrentUser(token);
 
         if (user == null) {
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("error", ErrorMessages.getZh("not_authenticated"));
-            result.put("error_en", ErrorMessages.getEn("not_authenticated"));
-            return ResponseEntity.status(401).body(result);
+            return ResponseEntity.status(401).body(ResponseUtils.error("not_authenticated"));
         }
 
         String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
 
         if (currentPassword == null || newPassword == null) {
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("error", ErrorMessages.getZh("invalid_file_format"));
-            result.put("error_en", ErrorMessages.getEn("invalid_file_format"));
-            return ResponseEntity.badRequest().body(result);
+            return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_file_format"));
         }
 
         // Verify current password
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("error", ErrorMessages.getZh("invalid_current_password"));
-            result.put("error_en", ErrorMessages.getEn("invalid_current_password"));
-            return ResponseEntity.badRequest().body(result);
+            return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_current_password"));
         }
 
         // Change password
         if (userService.changePassword(user.getUsername(), newPassword)) {
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(ResponseUtils.success());
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", false);
-        result.put("error", ErrorMessages.getZh("failed_to_update_user"));
-        result.put("error_en", ErrorMessages.getEn("failed_to_update_user"));
-        return ResponseEntity.badRequest().body(result);
+        return ResponseEntity.badRequest().body(ResponseUtils.error("failed_to_update_user"));
     }
 
     /**

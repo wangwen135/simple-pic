@@ -71,6 +71,12 @@
             <version>31.1-jre</version>
         </dependency>
 
+        <!-- Caffeine for high-performance caching -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

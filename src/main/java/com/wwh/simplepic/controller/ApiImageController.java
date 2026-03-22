@@ -4,7 +4,7 @@ import com.wwh.simplepic.model.UploadResult;
 import com.wwh.simplepic.service.AuthService;
 import com.wwh.simplepic.service.ConfigService;
 import com.wwh.simplepic.service.ImageService;
-import com.wwh.simplepic.util.ErrorMessages;
+import com.wwh.simplepic.util.ResponseUtils;
 import com.wwh.simplepic.util.StorageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,12 +69,12 @@ public class ApiImageController {
             if (user == null) {
                 com.wwh.simplepic.model.SystemConfig config = configService.getConfig();
                 if (!config.isAnonymousUploadEnabled()) {
-                    return ResponseEntity.status(403).body(createErrorResponse("anonymous_upload_not_enabled"));
+                    return ResponseEntity.status(403).body(ResponseUtils.error("anonymous_upload_not_enabled"));
                 }
 
                 // Check if the specific storage space allows anonymous upload
                 if (!storageUtils.isAnonymousUploadAllowed(storageSpace)) {
-                    return ResponseEntity.status(403).body(createErrorResponse("storage_no_anonymous"));
+                    return ResponseEntity.status(403).body(ResponseUtils.error("storage_no_anonymous"));
                 }
             }
 
@@ -83,45 +83,30 @@ public class ApiImageController {
             if (result.isSuccess()) {
                 return ResponseEntity.ok(resultToMap(result));
             } else {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("error", result.getMessage());
+                Map<String, Object> response = ResponseUtils.error(result.getMessage(), result.getMessage());
                 return ResponseEntity.badRequest().body(response);
             }
         } catch (IOException e) {
             logger.error("Upload failed", e);
-            return ResponseEntity.status(500).body(createUploadFailedResponse(e.getMessage()));
+            return ResponseEntity.status(500).body(ResponseUtils.errorWithDetail("upload_failed", e.getMessage()));
         }
     }
 
-    private Map<String, Object> createErrorResponse(String errorKey) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("error", ErrorMessages.getZh(errorKey));
-        response.put("error_en", ErrorMessages.getEn(errorKey));
-        return response;
-    }
-
-    private Map<String, Object> createUploadFailedResponse(String errorMessage) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("error", ErrorMessages.getZh("upload_failed") + ": " + errorMessage);
-        response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + errorMessage);
-        return response;
-    }
-
+    /**
+     * Convert UploadResult to Map
+     * 将 UploadResult 转换为 Map
+     */
     private Map<String, Object> resultToMap(UploadResult result) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("success", result.isSuccess());
-        map.put("message", result.getMessage());
-        map.put("url", result.getUrl());
-        map.put("thumbnailUrl", result.getThumbnailUrl());
-        map.put("markdown", result.getMarkdown());
-        map.put("html", result.getHtml());
-        map.put("bbcode", result.getBbcode());
-        map.put("directLink", result.getDirectLink());
-        map.put("path", result.getPath());
-        map.put("storageSpace", result.getStorageSpace());
-        return map;
+        Map<String, Object> response = ResponseUtils.success();
+        response.put("message", result.getMessage());
+        response.put("url", result.getUrl());
+        response.put("thumbnailUrl", result.getThumbnailUrl());
+        response.put("markdown", result.getMarkdown());
+        response.put("html", result.getHtml());
+        response.put("bbcode", result.getBbcode());
+        response.put("directLink", result.getDirectLink());
+        response.put("path", result.getPath());
+        response.put("storageSpace", result.getStorageSpace());
+        return response;
     }
 }

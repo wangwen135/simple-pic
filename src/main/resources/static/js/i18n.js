@@ -237,7 +237,6 @@ const i18n = {
             password_change_failed: "密码修改失败",
             // Image management specific
             upload_to: "上传到",
-            confirm: "确认",
             copy: "复制",
             select: "选择",
             search: "搜索",
@@ -245,14 +244,7 @@ const i18n = {
             next_page: "下一页",
             parent_directory: "上级目录",
             current_directory: "当前目录",
-            directory: "目录",
-            storage: "存储空间",
-            failed: "失败",
-            please_fill_all_fields: "请填写所有字段",
-            passwords_not_match: "两次输入的密码不一致",
-            password_too_short: "密码长度至少6位",
-            password_changed: "密码修改成功",
-            password_change_failed: "密码修改失败"
+            directory: "目录"
         },
         en: {
             // Page titles
@@ -472,7 +464,6 @@ const i18n = {
             password_change_failed: "Failed to change password",
             // Image management specific
             upload_to: "Upload to",
-            confirm: "Confirm",
             copy: "Copy",
             select: "Select",
             search: "Search",
@@ -480,14 +471,7 @@ const i18n = {
             next_page: "Next",
             parent_directory: "Parent Directory",
             current_directory: "Current Directory",
-            directory: "Directory",
-            storage: "Storage",
-            failed: "Failed",
-            please_fill_all_fields: "Please fill in all fields",
-            passwords_not_match: "Passwords do not match",
-            password_too_short: "Password must be at least 6 characters",
-            password_changed: "Password changed successfully",
-            password_change_failed: "Failed to change password"
+            directory: "Directory"
         }
     },
 

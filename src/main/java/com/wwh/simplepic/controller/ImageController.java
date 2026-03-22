@@ -9,6 +9,7 @@ import com.wwh.simplepic.service.ConfigService;
 import com.wwh.simplepic.service.ImageService;
 import com.wwh.simplepic.service.ThumbnailService;
 import com.wwh.simplepic.util.ErrorMessages;
+import com.wwh.simplepic.util.ResponseUtils;
 import com.wwh.simplepic.util.SimplePicUtils;
 import com.wwh.simplepic.util.StorageUtils;
 import org.slf4j.Logger;
@@ -88,12 +89,12 @@ public class ImageController {
             if (user == null) {
                 com.wwh.simplepic.model.SystemConfig config = configService.getConfig();
                 if (!config.isAnonymousUploadEnabled()) {
-                    return ResponseEntity.status(403).body(createErrorResponse("anonymous_upload_not_enabled"));
+                    return ResponseEntity.status(403).body(ResponseUtils.error("anonymous_upload_not_enabled"));
                 }
 
                 // Check if the specific storage space allows anonymous upload
                 if (!storageUtils.isAnonymousUploadAllowed(storageSpace)) {
-                    return ResponseEntity.status(403).body(createErrorResponse("storage_no_anonymous"));
+                    return ResponseEntity.status(403).body(ResponseUtils.error("storage_no_anonymous"));
                 }
             }
 
@@ -102,39 +103,12 @@ public class ImageController {
             if (result.isSuccess()) {
                 return ResponseEntity.ok(resultToMap(result));
             } else {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("error", result.getMessage());
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest().body(ResponseUtils.errorMessage(result.getMessage()));
             }
         } catch (IOException e) {
             logger.error("Upload failed", e);
-            return ResponseEntity.status(500).body(createUploadFailedResponse(e.getMessage()));
+            return ResponseEntity.status(500).body(ResponseUtils.errorWithDetail("upload_failed", e.getMessage()));
         }
-    }
-
-    /**
-     * Create error response
-     * 创建错误响应
-     */
-    private Map<String, Object> createErrorResponse(String errorKey) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("error", ErrorMessages.getZh(errorKey));
-        response.put("error_en", ErrorMessages.getEn(errorKey));
-        return response;
-    }
-
-    /**
-     * Create upload failed response
-     * 创建上传失败响应
-     */
-    private Map<String, Object> createUploadFailedResponse(String errorMessage) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("error", ErrorMessages.getZh("upload_failed") + ": " + errorMessage);
-        response.put("error_en", ErrorMessages.getEn("upload_failed") + ": " + errorMessage);
-        return response;
     }
 
     /**
@@ -217,18 +191,18 @@ public class ImageController {
         List<ImageInfo> pagedImages = startIndex < total ?
                 images.subList(startIndex, endIndex) : new java.util.ArrayList<>();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
+        Map<String, Object> pagination = new HashMap<>();
+        pagination.put("page", page);
+        pagination.put("pageSize", pageSize);
+        pagination.put("total", total);
+        pagination.put("totalPages", totalPages);
+
+        Map<String, Object> response = ResponseUtils.success();
         response.put("images", pagedImages);
         response.put("directories", directories);
         response.put("path", path);
         response.put("storageSpace", storageSpace);
-        response.put("pagination", new HashMap<String, Object>() {{
-            put("page", page);
-            put("pageSize", pageSize);
-            put("total", total);
-            put("totalPages", totalPages);
-        }});
+        response.put("pagination", pagination);
 
         return ResponseEntity.ok(response);
     }
@@ -364,15 +338,10 @@ public class ImageController {
 
         boolean success = imageService.deleteImage(path, storageSpace);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
         if (success) {
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ResponseUtils.success());
         } else {
-            response.put("error", ErrorMessages.getZh("failed_to_delete_image"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_delete_image"));
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(ResponseUtils.error("failed_to_delete_image"));
         }
     }
 
@@ -387,11 +356,7 @@ public class ImageController {
         String storageSpace = (String) request.get("storageSpace");
 
         if (paths == null || paths.isEmpty()) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", ErrorMessages.getZh("failed_to_delete_image"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_delete_image"));
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(ResponseUtils.error("failed_to_delete_image"));
         }
 
         int successCount = 0;
@@ -405,7 +370,7 @@ public class ImageController {
             }
         }
 
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> response = ResponseUtils.success();
         response.put("success", failCount == 0);
         response.put("successCount", successCount);
         response.put("failCount", failCount);

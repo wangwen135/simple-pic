@@ -3,6 +3,7 @@ package com.wwh.simplepic.controller;
 import com.wwh.simplepic.model.*;
 import com.wwh.simplepic.service.*;
 import com.wwh.simplepic.util.ErrorMessages;
+import com.wwh.simplepic.util.ResponseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,15 +144,11 @@ public class AdminController {
 
         boolean success = storageService.createStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_create_storage"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_create_storage"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_create_storage"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -168,15 +165,11 @@ public class AdminController {
 
         boolean success = storageService.updateStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_update_storage"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_update_storage"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_update_storage"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -186,15 +179,11 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> deleteStorage(@PathVariable String name) {
         boolean success = storageService.deleteStorageSpace(name);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_delete_storage"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_delete_storage"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_delete_storage"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -234,15 +223,11 @@ public class AdminController {
 
         boolean success = userService.createUser(username, password, role, storageSpaces);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_create_user"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_create_user"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_create_user"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -262,15 +247,11 @@ public class AdminController {
 
         boolean success = userService.updateUser(username, password, role, storageSpaces);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_update_user"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_update_user"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_update_user"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -280,15 +261,11 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable String username) {
         boolean success = userService.deleteUser(username);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_delete_user"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_delete_user"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_delete_user"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -297,12 +274,7 @@ public class AdminController {
     @GetMapping("/config")
     public ResponseEntity<Map<String, Object>> getConfig() {
         SystemConfig config = configService.getConfig();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("config", config);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseUtils.success("config", config));
     }
 
     /**
@@ -311,11 +283,7 @@ public class AdminController {
     @PutMapping("/config")
     public ResponseEntity<Map<String, Object>> updateConfig(@RequestBody SystemConfig config) {
         configService.saveConfig(config);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseUtils.success());
     }
 
     /**
@@ -333,10 +301,7 @@ public class AdminController {
     @GetMapping("/theme")
     public ResponseEntity<Map<String, Object>> getTheme() {
         SystemConfig config = configService.getConfig();
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("theme", config.getTheme() != null ? config.getTheme() : "light");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseUtils.success("theme", config.getTheme() != null ? config.getTheme() : "light"));
     }
 
     /**
@@ -359,11 +324,7 @@ public class AdminController {
         config.getApiKeys().add(apiKey);
         configService.saveConfig(config);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("token", token);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ResponseUtils.success("token", token));
     }
 
     /**
@@ -375,18 +336,10 @@ public class AdminController {
         if (config.getApiKeys() != null && index >= 0 && index < config.getApiKeys().size()) {
             config.getApiKeys().remove(index);
             configService.saveConfig(config);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ResponseUtils.success());
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("error", ErrorMessages.getZh("invalid_api_key_index"));
-        response.put("error_en", ErrorMessages.getEn("invalid_api_key_index"));
-
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_api_key_index"));
     }
 
     /**
@@ -398,24 +351,20 @@ public class AdminController {
         try {
             UploadResult result = imageService.uploadImage(file, storageSpace);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", result.isSuccess());
-            response.put("message", result.getMessage());
-            response.put("url", result.getUrl());
-            response.put("path", result.getPath());
+            Map<String, Object> data = new HashMap<>();
+            data.put("success", result.isSuccess());
+            data.put("message", result.getMessage());
+            data.put("url", result.getUrl());
+            data.put("path", result.getPath());
 
             if (result.isSuccess()) {
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(data);
             } else {
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest().body(data);
             }
         } catch (IOException e) {
             logger.error("Admin upload failed", e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(response);
+            return ResponseEntity.status(500).body(ResponseUtils.errorMessage(e.getMessage()));
         }
     }
 
@@ -430,24 +379,20 @@ public class AdminController {
         try {
             UploadResult result = imageService.uploadImageToPath(file, storageSpace, targetPath);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", result.isSuccess());
-            response.put("message", result.getMessage());
-            response.put("url", result.getUrl());
-            response.put("path", result.getPath());
+            Map<String, Object> data = new HashMap<>();
+            data.put("success", result.isSuccess());
+            data.put("message", result.getMessage());
+            data.put("url", result.getUrl());
+            data.put("path", result.getPath());
 
             if (result.isSuccess()) {
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(data);
             } else {
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.badRequest().body(data);
             }
         } catch (IOException e) {
             logger.error("Admin upload failed", e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(response);
+            return ResponseEntity.status(500).body(ResponseUtils.errorMessage(e.getMessage()));
         }
     }
 
@@ -461,15 +406,11 @@ public class AdminController {
 
         boolean success = imageService.createDirectory(path, storageSpace);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_create_directory"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_create_directory"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_create_directory"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -483,15 +424,11 @@ public class AdminController {
 
         boolean success = imageService.renameDirectory(oldPath, newPath, storageSpace);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_rename_directory"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_rename_directory"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_rename_directory"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -505,15 +442,11 @@ public class AdminController {
 
         boolean success = imageService.renameImage(oldPath, newPath, storageSpace);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_rename_directory"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_rename_directory"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_rename_directory"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -527,15 +460,11 @@ public class AdminController {
 
         boolean success = imageService.moveImage(sourcePath, targetPath, storageSpace);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_rename_directory"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_rename_directory"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_rename_directory"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**
@@ -548,15 +477,11 @@ public class AdminController {
 
         boolean success = imageService.deleteDirectory(path, storageSpace);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-
-        if (!success) {
-            response.put("error", ErrorMessages.getZh("failed_to_delete_directory"));
-            response.put("error_en", ErrorMessages.getEn("failed_to_delete_directory"));
+        if (success) {
+            return ResponseEntity.ok(ResponseUtils.success());
+        } else {
+            return ResponseEntity.ok(ResponseUtils.error("failed_to_delete_directory"));
         }
-
-        return ResponseEntity.ok(response);
     }
 
     /**

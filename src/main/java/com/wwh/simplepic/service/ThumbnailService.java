@@ -1,5 +1,6 @@
 package com.wwh.simplepic.service;
 
+import com.wwh.simplepic.util.FileUtils;
 import com.wwh.simplepic.util.SimplePicUtils;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
@@ -199,7 +200,7 @@ public class ThumbnailService {
      * Get relative path from base directory
      */
     private String getRelativePath(File file, File baseDir) {
-        return SimplePicUtils.getRelativePath(file, baseDir);
+        return FileUtils.getRelativePath(file, baseDir);
     }
 
     /**

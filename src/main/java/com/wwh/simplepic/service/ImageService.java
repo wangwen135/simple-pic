@@ -4,8 +4,9 @@ import com.wwh.simplepic.model.ImageInfo;
 import com.wwh.simplepic.model.StorageSpace;
 import com.wwh.simplepic.model.SystemConfig;
 import com.wwh.simplepic.model.UploadResult;
+import com.wwh.simplepic.util.Constants;
 import com.wwh.simplepic.util.ErrorMessages;
-import com.wwh.simplepic.util.SimplePicUtils;
+import com.wwh.simplepic.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,6 @@ import java.util.stream.Collectors;
 public class ImageService {
 
     private static final Logger logger = LoggerFactory.getLogger(ImageService.class);
-
-    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "webp", "svg");
 
     @Autowired
     private StorageService storageService;
@@ -70,13 +69,6 @@ public class ImageService {
     }
 
     /**
-     * Common upload logic
-     */
-    private UploadResult doUploadImage(InputStream inputStream, String originalFilename, long fileSize, String storageSpace) throws IOException {
-        return doUploadImage(inputStream, originalFilename, fileSize, storageSpace, null);
-    }
-
-    /**
      * Common upload logic with optional target path
      */
     private UploadResult doUploadImage(InputStream inputStream, String originalFilename, long fileSize, String storageSpace, String targetPath) throws IOException {
@@ -85,9 +77,9 @@ public class ImageService {
             return UploadResult.error(ErrorMessages.getZh("invalid_filename"));
         }
 
-        String extension = SimplePicUtils.getFileExtension(originalFilename);
-        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            return UploadResult.error(ErrorMessages.getZh("file_type_not_allowed") + ": " + String.join(", ", ALLOWED_EXTENSIONS));
+        String extension = FileUtils.getFileExtension(originalFilename);
+        if (!Constants.Extensions.IMAGES.contains(extension.toLowerCase())) {
+            return UploadResult.error(ErrorMessages.getZh("file_type_not_allowed") + ": " + String.join(", ", Constants.Extensions.IMAGES));
         }
 
         // Check file size
@@ -176,7 +168,7 @@ public class ImageService {
             return UploadResult.error(ErrorMessages.getZh("file_not_found"));
         }
 
-        return doUploadImage(new java.io.FileInputStream(file), file.getName(), file.length(), storageSpace);
+        return doUploadImage(new java.io.FileInputStream(file), file.getName(), file.length(), storageSpace, null);
     }
 
     /**
@@ -243,8 +235,8 @@ public class ImageService {
             File[] files = targetDir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile() && isImageFile(file.getName())) {
-                        String relativePath = SimplePicUtils.getRelativePath(file, baseDir);
+                    if (file.isFile() && FileUtils.isImageFile(file.getName())) {
+                        String relativePath = FileUtils.getRelativePath(file, baseDir);
                         images.add(new ImageInfo(file, storageSpace, relativePath.replace(File.separator, "/")));
                     }
                 }
@@ -277,8 +269,8 @@ public class ImageService {
 
         if (files != null) {
             for (File file : files) {
-                if (file.isDirectory() && !file.getName().equals(".thumbnails")) {
-                    String relativePath = SimplePicUtils.getRelativePath(file, baseDir);
+                if (file.isDirectory() && !file.getName().equals(Constants.Directories.THUMBNAILS)) {
+                    String relativePath = FileUtils.getRelativePath(file, baseDir);
                     directories.add(relativePath.replace(File.separator, "/"));
                 }
             }
@@ -309,7 +301,7 @@ public class ImageService {
 
             if (oldFile.renameTo(newFile)) {
                 // Delete thumbnail if exists
-                File thumbDir = new File(space.getStorageDirectory(), ".thumbnails");
+                File thumbDir = new File(space.getStorageDirectory(), Constants.Directories.THUMBNAILS);
                 File oldThumb = new File(thumbDir, oldPath.replace("/", File.separator));
                 if (oldThumb.exists()) {
                     oldThumb.delete();
@@ -348,7 +340,7 @@ public class ImageService {
 
             if (sourceFile.renameTo(targetFile)) {
                 // Delete thumbnail if exists
-                File thumbDir = new File(space.getStorageDirectory(), ".thumbnails");
+                File thumbDir = new File(space.getStorageDirectory(), Constants.Directories.THUMBNAILS);
                 File oldThumb = new File(thumbDir, sourcePath.replace("/", File.separator));
                 if (oldThumb.exists()) {
                     oldThumb.delete();
@@ -507,10 +499,10 @@ public class ImageService {
 
         if (files != null) {
             for (File file : files) {
-                if (file.isFile() && isImageFile(file.getName())) {
-                    String relativePath = SimplePicUtils.getRelativePath(file, baseDir);
+                if (file.isFile() && FileUtils.isImageFile(file.getName())) {
+                    String relativePath = FileUtils.getRelativePath(file, baseDir);
                     images.add(new ImageInfo(file, storageSpace, relativePath.replace(File.separator, "/")));
-                } else if (file.isDirectory() && !file.getName().equals(".thumbnails")) {
+                } else if (file.isDirectory() && !file.getName().equals(Constants.Directories.THUMBNAILS)) {
                     images.addAll(findAllImages(file, baseDir, storageSpace));
                 }
             }
@@ -540,15 +532,7 @@ public class ImageService {
      * Get file extension
      */
     private String getExtension(String filename) {
-        return SimplePicUtils.getFileExtension(filename);
-    }
-
-    /**
-     * Check if file is an image
-     */
-    private boolean isImageFile(String filename) {
-        String lower = filename.toLowerCase();
-        return ALLOWED_EXTENSIONS.contains(lower.substring(lower.lastIndexOf('.') + 1));
+        return FileUtils.getFileExtension(filename);
     }
 
     /**

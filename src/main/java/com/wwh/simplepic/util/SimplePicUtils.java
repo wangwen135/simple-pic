@@ -36,38 +36,6 @@ public class SimplePicUtils {
     }
 
     /**
-     * Get relative path from base directory
-     *
-     * @param file    the file
-     * @param baseDir the base directory
-     * @return relative path
-     */
-    public static String getRelativePath(File file, File baseDir) {
-        String basePath = baseDir.getAbsolutePath();
-        String filePath = file.getAbsolutePath();
-
-        if (filePath.startsWith(basePath)) {
-            return filePath.substring(basePath.length() + 1);
-        }
-
-        return file.getName();
-    }
-
-    /**
-     * Get file extension from filename
-     *
-     * @param filename the filename
-     * @return file extension (without dot), empty string if no extension
-     */
-    public static String getFileExtension(String filename) {
-        int lastDot = filename.lastIndexOf('.');
-        if (lastDot > 0 && lastDot < filename.length() - 1) {
-            return filename.substring(lastDot + 1);
-        }
-        return "";
-    }
-
-    /**
      * Validate path to prevent path traversal attacks
      * 验证路径以防止路径遍历攻击
      *

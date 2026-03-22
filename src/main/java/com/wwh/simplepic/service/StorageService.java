@@ -3,6 +3,10 @@ package com.wwh.simplepic.service;
 import com.wwh.simplepic.model.StorageSpace;
 import com.wwh.simplepic.model.StorageStats;
 import com.wwh.simplepic.model.SystemConfig;
+import com.wwh.simplepic.util.Constants;
+import com.wwh.simplepic.util.FileUtils;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Storage service
@@ -27,8 +31,17 @@ public class StorageService {
     @Autowired
     private UserService userService;
 
-    private final Map<String, StorageStats> statsCache = new ConcurrentHashMap<>();
-    private final Map<String, Long> lastStatsUpdate = new ConcurrentHashMap<>();
+    /**
+     * Storage statistics cache with Caffeine
+     * 使用 Caffeine 缓存存储统计数据
+     * - 5 minutes TTL after write
+     * - Maximum 100 entries
+     * - Automatically cleanup expired entries
+     */
+    private final Cache<String, StorageStats> statsCache = Caffeine.newBuilder()
+            .expireAfterWrite(Constants.Cache.STATS_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
+            .maximumSize(Constants.Cache.STATS_CACHE_MAX_SIZE)
+            .build();
 
     /**
      * Get all storage spaces
@@ -172,7 +185,7 @@ public class StorageService {
         // Automatically assign new storage space to all admin users
         if (config.getUsers() != null) {
             for (SystemConfig.User user : config.getUsers()) {
-                if ("ADMIN".equals(user.getRole()) && !user.getStorageSpaces().contains(name)) {
+                if (Constants.Roles.ADMIN.equals(user.getRole()) && !user.getStorageSpaces().contains(name)) {
                     user.getStorageSpaces().add(name);
                     logger.info("Automatically assigned storage space {} to admin user {}", name, user.getUsername());
                 }
@@ -181,8 +194,11 @@ public class StorageService {
 
         configService.saveConfig(config);
 
+        // Clear cache after creating storage space
+        clearStatsCache(name);
+
         // Create thumbnails directory if not exists
-        File thumbnailsDir = new File(path, ".thumbnails");
+        File thumbnailsDir = new File(path, Constants.Directories.THUMBNAILS);
         if (!thumbnailsDir.exists()) {
             try {
                 thumbnailsDir.mkdirs();
@@ -230,7 +246,7 @@ public class StorageService {
         }
 
         // Create thumbnails directory if not exists
-        File thumbnailsDir = new File(path, ".thumbnails");
+        File thumbnailsDir = new File(path, Constants.Directories.THUMBNAILS);
         if (!thumbnailsDir.exists()) {
             try {
                 thumbnailsDir.mkdirs();
@@ -250,6 +266,10 @@ public class StorageService {
 
                 configService.saveConfig(config);
                 logger.info("Storage space {} updated", name);
+
+                // Clear cache after updating storage space
+                clearStatsCache(name);
+
                 return true;
             }
         }
@@ -273,8 +293,7 @@ public class StorageService {
                 logger.info("Storage space {} deleted", name);
 
                 // Clear cache
-                statsCache.remove(name);
-                lastStatsUpdate.remove(name);
+                statsCache.invalidate(name);
 
                 return true;
             }
@@ -287,12 +306,13 @@ public class StorageService {
      * Get storage statistics
      */
     public StorageStats getStorageStats(String name) {
-        // Check cache (5 minute TTL)
-        Long lastUpdate = lastStatsUpdate.get(name);
-        if (lastUpdate != null && System.currentTimeMillis() - lastUpdate < 300000) {
-            return statsCache.get(name);
+        // Try to get from cache first
+        StorageStats cached = statsCache.getIfPresent(name);
+        if (cached != null) {
+            return cached;
         }
 
+        // Cache miss - calculate and cache
         StorageSpace space = getStorageSpace(name);
         if (space == null) {
             return null;
@@ -319,9 +339,8 @@ public class StorageService {
 
         stats.setUsagePercentage((double) usedSize / space.getMaxSizeInBytes() * 100);
 
-        // Update cache
+        // Update cache (will automatically expire after 5 minutes)
         statsCache.put(name, stats);
-        lastStatsUpdate.put(name, System.currentTimeMillis());
 
         return stats;
     }
@@ -330,52 +349,15 @@ public class StorageService {
      * Calculate directory size recursively
      */
     private long calculateDirectorySize(File dir) {
-        long size = 0;
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    size += file.length();
-                } else if (file.isDirectory() && !file.getName().equals(".thumbnails")) {
-                    size += calculateDirectorySize(file);
-                }
-            }
-        }
-        return size;
+        return FileUtils.calculateDirectorySize(dir);
     }
 
     /**
      * Count images and directories
      */
     private int[] countImagesAndDirectories(File dir) {
-        int imageCount = 0;
-        int dirCount = 0;
-
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile() && isImageFile(file.getName())) {
-                    imageCount++;
-                } else if (file.isDirectory() && !file.getName().equals(".thumbnails")) {
-                    dirCount++;
-                    int[] subCounts = countImagesAndDirectories(file);
-                    imageCount += subCounts[0];
-                    dirCount += subCounts[1];
-                }
-            }
-        }
-
-        return new int[]{imageCount, dirCount};
-    }
-
-    /**
-     * Check if file is an image
-     */
-    private boolean isImageFile(String filename) {
-        String lower = filename.toLowerCase();
-        return lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
-               lower.endsWith(".png") || lower.endsWith(".gif") ||
-               lower.endsWith(".webp") || lower.endsWith(".svg");
+        return FileUtils.countFiles(dir, FileUtils::isImageFile,
+                name -> name.equals(Constants.Directories.THUMBNAILS));
     }
 
     /**
@@ -391,11 +373,9 @@ public class StorageService {
      */
     public void clearStatsCache(String name) {
         if (name != null) {
-            statsCache.remove(name);
-            lastStatsUpdate.remove(name);
+            statsCache.invalidate(name);
         } else {
-            statsCache.clear();
-            lastStatsUpdate.clear();
+            statsCache.invalidateAll();
         }
     }
 
