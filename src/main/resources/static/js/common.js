@@ -123,7 +123,8 @@ function updateThemeIcon(iconId = 'themeIcon') {
     const icon = document.getElementById(iconId);
     if (icon) {
         const theme = i18n.getTheme();
-        icon.innerHTML = theme === 'light' ? THEME_ICONS.sun : THEME_ICONS.moon;
+        // 浅色时显示月亮（可切换到深色），深色时显示太阳（可切换到浅色）
+        icon.innerHTML = theme === 'light' ? THEME_ICONS.moon : THEME_ICONS.sun;
     }
 }
 
@@ -156,7 +157,8 @@ function updateLanguageText(textId = 'langText') {
     const text = document.getElementById(textId);
     if (text) {
         const lang = i18n.getLanguage();
-        text.textContent = lang === 'zh' ? '中文' : 'EN';
+        // 中文时显示 EN（可切换到英文），英文时显示 中文（可切换到中文）
+        text.textContent = lang === 'zh' ? 'EN' : '中文';
     }
 }
 

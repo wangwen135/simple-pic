@@ -120,6 +120,11 @@ const AdminComponents = {
     async loadUserInfo() {
         try {
             const response = await fetch('/api/auth/me');
+            if (response.status === 401) {
+                // 未登录，跳转到登录页面
+                window.location.href = '/admin/login.html';
+                return;
+            }
             const data = await response.json();
             if (data.success && data.user) {
                 const usernameEl = document.getElementById('username');
@@ -131,9 +136,14 @@ const AdminComponents = {
                     userInfo.addEventListener('click', this.toggleUserMenu);
                     userInfo.style.cursor = 'pointer';
                 }
+            } else {
+                // 未登录，跳转到登录页面
+                window.location.href = '/admin/login.html';
             }
         } catch (error) {
             console.error('Failed to load user info:', error);
+            // 请求失败也可能是未登录，跳转到登录页面
+            window.location.href = '/admin/login.html';
         }
     },
 
@@ -207,7 +217,8 @@ const AdminComponents = {
         const themeIcon = document.getElementById('themeIcon');
         if (themeIcon && typeof i18n !== 'undefined') {
             const theme = i18n.getTheme();
-            themeIcon.innerHTML = theme === 'light' ? this.sunIcon : this.moonIcon;
+            // 浅色时显示月亮（可切换到深色），深色时显示太阳（可切换到浅色）
+            themeIcon.innerHTML = theme === 'light' ? this.moonIcon : this.sunIcon;
         }
     },
 
@@ -218,7 +229,8 @@ const AdminComponents = {
         const langText = document.getElementById('langText');
         if (langText && typeof i18n !== 'undefined') {
             const lang = i18n.getLanguage();
-            langText.textContent = lang === 'zh' ? '中文' : 'EN';
+            // 中文时显示 EN（可切换到英文），英文时显示 中文（可切换到中文）
+            langText.textContent = lang === 'zh' ? 'EN' : '中文';
         }
     },
 

@@ -2,6 +2,7 @@ package com.wwh.simplepic.config;
 
 import com.wwh.simplepic.interceptor.AuthInterceptor;
 import com.wwh.simplepic.interceptor.RateLimitInterceptor;
+import com.wwh.simplepic.model.SystemConfig;
 import com.wwh.simplepic.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +44,30 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .resourceChain(true);
+
+        // Serve images from storage spaces
+        // Map /image/{storageName}/** to storage directory
+        SystemConfig config = configService.getConfig();
+        if (config != null && config.getStorageSpaces() != null) {
+            for (SystemConfig.StorageSpace space : config.getStorageSpaces()) {
+                String storagePath = space.getPath();
+                if (storagePath != null && !storagePath.isEmpty()) {
+                    // Ensure path ends with separator
+                    if (!storagePath.endsWith("/") && !storagePath.endsWith("\\")) {
+                        storagePath += "/";
+                    }
+                    // Add file:// prefix for absolute paths
+                    String location = storagePath.startsWith("/") ? "file:" + storagePath : storagePath;
+
+                    // Register resource handler for this storage space
+                    // Support both /image/{name}/** and /images/{name}/** for compatibility
+                    registry.addResourceHandler("/image/" + space.getName() + "/**")
+                            .addResourceLocations(location);
+                    registry.addResourceHandler("/images/" + space.getName() + "/**")
+                            .addResourceLocations(location);
+                }
+            }
+        }
     }
 
     /**
@@ -85,6 +110,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/health",
                         "/api/upload",
                         "/image/**",
+                        "/images/**",
                         "/api/auth/**",
                         "/login.html",
                         "/css/**",

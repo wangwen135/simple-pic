@@ -143,7 +143,8 @@
 
         function updateThemeIcon() {
             const theme = i18n.getTheme();
-            themeIcon.innerHTML = theme === 'light' ? sunIcon : moonIcon;
+            // 浅色时显示月亮（可切换到深色），深色时显示太阳（可切换到浅色）
+            themeIcon.innerHTML = theme === 'light' ? moonIcon : sunIcon;
         }
 
         // Language toggle
@@ -154,7 +155,8 @@
 
         function updateLangText() {
             const lang = i18n.getLanguage();
-            langText.textContent = lang === 'zh' ? '中文' : 'EN';
+            // 中文时显示 EN（可切换到英文），英文时显示 中文（可切换到中文）
+            langText.textContent = lang === 'zh' ? 'EN' : '中文';
         }
 
         // Load system info
