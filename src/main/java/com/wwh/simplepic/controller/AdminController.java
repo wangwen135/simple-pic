@@ -310,6 +310,7 @@ public class AdminController {
     @PostMapping("/apikeys")
     public ResponseEntity<Map<String, Object>> generateApiKey(@RequestBody Map<String, String> request) {
         String storageSpace = request.get("storageSpace");
+        String remark = request.get("remark");
 
         SystemConfig config = configService.getConfig();
         if (config.getApiKeys() == null) {
@@ -320,6 +321,7 @@ public class AdminController {
         SystemConfig.ApiKey apiKey = new SystemConfig.ApiKey();
         apiKey.setToken(token);
         apiKey.setStorageSpace(storageSpace);
+        apiKey.setRemark(remark);
 
         config.getApiKeys().add(apiKey);
         configService.saveConfig(config);

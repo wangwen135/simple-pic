@@ -61,5 +61,6 @@ public class SystemConfig {
     public static class ApiKey {
         private String token;
         private String storageSpace;
+        private String remark; // 备注信息
     }
 }

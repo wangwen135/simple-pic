@@ -19,10 +19,38 @@
     <div class="flex flex-1 overflow-hidden">
         <div id="sidebar-container" class="flex-shrink-0"></div>
         <main class="flex-1 overflow-y-auto p-8">
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center justify-between mb-6">
                 <h1 class="text-3xl font-bold" data-i18n="api_key_management">API Keys</h1>
                 <button onclick="showGenerateModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors" data-i18n="generate_api_key">Generate API Key</button>
             </div>
+
+            <!-- API Usage Instructions -->
+            <div class="glass rounded-xl p-6 mb-6">
+                <h2 class="text-lg font-semibold text-primary mb-4">📖 使用说明 / API Usage</h2>
+                <div class="space-y-4 text-sm text-secondary">
+                    <div>
+                        <p class="font-semibold text-primary mb-2">1. 上传图片接口 / Upload Image</p>
+                        <code class="block bg-slate-800 text-green-400 p-3 rounded-lg overflow-x-auto">
+                            POST /api/upload<br>
+                            Authorization: Bearer &lt;your_api_key&gt;<br>
+                            Content-Type: multipart/form-data<br>
+                            file: &lt;image_file&gt;
+                        </code>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-primary mb-2">2. 示例 / Example</p>
+                        <code class="block bg-slate-800 text-green-400 p-3 rounded-lg overflow-x-auto">
+                            curl -X POST http://localhost:8080/api/upload \<br>
+                            &nbsp;&nbsp;-H "Authorization: Bearer YOUR_API_KEY" \<br>
+                            &nbsp;&nbsp;-F "file=@image.jpg"
+                        </code>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        ⚠️ API Key 用于程序调用，请妥善保管。泄露后可随时删除重新生成。
+                    </div>
+                </div>
+            </div>
+
             <div class="glass rounded-xl p-6">
                 <div id="apikeys-list" class="space-y-4">
                     <p class="text-slate-500 text-center py-8">Loading...</p>
@@ -42,6 +70,10 @@
                 <select id="generate-storage" class="w-full px-4 py-2 input-field rounded-lg">
                     <option value="" disabled selected>Loading...</option>
                 </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-secondary text-sm mb-1"><span data-i18n="remark">Remark</span></label>
+                <input type="text" id="generate-remark" class="w-full px-4 py-2 input-field rounded-lg" data-i18n-placeholder="remark_placeholder" placeholder="Optional remark for this API key">
             </div>
             <button onclick="generateApiKey()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" data-i18n="save">Generate</button>
             <button onclick="hideGenerateModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">Cancel</button>
@@ -105,18 +137,89 @@
 
         function renderApiKeys(apikeys) {
             const container = document.getElementById('apikeys-list');
+
+            if (apikeys.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center py-8" data-i18n="no_data">No API keys found</p>';
+                i18n.applyLanguage();
+                return;
+            }
+
             container.innerHTML = apikeys.map((k, i) => `
-                <div class="p-4 rounded-lg card-item flex items-center justify-between">
-                    <div>
-                        <p class="text-primary font-mono text-sm">${k.token.substring(0, 16)}...</p>
-                        <p class="text-secondary text-xs">Storage: ${k.storageSpace}</p>
+                <div class="p-4 rounded-lg card-item">
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <span class="text-sm text-muted whitespace-nowrap" data-i18n="storage_space_for_key">Storage Space</span>
+                            <span class="text-sm text-muted">:</span>
+                            <span class="font-bold text-primary">${k.storageSpace}</span>
+                        </div>
+                        <button onclick="deleteApiKey(${i})" class="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" title="Delete">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
                     </div>
-                    <button onclick="deleteApiKey(${i})" class="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
+                    ${k.remark ? `
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-sm text-muted whitespace-nowrap" data-i18n="remark">Remark</span>
+                        <span class="text-sm text-muted">:</span>
+                        <span class="text-sm text-secondary truncate">${k.remark}</span>
+                    </div>
+                    ` : ''}
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-muted whitespace-nowrap">API Key</span>
+                        <span class="text-sm text-muted">:</span>
+                        <code id="token-${i}" class="flex-1 font-mono text-sm bg-slate-700/50 dark:bg-slate-800 px-3 py-1.5 rounded break-all text-primary">${k.token}</code>
+                        <button onclick="copyToken(${i})" class="p-1.5 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors" title="Copy">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"></rect>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-            `).join('') || '<p class="text-muted text-center py-8" data-i18n="no_data">No API keys found</p>';
+            `).join('');
             i18n.applyLanguage();
+        }
+
+        function copyToken(index) {
+            const tokenElement = document.getElementById(`token-${index}`);
+            if (tokenElement) {
+                const token = tokenElement.textContent.trim();
+
+                // 优先使用 Clipboard API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(token).then(() => {
+                        Toast.success(i18n.t('link_copied'));
+                    }).catch(() => {
+                        fallbackCopy(token);
+                    });
+                } else {
+                    fallbackCopy(token);
+                }
+            }
+        }
+
+        function fallbackCopy(text) {
+            // 创建临时文本框进行复制
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    Toast.success(i18n.t('link_copied'));
+                } else {
+                    Toast.error(i18n.t('copy_failed'));
+                }
+            } catch (err) {
+                Toast.error(i18n.t('copy_failed'));
+            }
+
+            document.body.removeChild(textarea);
         }
 
         function showGenerateModal() {
@@ -129,17 +232,19 @@
 
         async function generateApiKey() {
             const storageSpace = document.getElementById('generate-storage').value;
+            const remark = document.getElementById('generate-remark').value;
 
             try {
                 const response = await fetch('/api/admin/apikeys', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ storageSpace })
+                    body: JSON.stringify({ storageSpace, remark })
                 });
                 const result = await response.json();
 
                 if (result.success) {
-                    Toast.info(i18n.t('api_key_generated') + ': ' + result.token);
+                    Toast.success(i18n.t('api_key_generated'));
+                    document.getElementById('generate-remark').value = '';
                     hideGenerateModal();
                     loadApiKeys();
                 } else {

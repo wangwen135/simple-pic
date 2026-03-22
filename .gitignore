@@ -128,3 +128,6 @@ test-images/
 *.test.jpg
 /.claude/
 /CLAUDE.md
+
+# Development scripts
+restart.sh

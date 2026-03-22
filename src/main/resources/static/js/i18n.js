@@ -161,6 +161,8 @@ const i18n = {
             storage_space_for_key: "存储空间",
             api_key_generated: "API 密钥已生成",
             api_key_deleted: "API 密钥已删除",
+            remark: "备注",
+            remark_placeholder: "可选，用于标识此 API 密钥的用途",
 
             // Admin - Images
             image_management: "图片管理",
@@ -388,6 +390,8 @@ const i18n = {
             storage_space_for_key: "Storage Space",
             api_key_generated: "API key generated",
             api_key_deleted: "API key deleted",
+            remark: "Remark",
+            remark_placeholder: "Optional, used to identify the purpose of this API key",
 
             // Admin - Images
             image_management: "Image Management",

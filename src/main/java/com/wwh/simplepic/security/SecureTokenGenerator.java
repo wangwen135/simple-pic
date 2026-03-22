@@ -1,7 +1,6 @@
 package com.wwh.simplepic.security;
 
 import java.security.SecureRandom;
-import java.util.Base64;
 
 /**
  * Secure token generator
@@ -13,9 +12,15 @@ public class SecureTokenGenerator {
     private static final int DEFAULT_TOKEN_LENGTH = 32;
 
     /**
+     * Character set for alphanumeric tokens (letters and numbers only)
+     * 不包含特殊字符的字符集（仅字母和数字）
+     */
+    private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    /**
      * Generate a cryptographically secure random token
      *
-     * @return Base64-encoded random token
+     * @return alphanumeric random token
      */
     public static String generateToken() {
         return generateToken(DEFAULT_TOKEN_LENGTH);
@@ -24,24 +29,23 @@ public class SecureTokenGenerator {
     /**
      * Generate a cryptographically secure random token with specified length
      *
-     * @param length number of random bytes (before Base64 encoding)
-     * @return Base64-encoded random token
+     * @param length length of the token
+     * @return alphanumeric random token
      */
     public static String generateToken(int length) {
-        byte[] randomBytes = new byte[length];
-        SECURE_RANDOM.nextBytes(randomBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(ALPHANUMERIC.charAt(SECURE_RANDOM.nextInt(ALPHANUMERIC.length())));
+        }
+        return sb.toString();
     }
 
     /**
-     * Generate a random string for API keys
+     * Generate a random string for API keys (alphanumeric only, no special characters)
      *
-     * @return random string
+     * @return 64-character alphanumeric random string
      */
     public static String generateApiKeyToken() {
-        // Generate a longer token for API keys
-        byte[] randomBytes = new byte[48];
-        SECURE_RANDOM.nextBytes(randomBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        return generateToken(64);
     }
 }
