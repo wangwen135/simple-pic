@@ -279,10 +279,11 @@ public class AdminController {
 
     /**
      * Update system config
+     * Only updates system settings, preserves users, storage spaces, and API keys
      */
     @PutMapping("/config")
     public ResponseEntity<Map<String, Object>> updateConfig(@RequestBody SystemConfig config) {
-        configService.saveConfig(config);
+        configService.updateSystemSettings(config);
         return ResponseEntity.ok(ResponseUtils.success());
     }
 

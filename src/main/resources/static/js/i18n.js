@@ -70,6 +70,9 @@ const i18n = {
             remember_me: "记住我",
             sign_in: "登录",
             upload_without_login: "匿名上传",
+            or: "或",
+            anonymous_upload: "匿名上传",
+            go_upload: "进入上传",
             entering_username: "请输入用户名",
             entering_password: "请输入密码",
             signing_in: "登录中...",
@@ -115,6 +118,7 @@ const i18n = {
             edit_storage: "编辑存储空间",
             delete_storage: "删除存储空间",
             allow_anonymous: "允许匿名上传",
+            anonymous_requires_global_enabled: "需要在系统设置中启用匿名上传功能",
             unit_mb: "MB",
             unit_gb: "GB",
             unit_tb: "TB",
@@ -153,6 +157,8 @@ const i18n = {
             watermark_position: "水印位置",
             watermark_opacity: "水印透明度",
             security_settings: "安全设置",
+            system_settings_warning_title: "系统设置保存说明",
+            system_settings_warning_desc: "此操作仅保存系统配置（名称、描述、水印、限流等），不会影响用户、存储空间和 API 密钥等数据。",
 
             // Admin - API Keys
             api_key_management: "API 密钥管理",
@@ -226,6 +232,7 @@ const i18n = {
             no_storage_for_anonymous: "没有存储空间允许匿名上传",
             no_storage_assigned: "您没有被分配任何存储空间，请联系管理员",
             select_storage_for_upload: "请选择上传存储空间",
+            anonymous_user: "匿名用户",
 
             // Change password
             change_password: "修改密码",
@@ -300,6 +307,9 @@ const i18n = {
             remember_me: "Remember me",
             sign_in: "Sign In",
             upload_without_login: "Upload without login",
+            or: "or",
+            anonymous_upload: "Anonymous Upload",
+            go_upload: "Go Upload",
             entering_username: "Enter your username",
             entering_password: "Enter your password",
             signing_in: "Signing in...",
@@ -345,6 +355,7 @@ const i18n = {
             edit_storage: "Edit Storage Space",
             delete_storage: "Delete Storage Space",
             allow_anonymous: "Allow Anonymous Upload",
+            anonymous_requires_global_enabled: "Requires anonymous upload to be enabled in system settings",
             unit_mb: "MB",
             unit_gb: "GB",
             unit_tb: "TB",
@@ -382,6 +393,9 @@ const i18n = {
             watermark_content: "Watermark Content",
             watermark_position: "Watermark Position",
             watermark_opacity: "Watermark Opacity",
+
+            system_settings_warning_title: "System Settings Notice",
+            system_settings_warning_desc: "This operation only saves system configuration (name, description, watermark, rate limit, etc.) and will not affect users, storage spaces, and API keys.",
 
             // Admin - API Keys
             api_key_management: "API Key Management",
@@ -455,6 +469,7 @@ const i18n = {
             no_storage_for_anonymous: "No storage spaces allow anonymous upload",
             no_storage_assigned: "You have not been assigned any storage space, please contact the administrator",
             select_storage_for_upload: "Please select a storage space for upload",
+            anonymous_user: "Anonymous",
 
             // Change password
             change_password: "Change Password",

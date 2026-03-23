@@ -101,7 +101,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (session == null) {
                 // Not logged in, check if anonymous upload is enabled
                 SystemConfig config = configService.getConfig();
-                if (!config.isAnonymousUploadEnabled()) {
+                if (!config.isAnonymousUploadEnabled() || storageUtils.findAnonymousUploadSpace() == null) {
                     // Anonymous upload not enabled, redirect to login
                     response.sendRedirect("/login.html");
                     return false;

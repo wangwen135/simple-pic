@@ -91,14 +91,20 @@
 
         <!-- Anonymous upload link -->
         <div id="anonymousSection" class="mt-6 text-center hidden">
-            <a href="/upload.html" id="anonymousLink" class="text-accent hover:text-accent-hover text-sm transition-colors" data-i18n="upload_without_login">
-                Upload image without login →
+            <a href="/upload.html" id="anonymousLink" class="btn-secondary w-full py-3 rounded-lg text-white font-semibold inline-flex items-center justify-center space-x-2 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span data-i18n="anonymous_upload">Anonymous Upload</span>
             </a>
-            <p id="anonymousNotAllowed" class="hidden text-muted text-sm" data-i18n="anonymous_upload_not_allowed"></p>
-            <div id="anonymousStorageSelector" class="hidden mt-4">
-                <p class="text-sm text-slate-400 mb-2" data-i18n="select_storage_for_upload"></p>
+
+            <div id="anonymousStorageSelector" class="hidden mt-3">
+                <p class="text-xs text-slate-400 mb-2" data-i18n="select_storage_for_upload"></p>
                 <select id="anonymousStorage" class="input-field w-full px-4 py-2 rounded-lg text-sm">
                 </select>
+                <button id="anonymousGoBtn" class="btn-primary w-full mt-2 py-2 rounded-lg text-white text-sm" data-i18n="go_upload">
+                    Go Upload
+                </button>
             </div>
         </div>
     </div>
@@ -190,29 +196,33 @@
                         // Hide anonymous upload completely
                         anonymousSection.classList.add('hidden');
                     } else if (data.availableStorageSpaces && data.availableStorageSpaces.length > 0) {
-                        // Show storage selector for anonymous upload
-                        anonymousLink.classList.add('hidden');
-                        anonymousNotAllowed.classList.add('hidden');
-                        anonymousStorageSelector.classList.remove('hidden');
+                        // Show anonymous upload section
+                        anonymousSection.classList.remove('hidden');
 
-                        // Populate storage options
-                        anonymousStorage.innerHTML = data.availableStorageSpaces.map(space =>
-                            `<option value="${space.name}">${space.name}</option>`
-                        ).join('');
+                        if (data.availableStorageSpaces.length === 1) {
+                            // Only one storage, link directly to upload page
+                            anonymousLink.href = `/upload.html?storage=${data.availableStorageSpaces[0].name}`;
+                            anonymousStorageSelector.classList.add('hidden');
+                        } else {
+                            // Multiple storages, show selector
+                            anonymousLink.classList.add('hidden');
+                            anonymousStorageSelector.classList.remove('hidden');
 
-                        // Add click handler to storage select
-                        anonymousStorage.addEventListener('change', () => {
-                            const selectedSpace = anonymousStorage.value;
-                            const selectedStorageData = data.availableStorageSpaces.find(s => s.name === selectedSpace);
-                            if (selectedStorageData) {
+                            // Populate storage options
+                            anonymousStorage.innerHTML = data.availableStorageSpaces.map(space =>
+                                `<option value="${space.name}">${space.name}</option>`
+                            ).join('');
+
+                            // Add click handler to go button
+                            document.getElementById('anonymousGoBtn').addEventListener('click', () => {
+                                const selectedSpace = anonymousStorage.value;
                                 window.location.href = `/upload.html?storage=${selectedSpace}`;
-                            }
-                        });
+                            });
+                        }
+                        i18n.applyLanguage();
                     } else {
                         // No storage allows anonymous upload
-                        anonymousLink.classList.add('hidden');
-                        anonymousNotAllowed.classList.remove('hidden');
-                        i18n.applyLanguage();
+                        anonymousSection.classList.add('hidden');
                     }
                 }
             } catch (error) {

@@ -294,6 +294,45 @@ public class ConfigService {
     }
 
     /**
+     * Update system settings only (name, description, watermark, rate limit, etc.)
+     * Preserves users, storage spaces, and API keys
+     * 只更新系统设置（名称、描述、水印、限流等），保留用户、存储空间和 API 密钥
+     */
+    public void updateSystemSettings(SystemConfig newSettings) {
+        SystemConfig currentConfig = getConfig();
+
+        // Update only system settings fields
+        currentConfig.setName(newSettings.getName());
+        currentConfig.setDescription(newSettings.getDescription());
+        currentConfig.setAnonymousUploadEnabled(newSettings.isAnonymousUploadEnabled());
+        currentConfig.setAllowedOrigins(newSettings.getAllowedOrigins());
+
+        // Watermark settings
+        currentConfig.setWatermarkEnabled(newSettings.isWatermarkEnabled());
+        currentConfig.setWatermarkType(newSettings.getWatermarkType());
+        currentConfig.setWatermarkContent(newSettings.getWatermarkContent());
+        currentConfig.setWatermarkPosition(newSettings.getWatermarkPosition());
+        currentConfig.setWatermarkOpacity(newSettings.getWatermarkOpacity());
+
+        // Security settings
+        currentConfig.setRateLimitEnabled(newSettings.isRateLimitEnabled());
+        currentConfig.setMaxRequests(newSettings.getMaxRequests());
+        currentConfig.setTimeWindow(newSettings.getTimeWindow());
+
+        // Frontend settings
+        currentConfig.setTheme(newSettings.getTheme());
+        currentConfig.setItemsPerPage(newSettings.getItemsPerPage());
+
+        // Login lockout settings
+        currentConfig.setLoginLockoutEnabled(newSettings.isLoginLockoutEnabled());
+        currentConfig.setMaxFailedAttempts(newSettings.getMaxFailedAttempts());
+        currentConfig.setLockoutMinutes(newSettings.getLockoutMinutes());
+
+        // Save the updated config
+        saveConfig(currentConfig);
+    }
+
+    /**
      * Generate map from SystemConfig for YAML dumping
      */
     @SuppressWarnings("unchecked")

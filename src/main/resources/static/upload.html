@@ -581,13 +581,14 @@
                 // Update user info with username and storage in same container
                 // Use textContent for username to prevent XSS
                 userInfo.innerHTML = `
-                    <div class="relative">
-                        <button class="flex items-center space-x-1 text-sm font-medium hover:text-accent transition-colors" onclick="toggleUserMenu()">
-                            <span class="username-span"></span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
+                    <div class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info cursor-pointer" onclick="toggleUserMenu()">
+                        <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span class="username-span text-sm text-primary"></span>
+                        <svg class="w-3 h-3 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
                     </div>
                 `;
                 userInfo.querySelector('.username-span').textContent = currentUser.username;
@@ -596,6 +597,22 @@
                     adminLink.classList.remove('hidden');
                 }
                 anonymousStorageSelector.classList.add('hidden');
+            } else {
+                // Anonymous user - show login button with user info style
+                userInfo.innerHTML = `
+                    <div class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info cursor-pointer">
+                        <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <a href="/login.html" class="text-sm text-primary hover:text-accent transition-colors flex items-center space-x-1">
+                            <span data-i18n="not_logged_in">Not logged in</span>
+                            <svg class="w-3 h-3 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
+                        </a>
+                    </div>
+                `;
+                i18n.applyLanguage();
             }
         }
 

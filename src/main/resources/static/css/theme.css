@@ -216,6 +216,7 @@ header.glass {
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 [data-theme="light"] .theme-btn,
@@ -232,6 +233,14 @@ header.glass {
 .admin-btn:hover,
 #admin-link:hover {
     background: rgba(59, 130, 246, 0.2);
+}
+
+/* Ensure buttons are clickable */
+.theme-btn,
+.lang-btn {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 101;
 }
 
 /* Stat card utility */
@@ -254,6 +263,26 @@ header.glass {
 .user-info {
     background: var(--bg-tertiary);
     color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .user-info {
+    background: #334155;
+    border-color: #475569;
+}
+
+.user-info:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .user-info:hover {
+    background: #1e293b;
+    border-color: #60a5fa;
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
 }
 
 /* Logout button */
