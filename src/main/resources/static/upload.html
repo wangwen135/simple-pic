@@ -253,7 +253,12 @@
             <div class="flex items-center space-x-3 flex-shrink-0">
                 <!-- User info -->
                 <div id="user-info" class="flex items-center mr-2">
-                    <a href="/login.html" class="login-link text-sm" data-i18n="not_logged_in">Not logged in</a>
+                    <a href="/login.html" class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info cursor-pointer text-sm text-primary hover:text-accent transition-colors">
+                        <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span data-i18n="not_logged_in">Not logged in</span>
+                    </a>
                 </div>
 
                 <button id="admin-link" onclick="window.location.href='/admin/dashboard.html'" class="admin-link admin-btn hidden px-3 py-2 rounded-lg text-sm" data-i18n="admin_panel">
@@ -600,17 +605,12 @@
             } else {
                 // Anonymous user - show login button with user info style
                 userInfo.innerHTML = `
-                    <div class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info cursor-pointer">
+                    <a href="/login.html" class="flex items-center space-x-2 px-3 py-2 rounded-lg user-info cursor-pointer text-sm text-primary hover:text-accent transition-colors">
                         <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
-                        <a href="/login.html" class="text-sm text-primary hover:text-accent transition-colors flex items-center space-x-1">
-                            <span data-i18n="not_logged_in">Not logged in</span>
-                            <svg class="w-3 h-3 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                            </svg>
-                        </a>
-                    </div>
+                        <span data-i18n="not_logged_in">Not logged in</span>
+                    </a>
                 `;
                 i18n.applyLanguage();
             }

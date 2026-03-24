@@ -118,8 +118,6 @@ public class WebConfig implements WebMvcConfigurer {
                         "/lib/**",
                         "/fonts/**",
                         "/favicon.ico",
-                        "/admin/login.html",
-                        "/favicon.ico",
                         "*.ico",
                         "*.png",
                         "*.jpg",

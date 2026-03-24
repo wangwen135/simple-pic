@@ -40,7 +40,6 @@ public class AuthInterceptor implements HandlerInterceptor {
             "/api/auth/config",
             "/login.html",
             "/api/image/",
-            "/admin/login.html",
             "/favicon.svg",
             "/favicon.ico",
             "/lib/",
