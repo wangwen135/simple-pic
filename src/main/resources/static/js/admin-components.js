@@ -19,21 +19,17 @@ const AdminComponents = {
             if (target) {
                 target.innerHTML = html;
                 return true;
-            } else {
-                console.error(`Target element #${targetId} not found`);
-                return false;
             }
         } catch (error) {
-            console.error(`Failed to load component from ${url}:`, error);
-            return false;
+            // Silently fail, error will be caught by init()
         }
+        return false;
     },
 
     /**
      * Initialize all admin layout components
      */
     async init(menuName = null) {
-        // Show loading state
         this.showLoading();
 
         // Load all components in parallel
@@ -46,7 +42,6 @@ const AdminComponents = {
         // Check if all components loaded successfully
         if (!headerLoaded || !sidebarLoaded || !modalLoaded) {
             this.hideLoading();
-            console.error('Failed to load some components');
             return false;
         }
 
@@ -66,9 +61,7 @@ const AdminComponents = {
         // Setup ESC key to close change password modal
         this.setupEscKeyHandler();
 
-        // Hide loading state
         this.hideLoading();
-
         return true;
     },
 
@@ -121,7 +114,6 @@ const AdminComponents = {
         try {
             const response = await fetch('/api/auth/me');
             if (response.status === 401) {
-                // 未登录，跳转到登录页面
                 window.location.href = '/admin/login.html';
                 return;
             }
@@ -137,12 +129,9 @@ const AdminComponents = {
                     userInfo.style.cursor = 'pointer';
                 }
             } else {
-                // 未登录，跳转到登录页面
                 window.location.href = '/admin/login.html';
             }
         } catch (error) {
-            console.error('Failed to load user info:', error);
-            // 请求失败也可能是未登录，跳转到登录页面
             window.location.href = '/admin/login.html';
         }
     },
@@ -157,7 +146,6 @@ const AdminComponents = {
         if (!userInfo || !menuContainer) return;
 
         if (menuContainer.classList.contains('hidden')) {
-            // Show menu
             menuContainer.innerHTML = `
                 <div class="glass rounded-lg shadow-lg w-48 py-2">
                     <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-700/50 text-primary flex items-center space-x-2" onclick="showChangePasswordModal()">
@@ -175,7 +163,6 @@ const AdminComponents = {
                 </div>
             `;
 
-            // Position menu
             const rect = userInfo.getBoundingClientRect();
             menuContainer.style.top = (rect.bottom + 5) + 'px';
             menuContainer.style.right = (window.innerWidth - rect.right - 20) + 'px';
@@ -194,14 +181,12 @@ const AdminComponents = {
      * Set active menu item in sidebar
      */
     setActiveMenu(menuName) {
-        // Remove active class from all menu items
         document.querySelectorAll('.sidebar-link').forEach(link => {
             link.classList.remove('active');
             link.classList.remove('text-white');
             link.classList.add('text-primary');
         });
 
-        // Add active class to current menu item
         const activeLink = document.querySelector(`.sidebar-link[data-menu="${menuName}"]`);
         if (activeLink) {
             activeLink.classList.add('active');
@@ -217,7 +202,6 @@ const AdminComponents = {
         const themeIcon = document.getElementById('themeIcon');
         if (themeIcon && typeof i18n !== 'undefined') {
             const theme = i18n.getTheme();
-            // 浅色时显示月亮（可切换到深色），深色时显示太阳（可切换到浅色）
             themeIcon.innerHTML = theme === 'light' ? this.moonIcon : this.sunIcon;
         }
     },
@@ -229,7 +213,6 @@ const AdminComponents = {
         const langText = document.getElementById('langText');
         if (langText && typeof i18n !== 'undefined') {
             const lang = i18n.getLanguage();
-            // 中文时显示 EN（可切换到英文），英文时显示 中文（可切换到中文）
             langText.textContent = lang === 'zh' ? 'EN' : '中文';
         }
     },
@@ -238,7 +221,6 @@ const AdminComponents = {
      * Show loading state
      */
     showLoading() {
-        // Create loading overlay if it doesn't exist
         let loadingOverlay = document.getElementById('admin-loading-overlay');
         if (!loadingOverlay) {
             loadingOverlay = document.createElement('div');
@@ -272,13 +254,11 @@ const AdminComponents = {
      * Setup ESC key handler for modal
      */
     setupEscKeyHandler() {
-        // Remove existing handler if any
         const existingHandler = this._escKeyHandler;
         if (existingHandler) {
             document.removeEventListener('keydown', existingHandler);
         }
 
-        // Add new handler
         this._escKeyHandler = (e) => {
             if (e.key === 'Escape') {
                 const modal = document.getElementById('change-password-modal');
@@ -321,7 +301,6 @@ window.showChangePasswordModal = function() {
         menuContainer.classList.add('hidden');
         menuContainer.innerHTML = '';
     }
-    // Clear form fields
     const currentPwd = document.getElementById('current-password');
     const newPwd = document.getElementById('new-password');
     const confirmPwd = document.getElementById('confirm-password');
@@ -345,7 +324,6 @@ window.submitChangePassword = async function() {
     const newPassword = document.getElementById('new-password')?.value;
     const confirmPassword = document.getElementById('confirm-password')?.value;
 
-    // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
         if (typeof Toast !== 'undefined' && typeof i18n !== 'undefined') {
             Toast.error(i18n.t('please_fill_all_fields'));
@@ -403,21 +381,7 @@ window.logout = async function() {
         await fetch('/api/auth/logout', { method: 'POST' });
         window.location.href = '/login.html';
     } catch (error) {
-        console.error('Logout failed:', error);
+        // Silently fail, just redirect
+        window.location.href = '/login.html';
     }
 };
-
-// Auto-initialize on DOM ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        // Auto-init if page has admin containers
-        if (document.getElementById('header-container')) {
-            AdminComponents.init();
-        }
-    });
-} else {
-    // Auto-init if page has admin containers
-    if (document.getElementById('header-container')) {
-        AdminComponents.init();
-    }
-}

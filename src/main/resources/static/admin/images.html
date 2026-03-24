@@ -1735,11 +1735,6 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            // Wait for AdminComponents to finish loading
-            if (typeof AdminComponents !== 'undefined' && AdminComponents.init) {
-                await AdminComponents.init('images');
-            }
-
             // Wait for Confirm object to be available
             let retries = 0;
             while (typeof Confirm === 'undefined' && retries < 50) {
@@ -1750,6 +1745,7 @@
                 console.error('Confirm object not available after waiting');
             }
 
+            // ImageManager.init() will call AdminComponents.init('images')
             ImageManager.init();
         });
     </script>
