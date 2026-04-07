@@ -3,6 +3,23 @@
  * Provides consistent theming across all pages
  */
 
+/* Logo 容器自定义样式 */
+.logo-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;  /* w-10 */
+    height: 2.5rem; /* h-10 */
+    border-radius: 9999px; /* rounded-full */
+    background: linear-gradient(to bottom right, #3b82f6, #9d95a5); /* from-blue-500 to #9d95a5 */
+}
+
+/* Login 页面大版本 */
+.logo-container-lg {
+    width: 4rem;    /* w-16 */
+    height: 4rem;   /* h-16 */
+}
+
 :root {
     /* Light mode colors */
     --bg-primary: #f8fafc;
