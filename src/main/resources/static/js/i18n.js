@@ -59,6 +59,8 @@ const i18n = {
             link_copied: "链接已复制！",
             copy_failed: "复制失败",
             history_cleared: "历史已清空",
+            delete_upload_record: "删除上传记录",
+            copy_link: "复制链接",
             upload_failed: "上传失败",
             please_select_images: "请仅选择图片文件",
             not_logged_in: "未登录",
@@ -296,6 +298,7 @@ const i18n = {
             link_copied: "Link copied!",
             copy_failed: "Copy failed",
             history_cleared: "History cleared",
+            delete_upload_record: "Delete upload record",
             upload_failed: "Upload failed",
             please_select_images: "Please select image files only",
             not_logged_in: "Not logged in",
@@ -543,6 +546,12 @@ const i18n = {
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.getAttribute('data-i18n-placeholder');
             el.placeholder = this.t(key);
+        });
+
+        // Update title attributes
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            el.title = this.t(key);
         });
 
         // Update page title if data-i18n-title attribute exists on document

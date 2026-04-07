@@ -75,6 +75,37 @@
             position: relative;
         }
 
+        /* 悬停显示的删除按钮 */
+        .history-item-d .delete-btn-d {
+            padding: 4px;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0;
+            visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-item-d:hover .delete-btn-d {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .history-item-d .delete-btn-d:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .history-item-d .delete-btn-d svg {
+            width: 16px;
+            height: 16px;
+        }
+
         .history-item-d img {
             width: 60px;
             height: 60px;
@@ -110,6 +141,12 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 8px;
+        }
+
+        .history-meta-d .time-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .history-meta-d .time {
@@ -756,7 +793,8 @@
                 url: result.url,
                 path: result.path,
                 name: file.name,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                username: currentUser?.username || 'anonymous'
             };
 
             // Clear previous NEW marks and mark only this one as new
@@ -808,12 +846,19 @@
 
         // Render upload history (方案D样式)
         function renderUploadHistory() {
-            if (uploadHistoryData.length === 0) {
+            // 只显示当前用户的记录
+            const currentUsername = currentUser?.username || 'anonymous';
+            const userHistory = uploadHistoryData.filter(item => {
+                const itemUsername = item.username || 'anonymous';  // 兼容旧数据
+                return itemUsername === currentUsername;
+            });
+
+            if (userHistory.length === 0) {
                 uploadHistory.innerHTML = `<p class="text-slate-500 text-center py-8" data-i18n="no_uploads_yet">${i18n.t('no_uploads_yet')}</p>`;
                 return;
             }
 
-            uploadHistory.innerHTML = uploadHistoryData.map((item, index) => {
+            uploadHistory.innerHTML = userHistory.map((item, index) => {
                 // Escape HTML special characters in item.name to prevent XSS
                 const escapeHtml = (str) => {
                     const div = document.createElement('div');
@@ -838,8 +883,15 @@
                         <div class="code-preview">${escapedLink}</div>
                     </div>
                     <div class="history-meta-d">
-                        <span class="time">${timeStr}</span>
-                        <button class="copy-btn-d" onclick="event.stopPropagation(); copyHistoryLink(${index})">
+                        <div class="time-row">
+                            <button class="delete-btn-d" onclick="event.stopPropagation(); deleteHistoryItem('${item.url}')" data-i18n-title="delete_upload_record">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                            <span class="time">${timeStr}</span>
+                        </div>
+                        <button class="copy-btn-d" onclick="event.stopPropagation(); copyHistoryLink('${item.url}')" data-i18n-title="copy_link">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
@@ -850,11 +902,27 @@
             }).join('');
         }
 
-        // Copy link from history using index to avoid escaping issues
-        window.copyHistoryLink = async function(index) {
-            const link = generateLinkFromUrl(uploadHistoryData[index].url);
+        // Copy link from history using URL to avoid escaping issues
+        window.copyHistoryLink = async function(url) {
+            const link = generateLinkFromUrl(url);
             await copyToClipboard(link);
             Toast.success(i18n.t('link_copied'));
+        };
+
+        // Delete single history item
+        window.deleteHistoryItem = function(url) {
+            const currentUsername = currentUser?.username || 'anonymous';
+            const initialLength = uploadHistoryData.length;
+            uploadHistoryData = uploadHistoryData.filter(item => {
+                const itemUsername = item.username || 'anonymous';
+                return !(itemUsername === currentUsername && item.url === url);
+            });
+            // Check if item was actually deleted
+            if (uploadHistoryData.length < initialLength) {
+                localStorage.setItem('uploadHistory', JSON.stringify(uploadHistoryData));
+                renderUploadHistory();
+                Toast.success(i18n.t('history_cleared'));
+            }
         };
 
         // Open image in new tab
@@ -870,8 +938,12 @@
 
         // Clear history
         document.getElementById('clear-history').addEventListener('click', () => {
-            uploadHistoryData = [];
-            localStorage.removeItem('uploadHistory');
+            const currentUsername = currentUser?.username || 'anonymous';
+            uploadHistoryData = uploadHistoryData.filter(item => {
+                const itemUsername = item.username || 'anonymous';  // 兼容旧数据
+                return itemUsername !== currentUsername;
+            });
+            localStorage.setItem('uploadHistory', JSON.stringify(uploadHistoryData));
             renderUploadHistory();
             Toast.success(i18n.t('history_cleared'));
         });
