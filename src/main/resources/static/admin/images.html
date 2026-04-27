@@ -12,58 +12,6 @@
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
     <script src="/js/admin-components.js"></script>
-    <style>
-        /* Image styles */
-        .image-checkbox {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #4b5563;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .image-checkbox:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-        }
-        .image-card.selected {
-            ring: 2px;
-            ring-color: #3b82f6;
-            background-color: rgba(59, 130, 246, 0.1);
-        }
-        /* Lazy load fade in */
-        .lazy-image {
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .lazy-image.loaded {
-            opacity: 1;
-        }
-        /* View toggle buttons */
-        .view-btn.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-        /* Action buttons on hover */
-        .action-buttons {
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .image-card:hover .action-buttons,
-        tr:hover .action-buttons {
-            opacity: 1;
-        }
-        /* Link format selector */
-        .link-format-btn {
-            transition: all 0.2s;
-        }
-        .link-format-btn.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-    </style>
 </head>
 <body class="gradient-bg h-screen overflow-hidden flex flex-col">
     <!-- Component containers -->
@@ -71,56 +19,24 @@
     <div class="flex flex-1 overflow-hidden">
         <div id="sidebar-container" class="flex-shrink-0"></div>
         <main class="flex-1 overflow-y-auto p-6" id="main-content">
-            <!-- Toolbar -->
-            <div class="glass rounded-xl p-4 mb-4">
+            <!-- Toolbar + Breadcrumb (merged) -->
+            <div class="glass rounded-xl p-3 mb-4">
+                <!-- Row 1: Storage + Breadcrumb + Stats + View toggle -->
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- Storage space selector with label -->
                     <span class="text-sm text-secondary" data-i18n="storage">存储空间</span>
                     <select id="storageSpace" class="px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.loadImages()">
                         <option value="" disabled selected>Loading...</option>
                     </select>
 
-                    <!-- Search box -->
-                    <div class="relative flex-1 min-w-[200px]">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <input type="text" id="searchInput" data-i18n-placeholder="search" placeholder="搜索..." class="w-full pl-10 pr-4 py-2 input-field rounded-lg text-sm" oninput="ImageManager.handleSearch(this.value)">
+                    <div class="h-4 w-px bg-slate-600"></div>
+
+                    <div id="breadcrumb" class="flex items-center gap-1.5 text-sm">
+                        <span class="text-primary">Root</span>
                     </div>
 
-                    <!-- Filter button -->
-                    <div class="relative">
-                        <button onclick="ImageManager.toggleFilterPanel()" class="px-3 py-2 input-field rounded-lg text-sm flex items-center gap-2 hover:bg-elevated">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                            </svg>
-                            <span data-i18n="filter">筛选</span>
-                        </button>
-                        <div id="filterPanel" class="hidden absolute right-0 mt-2 w-64 glass rounded-lg shadow-xl z-50 p-4">
-                            <div class="mb-3">
-                                <label class="block text-sm text-secondary mb-1" data-i18n="file_type">文件类型</label>
-                                <select id="fileTypeFilter" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.applyFilters()">
-                                    <option value="all" data-i18n="all">全部</option>
-                                    <option value="image" data-i18n="images">图片</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="block text-sm text-secondary mb-1" data-i18n="sort_by">排序</label>
-                                <select id="sortBy" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.applyFilters()">
-                                    <option value="date" data-i18n="date">日期</option>
-                                    <option value="name" data-i18n="name">名称</option>
-                                    <option value="size" data-i18n="size">大小</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-secondary mb-1" data-i18n="sort_order">排序方式</label>
-                                <select id="sortOrder" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="ImageManager.applyFilters()">
-                                    <option value="desc">降序</option>
-                                    <option value="asc">升序</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="flex-1"></div>
+
+                    <div id="directoryStats" class="text-sm text-muted"></div>
 
                     <!-- View toggle -->
                     <div class="flex rounded-lg overflow-hidden border border-slate-600">
@@ -137,7 +53,7 @@
                     </div>
                 </div>
 
-                <!-- Action buttons -->
+                <!-- Row 2: Actions + Search -->
                 <div class="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-slate-700">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="selectAll" class="image-checkbox" onchange="ImageManager.toggleSelectAll()">
@@ -161,7 +77,17 @@
                         </svg>
                         <span data-i18n="refresh">刷新</span>
                     </button>
+
+                    <!-- Search box -->
+                    <div class="relative flex-1 min-w-[180px] max-w-[280px]">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="searchInput" data-i18n-placeholder="search" placeholder="搜索..." class="w-full pl-10 pr-4 py-2 input-field rounded-lg text-sm" oninput="ImageManager.handleSearch(this.value)">
+                    </div>
+
                     <div class="flex-1"></div>
+
                     <button onclick="ImageManager.showCreateDirModal()" class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
@@ -177,60 +103,48 @@
                 </div>
             </div>
 
-            <!-- Breadcrumb -->
-            <div class="glass rounded-xl p-4 mb-4">
-                <div class="flex items-center justify-between">
-                    <div id="breadcrumb" class="flex items-center gap-2 text-sm">
-                        <span class="text-primary">Root</span>
+            <!-- Content area + Pagination (merged) -->
+            <div class="glass rounded-xl p-6 min-h-[400px] flex flex-col">
+                <div class="flex-1">
+                    <!-- Grid view -->
+                    <div id="gridView" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4">
+                        <p class="text-muted col-span-full text-center py-8">Loading...</p>
                     </div>
-                    <div id="directoryStats" class="text-sm text-muted"></div>
-                </div>
-            </div>
 
-            <!-- Content area -->
-            <div class="glass rounded-xl p-6 min-h-[400px]">
-                <!-- Grid view -->
-                <div id="gridView" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    <p class="text-muted col-span-full text-center py-8">Loading...</p>
+                    <!-- List view -->
+                    <div id="listView" class="hidden overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-700">
+                                    <th class="text-left py-3 px-4 w-12"></th>
+                                    <th class="text-left py-3 px-4" data-i18n="file_name">文件名</th>
+                                    <th class="text-left py-3 px-4" data-i18n="date">日期</th>
+                                    <th class="text-left py-3 px-4" data-i18n="size">大小</th>
+                                    <th class="text-left py-3 px-4" data-i18n="dimensions">尺寸</th>
+                                    <th class="text-right py-3 px-4" data-i18n="actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listViewBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="emptyState" class="hidden text-center py-16">
+                        <svg class="w-16 h-16 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="text-muted" data-i18n="no_images">暂无图片</p>
+                    </div>
                 </div>
 
-                <!-- List view -->
-                <div id="listView" class="hidden overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-slate-700">
-                                <th class="text-left py-3 px-4 w-12"></th>
-                                <th class="text-left py-3 px-4" data-i18n="file_name">文件名</th>
-                                <th class="text-left py-3 px-4" data-i18n="date">日期</th>
-                                <th class="text-left py-3 px-4" data-i18n="size">大小</th>
-                                <th class="text-left py-3 px-4" data-i18n="dimensions">尺寸</th>
-                                <th class="text-right py-3 px-4" data-i18n="actions">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listViewBody">
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Empty state -->
-                <div id="emptyState" class="hidden text-center py-16">
-                    <svg class="w-16 h-16 mx-auto text-muted mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <p class="text-muted" data-i18n="no_images">暂无图片</p>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div id="pagination" class="glass rounded-xl p-4 mt-4 flex items-center justify-between">
-                <div class="text-sm text-muted">
-                    <span id="paginationInfo">第 1 页，共 1 页</span>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="ImageManager.goToPage(1)" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="firstPageBtn" data-i18n="first_page">首页</button>
-                    <button onclick="ImageManager.prevPage()" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="prevPageBtn">上一页</button>
-                    <button onclick="ImageManager.nextPage()" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="nextPageBtn">下一页</button>
-                    <button onclick="ImageManager.goToPage('last')" class="px-3 py-1 input-field rounded text-sm hover:bg-elevated" id="lastPageBtn" data-i18n="last_page">末页</button>
+                <!-- Pagination (inline) -->
+                <div id="pagination" class="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
+                    <div class="text-sm text-muted">
+                        <span id="paginationInfo">共 0 项</span>
+                    </div>
+                    <div class="flex items-center gap-1" id="paginationButtons">
+                    </div>
                 </div>
             </div>
         </main>
@@ -247,11 +161,8 @@
             <!-- Upload target info -->
             <div class="mb-4 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
-                    </svg>
                     <span class="text-sm text-slate-600 dark:text-slate-400">存储空间</span>
-                    <span id="uploadStorageName" class="px-2 py-0.5 bg-blue-500 text-white text-sm font-medium rounded-md">--</span>
+                    <span id="uploadStorageName" class="storage-badge">--</span>
                 </div>
                 <div class="flex items-center gap-2 pl-6">
                     <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,8 +200,12 @@
     <div id="createDirModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
         <div class="modal rounded-xl p-6 w-full max-w-md">
             <h2 class="text-xl font-bold text-primary mb-4" data-i18n="new_directory">新建目录</h2>
-            <div class="mb-2 text-sm text-muted">
-                将在 <span class="text-blue-400" id="createDirLocation">--</span> 下创建
+            <div class="mb-4 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-secondary">将在</span>
+                    <span class="storage-badge" id="createDirLocation">--</span>
+                    <span class="text-secondary">下创建</span>
+                </div>
             </div>
             <div class="mb-4">
                 <label class="block text-sm text-secondary mb-1"><span class="text-red-500">*</span> <span data-i18n="directory_name">目录名</span></label>
@@ -586,15 +501,12 @@
                 this.state.directories.forEach(dir => {
                     const name = dir.split('/').pop();
                     html += `
-                        <div class="image-card p-4 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer" onclick="ImageManager.navigate('${dir}')">
-                            <div class="flex items-center space-x-3">
-                                <svg class="w-10 h-10 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        <div class="image-card p-3 rounded-lg card-item hover:bg-elevated transition-colors cursor-pointer" onclick="ImageManager.navigate('${dir}')">
+                            <div class="flex flex-col items-center justify-center aspect-square">
+                                <svg class="w-12 h-12 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
                                 </svg>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-primary text-sm truncate">${name}</p>
-                                    <p class="text-muted text-xs">文件夹</p>
-                                </div>
+                                <p class="mt-2 text-primary text-sm truncate max-w-full text-center px-1">${name}</p>
                             </div>
                         </div>
                     `;
@@ -733,17 +645,20 @@
                 const breadcrumb = document.getElementById('breadcrumb');
                 const stats = document.getElementById('directoryStats');
 
+                const folderSvg = '<svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>';
+                const chevronSvg = '<svg class="w-3 h-3 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+
                 if (!this.state.currentPath) {
-                    breadcrumb.innerHTML = '<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigate(\'\')">Root</span>';
+                    breadcrumb.innerHTML = `${folderSvg}<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigate('')">Root</span>`;
                 } else {
                     const parts = this.state.currentPath.split('/');
-                    let html = '<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigate(\'\')">Root</span>';
+                    let html = `${folderSvg}<span class="text-primary cursor-pointer hover:text-blue-400" onclick="ImageManager.navigate('')">Root</span>`;
                     let accum = '';
                     parts.forEach((part, index) => {
                         accum += (index > 0 ? '/' : '') + part;
-                        html += ' <span class="text-slate-500">/</span> ';
+                        html += chevronSvg;
                         if (index === parts.length - 1) {
-                            html += `<span class="text-primary">${part}</span>`;
+                            html += `<span class="text-primary font-medium">${part}</span>`;
                         } else {
                             html += `<span class="text-blue-400 cursor-pointer hover:text-blue-300" onclick="ImageManager.navigate('${accum}')">${part}</span>`;
                         }
@@ -759,17 +674,62 @@
              */
             renderPagination() {
                 const info = document.getElementById('paginationInfo');
-                const prevBtn = document.getElementById('prevPageBtn');
-                const nextBtn = document.getElementById('nextPageBtn');
-                const firstBtn = document.getElementById('firstPageBtn');
-                const lastBtn = document.getElementById('lastPageBtn');
+                const container = document.getElementById('paginationButtons');
+                const { page, totalPages, total } = this.state;
 
-                info.textContent = `第 ${this.state.page} 页，共 ${this.state.totalPages} 页 (${this.state.total} 项)`;
+                info.textContent = `共 ${total} 项`;
 
-                prevBtn.disabled = this.state.page <= 1;
-                nextBtn.disabled = this.state.page >= this.state.totalPages;
-                firstBtn.disabled = this.state.page <= 1;
-                lastBtn.disabled = this.state.page >= this.state.totalPages;
+                if (totalPages <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                const prevDisabled = page <= 1;
+                const nextDisabled = page >= totalPages;
+                const btnBase = 'px-3 py-1.5 rounded-lg text-sm transition-colors';
+                const btnEnabled = 'input-field hover:bg-elevated cursor-pointer';
+                const btnDisabled = 'input-field opacity-40 cursor-not-allowed';
+                const btnActive = 'bg-blue-600 text-white';
+
+                let html = '';
+
+                // Previous button
+                html += `<button onclick="ImageManager.prevPage()" class="${btnBase} ${prevDisabled ? btnDisabled : btnEnabled}" ${prevDisabled ? 'disabled' : ''}>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>`;
+
+                // Page numbers
+                const pages = this.getPageRange(page, totalPages);
+                pages.forEach(p => {
+                    if (p === '...') {
+                        html += `<span class="px-2 py-1.5 text-sm text-muted">...</span>`;
+                    } else {
+                        const isActive = p === page;
+                        html += `<button onclick="ImageManager.goToPage(${p})" class="${btnBase} ${isActive ? btnActive : btnEnabled}">${p}</button>`;
+                    }
+                });
+
+                // Next button
+                html += `<button onclick="ImageManager.nextPage()" class="${btnBase} ${nextDisabled ? btnDisabled : btnEnabled}" ${nextDisabled ? 'disabled' : ''}>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>`;
+
+                container.innerHTML = html;
+            },
+
+            getPageRange(current, total) {
+                if (total <= 7) {
+                    return Array.from({length: total}, (_, i) => i + 1);
+                }
+                const pages = [];
+                pages.push(1);
+                if (current > 3) pages.push('...');
+                for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+                    pages.push(i);
+                }
+                if (current < total - 2) pages.push('...');
+                pages.push(total);
+                return pages;
             },
 
             /**
@@ -1088,23 +1048,6 @@
                 this.loadImages();
             },
 
-            /**
-             * Toggle filter panel
-             */
-            toggleFilterPanel() {
-                document.getElementById('filterPanel').classList.toggle('hidden');
-            },
-
-            /**
-             * Apply filters
-             */
-            applyFilters() {
-                this.state.filters.fileType = document.getElementById('fileTypeFilter').value;
-                this.state.filters.sortBy = document.getElementById('sortBy').value;
-                this.state.filters.sortOrder = document.getElementById('sortOrder').value;
-                this.state.page = 1;
-                this.loadImages();
-            },
 
             /**
              * Pagination
@@ -1210,55 +1153,19 @@
                         const formData = new FormData();
                         formData.append('file', file);
                         formData.append('storageSpace', this.state.currentStorage);
-                        if (uploadPath) {
-                            formData.append('targetPath', uploadPath);
-                        }
+                        formData.append('targetPath', uploadPath || '');
 
-                        // Use admin upload API with custom path if specified
-                        const uploadUrl = uploadPath ? '/api/admin/upload-custom' : '/api/admin/upload';
-                        const response = await fetch(uploadUrl, {
+                        // Always use upload-custom API to support custom paths
+                        const response = await fetch('/api/admin/upload-custom', {
                             method: 'POST',
                             body: formData
                         });
 
-                        // If custom upload not available, move the file after upload
-                        if (!response.ok) {
-                            // Fallback to regular upload
-                            const regularResponse = await fetch('/api/admin/upload', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            const result = await regularResponse.json();
-
-                            if (result.success && result.path && uploadPath) {
-                                // Move the uploaded file to the target directory
-                                const moveResponse = await fetch('/api/admin/move-image', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        storageSpace: this.state.currentStorage,
-                                        sourcePath: result.path,
-                                        targetPath: uploadPath
-                                    })
-                                });
-                                const moveResult = await moveResponse.json();
-                                if (moveResult.success) {
-                                    successCount++;
-                                } else {
-                                    failCount++;
-                                }
-                            } else if (result.success) {
-                                successCount++;
-                            } else {
-                                failCount++;
-                            }
+                        const result = await response.json();
+                        if (result.success) {
+                            successCount++;
                         } else {
-                            const result = await response.json();
-                            if (result.success) {
-                                successCount++;
-                            } else {
-                                failCount++;
-                            }
+                            failCount++;
                         }
                     } catch (error) {
                         console.error('Upload failed:', error);

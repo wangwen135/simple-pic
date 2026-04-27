@@ -138,21 +138,23 @@
                         <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="domain">URL Prefix</span></label>
 
                         <!-- Current system URL prefix example -->
-                        <div class="flex items-center justify-between bg-slate-800/50 px-3 py-2 rounded-lg mb-2">
-                            <span class="text-xs text-muted" data-i18n="current_app_url_prefix">本系统访问路径前缀：</span>
-                            <span id="url-prefix-example" class="text-xs text-blue-400 font-mono"></span>
+                        <div class="bg-slate-100 dark:bg-slate-800/50 px-3 py-2.5 rounded-lg mb-2 border border-slate-200 dark:border-slate-700">
+                            <div class="mb-2">
+                                <span class="text-xs text-secondary block mb-1" data-i18n="current_app_url_prefix">本系统访问路径前缀：</span>
+                                <span id="url-prefix-example" class="text-xs text-blue-500 dark:text-blue-400 font-mono block"></span>
+                            </div>
                             <button type="button" onclick="applyUrlPrefix()" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors" data-i18n="apply">应用</button>
                         </div>
 
                         <input type="text" id="create-url-prefix" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://192.168.31.88:8080/image/note/">
 
                         <!-- Description content -->
-                        <div class="text-xs text-muted mt-2 space-y-1">
+                        <div class="text-sm text-muted mt-2 space-y-1">
                             <p data-i18n="url_prefix_description_1">上传图片后会根据这个配置来返回图片的访问URL地址</p>
                             <p data-i18n="url_prefix_description_2">返回的图片URL地址为：[访问路径前缀]+[文件相对存储路径]</p>
                             <p data-i18n="url_prefix_description_3">当前系统获取图片的api地址为：/image/{存储空间名称}/{文件相对地址}</p>
                             <p data-i18n="url_prefix_description_4">文件相对地址为：./4位年份/2位月份/UUID文件名</p>
-                            <a href="#" onclick="showNginxConfig(); return false;" class="text-blue-400 hover:text-blue-300" data-i18n="other_mount_methods">&lt;其他挂载方式说明&gt;</a>
+                            <a href="/admin/mount-guide.html" target="_blank" class="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 inline-flex items-center gap-1" data-i18n="other_mount_methods">&lt;其他挂载方式说明&gt;</a>
                         </div>
                     </div>
                     <div>
@@ -251,7 +253,7 @@
                 confirmText: i18n.t('save'),
                 cancelText: i18n.t('cancel'),
                 onConfirm: () => saveStorage(),
-                size: 'medium'
+                size: 'large'
             });
 
             // Initialize form values
@@ -291,7 +293,7 @@
                         confirmText: i18n.t('save'),
                         cancelText: i18n.t('cancel'),
                         onConfirm: () => saveStorage(),
-                        size: 'medium'
+                        size: 'large'
                     });
 
                     // Initialize form values

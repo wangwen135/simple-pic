@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Image service
  * 图片服务
  */
 @Service
@@ -36,9 +35,6 @@ public class ImageService {
 
     @Autowired
     private StorageService storageService;
-
-    @Autowired
-    private ThumbnailService thumbnailService;
 
     @Autowired
     private ConfigService configService;
@@ -98,12 +94,17 @@ public class ImageService {
         String relativePath;
         File targetDir;
 
-        if (targetPath != null && !targetPath.isEmpty()) {
-            // Use custom path
+        if (targetPath != null) {
+            // Use custom path (empty string means root directory)
             String uuid = UUID.randomUUID().toString().replace("-", "");
             String filename = uuid + "." + extension;
-            relativePath = targetPath.replace("/", File.separator) + File.separator + filename;
-            targetDir = new File(space.getStorageDirectory(), targetPath.replace("/", File.separator));
+            if (targetPath.isEmpty()) {
+                relativePath = filename;
+                targetDir = space.getStorageDirectory();
+            } else {
+                relativePath = targetPath.replace("/", File.separator) + File.separator + filename;
+                targetDir = new File(space.getStorageDirectory(), targetPath.replace("/", File.separator));
+            }
         } else {
             // Use default yyyy/MM structure
             SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
@@ -134,7 +135,7 @@ public class ImageService {
         if (config != null && config.isWatermarkEnabled()) {
             try {
                 applyWatermark(targetFile, config);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 logger.warn("Failed to apply watermark", e);
             }
         }
@@ -156,8 +157,7 @@ public class ImageService {
 
         logger.info("Image uploaded: {} ({} bytes)", relativePath, fileSize);
 
-        // Use original URL for both url and thumbnailUrl (thumbnails removed)
-        return UploadResult.success(imageUrl, imageUrl, relativePath.replace(File.separator, "/"), storageSpace);
+        return UploadResult.success(imageUrl, relativePath.replace(File.separator, "/"), storageSpace);
     }
 
     /**
@@ -168,7 +168,9 @@ public class ImageService {
             return UploadResult.error(ErrorMessages.getZh("file_not_found"));
         }
 
-        return doUploadImage(new java.io.FileInputStream(file), file.getName(), file.length(), storageSpace, null);
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+            return doUploadImage(fis, file.getName(), file.length(), storageSpace, null);
+        }
     }
 
     /**
@@ -180,7 +182,12 @@ public class ImageService {
             return false;
         }
 
-        File imageFile = new File(space.getStorageDirectory(), path.replace("/", File.separator));
+        File imageFile = FileUtils.validatePath(path, space.getStorageDirectory());
+        if (imageFile == null) {
+            logger.warn("Invalid path for deletion: {}", path);
+            return false;
+        }
+
         if (imageFile.exists()) {
             if (imageFile.delete()) {
                 storageService.clearStatsCache(storageSpace);
@@ -201,7 +208,11 @@ public class ImageService {
             return null;
         }
 
-        File imageFile = new File(space.getStorageDirectory(), path.replace("/", File.separator));
+        File imageFile = FileUtils.validatePath(path, space.getStorageDirectory());
+        if (imageFile == null) {
+            return null;
+        }
+
         if (imageFile.exists()) {
             return imageFile;
         }
@@ -219,7 +230,13 @@ public class ImageService {
         }
 
         File baseDir = space.getStorageDirectory();
-        File targetDir = path == null || path.isEmpty() ? baseDir : new File(baseDir, path.replace("/", File.separator));
+        File targetDir = baseDir;
+        if (path != null && !path.isEmpty()) {
+            targetDir = FileUtils.validatePath(path, baseDir);
+            if (targetDir == null) {
+                return new ArrayList<>();
+            }
+        }
 
         if (!targetDir.exists() || !targetDir.isDirectory()) {
             return new ArrayList<>();
@@ -258,7 +275,13 @@ public class ImageService {
         }
 
         File baseDir = space.getStorageDirectory();
-        File targetDir = path == null || path.isEmpty() ? baseDir : new File(baseDir, path.replace("/", File.separator));
+        File targetDir = baseDir;
+        if (path != null && !path.isEmpty()) {
+            targetDir = FileUtils.validatePath(path, baseDir);
+            if (targetDir == null) {
+                return new ArrayList<>();
+            }
+        }
 
         if (!targetDir.exists() || !targetDir.isDirectory()) {
             return new ArrayList<>();
@@ -289,8 +312,12 @@ public class ImageService {
             return false;
         }
 
-        File oldFile = new File(space.getStorageDirectory(), oldPath.replace("/", File.separator));
-        File newFile = new File(space.getStorageDirectory(), newPath.replace("/", File.separator));
+        File oldFile = FileUtils.validatePath(oldPath, space.getStorageDirectory());
+        File newFile = FileUtils.validatePath(newPath, space.getStorageDirectory());
+        if (oldFile == null || newFile == null) {
+            logger.warn("Invalid path for rename: {} -> {}", oldPath, newPath);
+            return false;
+        }
 
         if (oldFile.exists() && oldFile.isFile() && !newFile.exists()) {
             // Ensure parent directory exists
@@ -300,13 +327,6 @@ public class ImageService {
             }
 
             if (oldFile.renameTo(newFile)) {
-                // Delete thumbnail if exists
-                File thumbDir = new File(space.getStorageDirectory(), Constants.Directories.THUMBNAILS);
-                File oldThumb = new File(thumbDir, oldPath.replace("/", File.separator));
-                if (oldThumb.exists()) {
-                    oldThumb.delete();
-                }
-
                 storageService.clearStatsCache(storageSpace);
                 logger.info("Image renamed: {} -> {}", oldPath, newPath);
                 return true;
@@ -325,11 +345,22 @@ public class ImageService {
             return false;
         }
 
-        File sourceFile = new File(space.getStorageDirectory(), sourcePath.replace("/", File.separator));
+        File sourceFile = FileUtils.validatePath(sourcePath, space.getStorageDirectory());
+        if (sourceFile == null) {
+            logger.warn("Invalid source path for move: {}", sourcePath);
+            return false;
+        }
+
         String fileName = sourceFile.getName();
-        File targetDir = targetDirPath.isEmpty() ?
+        File targetDir = targetDirPath == null || targetDirPath.isEmpty() ?
             space.getStorageDirectory() :
-            new File(space.getStorageDirectory(), targetDirPath.replace("/", File.separator));
+            FileUtils.validatePath(targetDirPath, space.getStorageDirectory());
+
+        if (targetDir == null) {
+            logger.warn("Invalid target directory path for move: {}", targetDirPath);
+            return false;
+        }
+
         File targetFile = new File(targetDir, fileName);
 
         if (sourceFile.exists() && sourceFile.isFile()) {
@@ -339,13 +370,6 @@ public class ImageService {
             }
 
             if (sourceFile.renameTo(targetFile)) {
-                // Delete thumbnail if exists
-                File thumbDir = new File(space.getStorageDirectory(), Constants.Directories.THUMBNAILS);
-                File oldThumb = new File(thumbDir, sourcePath.replace("/", File.separator));
-                if (oldThumb.exists()) {
-                    oldThumb.delete();
-                }
-
                 storageService.clearStatsCache(storageSpace);
                 logger.info("Image moved: {} -> {}/{}", sourcePath, targetDirPath, fileName);
                 return true;
@@ -364,8 +388,12 @@ public class ImageService {
             return false;
         }
 
-        File oldDir = new File(space.getStorageDirectory(), oldPath.replace("/", File.separator));
-        File newDir = new File(space.getStorageDirectory(), newPath.replace("/", File.separator));
+        File oldDir = FileUtils.validatePath(oldPath, space.getStorageDirectory());
+        File newDir = FileUtils.validatePath(newPath, space.getStorageDirectory());
+        if (oldDir == null || newDir == null) {
+            logger.warn("Invalid path for directory rename: {} -> {}", oldPath, newPath);
+            return false;
+        }
 
         if (oldDir.exists() && oldDir.isDirectory() && !newDir.exists()) {
             if (oldDir.renameTo(newDir)) {
@@ -386,7 +414,12 @@ public class ImageService {
             return false;
         }
 
-        File newDir = new File(space.getStorageDirectory(), path.replace("/", File.separator));
+        File newDir = FileUtils.validatePath(path, space.getStorageDirectory());
+        if (newDir == null) {
+            logger.warn("Invalid path for directory creation: {}", path);
+            return false;
+        }
+
         if (!newDir.exists()) {
             if (newDir.mkdirs()) {
                 logger.info("Directory created: {}", path);
@@ -406,9 +439,14 @@ public class ImageService {
             return false;
         }
 
-        File dir = new File(space.getStorageDirectory(), path.replace("/", File.separator));
+        File dir = FileUtils.validatePath(path, space.getStorageDirectory());
+        if (dir == null) {
+            logger.warn("Invalid path for directory deletion: {}", path);
+            return false;
+        }
+
         if (dir.exists() && dir.isDirectory()) {
-            if (deleteDirectoryRecursive(dir)) {
+            if (FileUtils.deleteDirectoryRecursive(dir)) {
                 storageService.clearStatsCache(storageSpace);
                 logger.info("Directory deleted: {}", path);
                 return true;
@@ -509,23 +547,6 @@ public class ImageService {
         }
 
         return images;
-    }
-
-    /**
-     * Delete directory recursively
-     */
-    private boolean deleteDirectoryRecursive(File dir) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    deleteDirectoryRecursive(file);
-                } else {
-                    file.delete();
-                }
-            }
-        }
-        return dir.delete();
     }
 
     /**

@@ -81,8 +81,4 @@ public class StorageSpace {
     public File getStorageDirectory() {
         return new File(path);
     }
-
-    public File getThumbnailsDirectory() {
-        return new File(path, ".thumbnails");
-    }
 }

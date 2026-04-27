@@ -16,7 +16,6 @@ public class UploadResult {
     private boolean success;
     private String message;
     private String url;
-    private String thumbnailUrl;
     private String markdown;
     private String html;
     private String bbcode;
@@ -24,12 +23,11 @@ public class UploadResult {
     private String path;
     private String storageSpace;
 
-    public static UploadResult success(String url, String thumbnailUrl, String path, String storageSpace) {
+    public static UploadResult success(String url, String path, String storageSpace) {
         UploadResult result = new UploadResult();
         result.setSuccess(true);
         result.setMessage("Upload successful");
         result.setUrl(url);
-        result.setThumbnailUrl(thumbnailUrl);
         result.setPath(path);
         result.setStorageSpace(storageSpace);
 

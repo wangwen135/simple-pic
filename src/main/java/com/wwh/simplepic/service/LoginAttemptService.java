@@ -13,7 +13,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Login attempt tracking service
  * 登录尝试追踪服务 - 用于IP锁定功能
  */
 @Service
@@ -39,7 +38,6 @@ public class LoginAttemptService {
     }
 
     /**
-     * Cleanup method called when bean is destroyed
      * Bean销毁时的清理方法
      */
     @PreDestroy
@@ -63,8 +61,8 @@ public class LoginAttemptService {
     public void loginFailed(String ipAddress) {
         SystemConfig config = configService.getConfig();
 
-        // 如果功能未启用，不做处理
-        if (!config.isLoginLockoutEnabled()) {
+        // 如果功能未启用或配置为空，不做处理
+        if (config == null || !config.isLoginLockoutEnabled()) {
             return;
         }
 
@@ -95,8 +93,8 @@ public class LoginAttemptService {
     public boolean isLocked(String ipAddress) {
         SystemConfig config = configService.getConfig();
 
-        // 如果功能未启用，始终返回false
-        if (!config.isLoginLockoutEnabled()) {
+        // 如果功能未启用或配置为空，始终返回false
+        if (config == null || !config.isLoginLockoutEnabled()) {
             return false;
         }
 
@@ -129,6 +127,9 @@ public class LoginAttemptService {
         }
 
         SystemConfig config = configService.getConfig();
+        if (config == null) {
+            return 0;
+        }
         long lockoutMinutes = config.getLockoutMinutes();
         long expireTime = lockoutTime + TimeUnit.MINUTES.toMillis(lockoutMinutes);
         long remainingMillis = expireTime - System.currentTimeMillis();
@@ -152,10 +153,7 @@ public class LoginAttemptService {
     }
 
     /**
-     * Clean up expired lockout records
-     * 清理过期的锁定记录
-     * Runs periodically to remove lockout records that have passed their expiration time
-     * 定期运行以移除已过期的锁定记录
+     * 清理过期的锁定记录（定期运行）
      */
     private void cleanExpiredLockouts() {
         SystemConfig config = configService.getConfig();

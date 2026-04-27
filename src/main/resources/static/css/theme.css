@@ -203,6 +203,36 @@ header.glass {
     outline: none;
 }
 
+/* Select dropdown arrow */
+select.input-field {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.25em 1.25em;
+    padding-right: 2rem;
+}
+
+/* Storage space name */
+.storage-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: inherit;
+    font-weight: 500;
+    vertical-align: middle;
+}
+html:not(.dark) .storage-badge {
+    background-color: #e2e8f0;
+    color: #334155;
+}
+html.dark .storage-badge,
+.dark .storage-badge {
+    background-color: #334155;
+    color: #f1f5f9;
+}
+
 /* Button utilities */
 .btn-primary {
     background: var(--btn-primary-bg);
@@ -578,4 +608,288 @@ header.glass {
         transform: translate(-70px, -50px) scale(1.1);
         opacity: 0.14;
     }
+}
+
+/* ===== Upload page styles ===== */
+
+/* 格式选择器 */
+.format-selector-d {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+}
+
+.format-option-d {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-muted);
+}
+
+.format-option-d:hover {
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+}
+
+.format-option-d.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* 历史记录项 */
+.history-item-d {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: rgba(241, 245, 249, 0.9);
+    border-radius: 12px;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .history-item-d {
+    background: rgba(30, 41, 59, 0.6);
+}
+
+.history-item-d:hover {
+    background: rgba(226, 232, 240, 1);
+}
+
+[data-theme="dark"] .history-item-d:hover {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.history-item-d.is-new {
+    position: relative;
+}
+
+/* 悬停显示的删除按钮 */
+.history-item-d .delete-btn-d {
+    padding: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-item-d:hover .delete-btn-d {
+    opacity: 1;
+    visibility: visible;
+}
+
+.history-item-d .delete-btn-d:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.history-item-d .delete-btn-d svg {
+    width: 16px;
+    height: 16px;
+}
+
+.history-item-d img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.history-info-d {
+    flex: 1;
+    min-width: 0;
+}
+
+.history-info-d .filename {
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.history-info-d .code-preview {
+    font-size: 13px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hover-clear-btn:hover {
+    color: var(--accent-color);
+}
+
+.history-meta-d {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.history-meta-d .time-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.history-meta-d .time {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.copy-btn-d {
+    padding: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-btn-d svg {
+    width: 20px;
+    height: 20px;
+}
+
+.copy-btn-d:hover {
+    color: var(--accent-color);
+    background: transparent;
+}
+
+.first-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--accent-color) 0%, #8b5cf6 100%);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    margin-left: 8px;
+}
+
+/* Upload page 响应式 */
+@media (max-width: 640px) {
+    .format-selector-d {
+        flex-wrap: wrap;
+    }
+
+    .format-option-d {
+        flex: 1;
+        min-width: calc(50% - 8px);
+        justify-content: center;
+    }
+
+    .history-item-d {
+        flex-wrap: wrap;
+    }
+
+    .history-item-d img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .history-meta-d {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+}
+
+/* 上传历史滚动条 */
+#upload-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+#upload-history::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#upload-history::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+#upload-history::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* ===== Admin images page styles ===== */
+
+/* 图片复选框 */
+.image-checkbox {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #4b5563;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.image-checkbox:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+.image-card.selected {
+    ring: 2px;
+    ring-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* 懒加载淡入 */
+.lazy-image {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.lazy-image.loaded {
+    opacity: 1;
+}
+
+/* 视图切换按钮 */
+.view-btn.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+/* 悬停操作按钮 */
+.action-buttons {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.image-card:hover .action-buttons,
+tr:hover .action-buttons {
+    opacity: 1;
+}
+
+/* 链接格式选择器 */
+.link-format-btn {
+    transition: all 0.2s;
+}
+.link-format-btn.active {
+    background-color: #3b82f6;
+    color: white;
 }

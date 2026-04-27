@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * API Image Controller - handles API endpoints under /api/image/*
  * API 图片控制器 - 处理 /api/image/* 下的 API 端点
  */
 @RestController
@@ -40,7 +39,6 @@ public class ApiImageController {
     private StorageUtils storageUtils;
 
     /**
-     * Upload image via API
      * 通过 API 上传图片
      */
     @PostMapping("/upload")
@@ -68,7 +66,7 @@ public class ApiImageController {
             // Verify anonymous upload is allowed if not authenticated
             if (user == null) {
                 com.wwh.simplepic.model.SystemConfig config = configService.getConfig();
-                if (!config.isAnonymousUploadEnabled()) {
+                if (config == null || !config.isAnonymousUploadEnabled()) {
                     return ResponseEntity.status(403).body(ResponseUtils.error("anonymous_upload_not_enabled"));
                 }
 
@@ -93,14 +91,12 @@ public class ApiImageController {
     }
 
     /**
-     * Convert UploadResult to Map
      * 将 UploadResult 转换为 Map
      */
     private Map<String, Object> resultToMap(UploadResult result) {
         Map<String, Object> response = ResponseUtils.success();
         response.put("message", result.getMessage());
         response.put("url", result.getUrl());
-        response.put("thumbnailUrl", result.getThumbnailUrl());
         response.put("markdown", result.getMarkdown());
         response.put("html", result.getHtml());
         response.put("bbcode", result.getBbcode());

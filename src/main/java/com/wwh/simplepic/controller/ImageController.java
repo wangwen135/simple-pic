@@ -7,7 +7,6 @@ import com.wwh.simplepic.model.StorageSpace;
 import com.wwh.simplepic.service.AuthService;
 import com.wwh.simplepic.service.ConfigService;
 import com.wwh.simplepic.service.ImageService;
-import com.wwh.simplepic.service.ThumbnailService;
 import com.wwh.simplepic.util.ErrorMessages;
 import com.wwh.simplepic.util.ResponseUtils;
 import com.wwh.simplepic.util.SimplePicUtils;
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Image controller
  * 图片控制器
  */
 @RestController
@@ -51,16 +49,12 @@ public class ImageController {
     private AuthService authService;
 
     @Autowired
-    private ThumbnailService thumbnailService;
-
-    @Autowired
     private ConfigService configService;
 
     @Autowired
     private StorageUtils storageUtils;
 
     /**
-     * Upload image
      * 上传图片
      */
     @PostMapping("/upload")
@@ -88,7 +82,7 @@ public class ImageController {
             // Verify anonymous upload is allowed if not authenticated
             if (user == null) {
                 com.wwh.simplepic.model.SystemConfig config = configService.getConfig();
-                if (!config.isAnonymousUploadEnabled()) {
+                if (config == null || !config.isAnonymousUploadEnabled()) {
                     return ResponseEntity.status(403).body(ResponseUtils.error("anonymous_upload_not_enabled"));
                 }
 
@@ -245,44 +239,6 @@ public class ImageController {
     }
 
     /**
-     * Get thumbnail
-     * 获取缩略图
-     */
-    @GetMapping("/thumb/{storageSpace}/**")
-    public ResponseEntity<Resource> getThumbnail(
-            @PathVariable("storageSpace") String storageSpace,
-            HttpServletRequest request) {
-        // Use AntPathMatcher to correctly extract the path after storageSpace
-        String pattern = "/image/thumb/" + storageSpace + "/**";
-        AntPathMatcher matcher = new AntPathMatcher();
-        String path = matcher.extractPathWithinPattern(pattern, request.getRequestURI());
-
-        // Validate path to prevent traversal attacks (same as getImage)
-        if (!SimplePicUtils.isPathSafe(path)) {
-            logger.warn("Invalid thumbnail path requested: {}", path);
-            return ResponseEntity.badRequest().build();
-        }
-
-        // Normalize path
-        path = SimplePicUtils.normalizePath(path);
-
-        File thumbnailFile = thumbnailService.getThumbnail(path, storageSpace);
-
-        if (thumbnailFile == null || !thumbnailFile.exists()) {
-            // Return original image if thumbnail doesn't exist
-            return getImage(storageSpace, request);
-        }
-
-        String contentType = getContentType(thumbnailFile.getName());
-        Resource resource = new FileSystemResource(thumbnailFile);
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000")
-                .body(resource);
-    }
-
-    /**
      * Get image info with dimensions
      */
     @GetMapping("/info/{storageSpace}/**")
@@ -388,7 +344,6 @@ public class ImageController {
         map.put("success", result.isSuccess());
         map.put("message", result.getMessage());
         map.put("url", result.getUrl());
-        map.put("thumbnailUrl", result.getThumbnailUrl());
         map.put("markdown", result.getMarkdown());
         map.put("html", result.getHtml());
         map.put("bbcode", result.getBbcode());

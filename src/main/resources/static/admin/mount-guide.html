@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple-Pic - 存储挂载说明</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <script src="/lib/tailwindcss.js"></script>
+    <script src="/js/i18n.js"></script>
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/lib/inter-font.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        pre {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+        pre::-webkit-scrollbar { height: 6px; }
+        pre::-webkit-scrollbar-track { background: transparent; }
+        pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        .section-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .code-block {
+            background: #1e293b;
+            position: relative;
+        }
+
+        .copy-hint {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+        .copy-hint:hover { color: rgba(255,255,255,0.6); }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="max-w-3xl mx-auto px-6 py-12">
+        <!-- Header -->
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-primary">存储挂载方式说明</h1>
+            </div>
+            <p class="text-secondary leading-relaxed">
+                Simple-Pic 的存储空间支持多种挂载方式。本页面介绍如何通过不同的 Web 服务器将存储目录映射为可通过 URL 访问的资源。
+            </p>
+        </div>
+
+        <!-- Concept -->
+        <div class="section-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                工作原理
+            </h2>
+            <div class="text-secondary text-sm space-y-3 leading-relaxed">
+                <p>当你上传图片后，系统会根据存储空间的 <strong class="text-primary">访问路径前缀</strong> 配置来生成图片的访问 URL：</p>
+                <div class="bg-slate-100 dark:bg-slate-800/60 rounded-lg px-4 py-3 font-mono text-sm border border-slate-200 dark:border-slate-700">
+                    <span class="text-blue-500">完整 URL</span> = <span class="text-amber-500">访问路径前缀</span> + <span class="text-green-500">文件相对路径</span>
+                </div>
+                <div class="space-y-2 mt-3">
+                    <div class="flex items-start gap-2">
+                        <span class="step-number">1</span>
+                        <div>
+                            <p class="font-medium text-primary">访问路径前缀</p>
+                            <p class="text-muted text-xs mt-0.5">你配置的 URL 前缀，如 <code class="text-blue-500">http://example.com/images/note/</code></p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="step-number">2</span>
+                        <div>
+                            <p class="font-medium text-primary">文件相对路径</p>
+                            <p class="text-muted text-xs mt-0.5">系统自动生成：<code class="text-blue-500">年份/月份/UUID.扩展名</code>，如 <code class="text-blue-500">2026/04/a1b2c3d4.jpg</code></p>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted text-xs mt-2">
+                    系统自带的图片 API 路径格式为：<code class="text-blue-500">/image/{存储空间名称}/{文件相对路径}</code>
+                </p>
+            </div>
+        </div>
+
+        <!-- Method 1: Built-in API -->
+        <div class="section-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold">1</span>
+                使用系统内置 API（默认）
+            </h2>
+            <div class="text-secondary text-sm space-y-3 leading-relaxed">
+                <p>最简单的方式，无需额外配置。直接使用系统自带的图片访问接口。</p>
+                <div class="code-block rounded-lg p-4">
+                    <pre class="text-sm text-green-400 overflow-x-auto"><code>访问路径前缀填写示例：
+
+http://192.168.31.88:8080/images/mystorage/
+
+系统会自动将 /images/{存储空间名}/ 映射到对应的存储目录</code></pre>
+                </div>
+                <div class="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-green-700 dark:text-green-400 text-xs">推荐方式，无需额外配置，开箱即用</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Method 2: Nginx -->
+        <div class="section-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold">2</span>
+                Nginx 反向代理挂载
+            </h2>
+            <div class="text-secondary text-sm space-y-4 leading-relaxed">
+                <p>通过 Nginx 直接映射存储目录到 URL 路径，实现静态文件访问，性能更好。</p>
+
+                <div>
+                    <p class="font-medium text-primary mb-2">基础配置：</p>
+                    <div class="code-block rounded-lg p-4">
+                        <span class="copy-hint" onclick="copyCode(this)">复制</span>
+                        <pre class="text-sm text-green-400 overflow-x-auto"><code>server {
+    listen 80;
+    server_name example.com;
+
+    # Simple-Pic 应用
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # 静态图片直接访问（性能更优）
+    location /images/mystorage/ {
+        alias /path/to/storage/;
+
+        # 可选：设置浏览器缓存
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}</code></pre>
+                    </div>
+                    <p class="text-muted text-xs mt-2">访问路径前缀填写：<code class="text-blue-500">http://example.com/images/mystorage/</code></p>
+                </div>
+
+                <div>
+                    <p class="font-medium text-primary mb-2">进阶配置（含缓存和跨域）：</p>
+                    <div class="code-block rounded-lg p-4">
+                        <span class="copy-hint" onclick="copyCode(this)">复制</span>
+                        <pre class="text-sm text-green-400 overflow-x-auto"><code># 静态图片访问 - 进阶配置
+location /images/mystorage/ {
+    alias /path/to/storage/;
+
+    # 浏览器缓存
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+
+    # 跨域支持（如需在其他网站引用图片）
+    add_header Access-Control-Allow-Origin *;
+    add_header Access-Control-Allow-Methods "GET, OPTIONS";
+
+    # 安全：禁止访问隐藏文件
+    location ~ /\. { deny all; }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <span class="text-amber-700 dark:text-amber-400 text-xs">修改 Nginx 配置后需执行 <code class="font-mono">nginx -s reload</code> 重新加载</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Method 3: Caddy -->
+        <div class="section-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-500 text-white text-xs font-bold">3</span>
+                Caddy 反向代理挂载
+            </h2>
+            <div class="text-secondary text-sm space-y-3 leading-relaxed">
+                <p>如果你使用 Caddy 作为 Web 服务器，可以使用以下配置：</p>
+                <div class="code-block rounded-lg p-4">
+                    <span class="copy-hint" onclick="copyCode(this)">复制</span>
+                    <pre class="text-sm text-green-400 overflow-x-auto"><code>example.com {
+    # Simple-Pic 应用
+    reverse_proxy localhost:8080
+
+    # 静态图片直接访问
+    handle_path /images/mystorage/* {
+        root * /path/to/storage
+        file_server
+        header Cache-Control "public, immutable"
+    }
+}</code></pre>
+                </div>
+                <p class="text-muted text-xs">访问路径前缀填写：<code class="text-blue-500">http://example.com/images/mystorage/</code></p>
+            </div>
+        </div>
+
+        <!-- Method 4: CDN -->
+        <div class="section-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold">4</span>
+                CDN 加速
+            </h2>
+            <div class="text-secondary text-sm space-y-3 leading-relaxed">
+                <p>将存储目录通过 CDN 分发，适用于需要全球加速访问的场景。</p>
+                <div class="space-y-2 mt-2">
+                    <div class="flex items-start gap-2">
+                        <span class="step-number">1</span>
+                        <span>将存储目录配置为 CDN 的源站</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="step-number">2</span>
+                        <span>在 CDN 控制台配置回源路径为存储目录</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="step-number">3</span>
+                        <span>将访问路径前缀设置为 CDN 分发域名</span>
+                    </div>
+                </div>
+                <div class="code-block rounded-lg p-4">
+                    <pre class="text-sm text-green-400 overflow-x-auto"><code>访问路径前缀填写示例：
+
+https://cdn.example.com/images/mystorage/</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="section-card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                常见问题
+            </h2>
+            <div class="text-secondary text-sm space-y-4 leading-relaxed">
+                <div>
+                    <p class="font-medium text-primary">Q: 访问路径前缀末尾需要加 <code class="text-blue-500">/</code> 吗？</p>
+                    <p class="text-muted mt-1">是的，建议始终以 <code class="text-blue-500">/</code> 结尾，确保 URL 拼接正确。</p>
+                </div>
+                <div>
+                    <p class="font-medium text-primary">Q: 可以使用 HTTPS 吗？</p>
+                    <p class="text-muted mt-1">可以。在 Nginx/Caddy 中配置 SSL 证书后，访问路径前缀使用 <code class="text-blue-500">https://</code> 即可。</p>
+                </div>
+                <div>
+                    <p class="font-medium text-primary">Q: 修改配置后图片无法访问？</p>
+                    <p class="text-muted mt-1">检查：1) 存储目录路径是否正确；2) Web 服务器是否有读取权限；3) Nginx 配置是否已 reload；4) 访问路径前缀是否与 Nginx location 匹配。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-muted mt-8">
+            <p>Simple-Pic Storage Mounting Guide</p>
+        </div>
+    </div>
+
+    <script>
+        function copyCode(el) {
+            const pre = el.parentElement.querySelector('pre code');
+            const text = pre.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = el.textContent;
+                el.textContent = '已复制';
+                el.style.color = 'rgba(34, 197, 94, 0.8)';
+                setTimeout(() => {
+                    el.textContent = original;
+                    el.style.color = '';
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>

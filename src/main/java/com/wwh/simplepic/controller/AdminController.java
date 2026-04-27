@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Admin controller
  * 管理员控制器
  */
 @RestController
@@ -45,9 +44,6 @@ public class AdminController {
 
     @Autowired
     private ConfigService configService;
-
-    @Autowired
-    private ThumbnailService thumbnailService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -142,6 +138,14 @@ public class AdminController {
         String urlPrefix = (String) request.get("urlPrefix");
         Boolean allowAnonymous = request.get("allowAnonymous") != null ? (Boolean) request.get("allowAnonymous") : false;
 
+        // 参数校验
+        if (name == null || name.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("name_required"));
+        }
+        if (path == null || path.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("path_required"));
+        }
+
         boolean success = storageService.createStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous);
 
         if (success) {
@@ -162,6 +166,11 @@ public class AdminController {
         String maxSize = (String) request.get("maxSize");
         String urlPrefix = (String) request.get("urlPrefix");
         Boolean allowAnonymous = request.get("allowAnonymous") != null ? (Boolean) request.get("allowAnonymous") : false;
+
+        // 参数校验
+        if (path == null || path.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("path_required"));
+        }
 
         boolean success = storageService.updateStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous);
 
@@ -217,6 +226,17 @@ public class AdminController {
         String roleStr = (String) request.get("role");
         @SuppressWarnings("unchecked")
         List<String> storageSpacesList = (List<String>) request.get("storageSpaces");
+
+        // 参数校验
+        if (username == null || username.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("username_required"));
+        }
+        if (password == null || password.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("password_required"));
+        }
+        if (roleStr == null || roleStr.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("role_required"));
+        }
 
         Role role = Role.fromString(roleStr);
         String[] storageSpaces = storageSpacesList != null ? storageSpacesList.toArray(new String[0]) : new String[0];
@@ -313,6 +333,11 @@ public class AdminController {
         String storageSpace = request.get("storageSpace");
         String remark = request.get("remark");
 
+        // 参数校验
+        if (storageSpace == null || storageSpace.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("storage_space_required"));
+        }
+
         SystemConfig config = configService.getConfig();
         if (config.getApiKeys() == null) {
             config.setApiKeys(new ArrayList<>());
@@ -407,6 +432,14 @@ public class AdminController {
         String path = request.get("path");
         String storageSpace = request.get("storageSpace");
 
+        // 参数校验
+        if (path == null || path.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("path_required"));
+        }
+        if (storageSpace == null || storageSpace.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("storage_space_required"));
+        }
+
         boolean success = imageService.createDirectory(path, storageSpace);
 
         if (success) {
@@ -424,6 +457,17 @@ public class AdminController {
         String oldPath = request.get("oldPath");
         String newPath = request.get("newPath");
         String storageSpace = request.get("storageSpace");
+
+        // 参数校验
+        if (oldPath == null || oldPath.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("old_path_required"));
+        }
+        if (newPath == null || newPath.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("new_path_required"));
+        }
+        if (storageSpace == null || storageSpace.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("storage_space_required"));
+        }
 
         boolean success = imageService.renameDirectory(oldPath, newPath, storageSpace);
 
@@ -443,6 +487,17 @@ public class AdminController {
         String oldPath = request.get("oldPath");
         String newPath = request.get("newPath");
 
+        // 参数校验
+        if (storageSpace == null || storageSpace.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("storage_space_required"));
+        }
+        if (oldPath == null || oldPath.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("old_path_required"));
+        }
+        if (newPath == null || newPath.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("new_path_required"));
+        }
+
         boolean success = imageService.renameImage(oldPath, newPath, storageSpace);
 
         if (success) {
@@ -461,6 +516,17 @@ public class AdminController {
         String sourcePath = request.get("sourcePath");
         String targetPath = request.get("targetPath");
 
+        // 参数校验
+        if (storageSpace == null || storageSpace.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("storage_space_required"));
+        }
+        if (sourcePath == null || sourcePath.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("source_path_required"));
+        }
+        if (targetPath == null || targetPath.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("target_path_required"));
+        }
+
         boolean success = imageService.moveImage(sourcePath, targetPath, storageSpace);
 
         if (success) {
@@ -477,6 +543,14 @@ public class AdminController {
     public ResponseEntity<Map<String, Object>> deleteDirectory(@RequestBody Map<String, String> request) {
         String path = request.get("path");
         String storageSpace = request.get("storageSpace");
+
+        // 参数校验
+        if (path == null || path.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("path_required"));
+        }
+        if (storageSpace == null || storageSpace.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("storage_space_required"));
+        }
 
         boolean success = imageService.deleteDirectory(path, storageSpace);
 

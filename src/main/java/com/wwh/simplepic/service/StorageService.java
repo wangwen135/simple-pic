@@ -17,7 +17,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Storage service
  * 存储服务
  */
 @Service
@@ -32,11 +31,7 @@ public class StorageService {
     private UserService userService;
 
     /**
-     * Storage statistics cache with Caffeine
-     * 使用 Caffeine 缓存存储统计数据
-     * - 5 minutes TTL after write
-     * - Maximum 100 entries
-     * - Automatically cleanup expired entries
+     * 使用 Caffeine 缓存存储统计数据（5分钟 TTL，最大 100 条，自动清理过期条目）
      */
     private final Cache<String, StorageStats> statsCache = Caffeine.newBuilder()
             .expireAfterWrite(Constants.Cache.STATS_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
@@ -121,7 +116,7 @@ public class StorageService {
         try {
             new java.net.URL(urlPrefix);
             return true;
-        } catch (Exception e) {
+        } catch (java.net.MalformedURLException e) {
             return false;
         }
     }
@@ -161,13 +156,11 @@ public class StorageService {
 
         File storageDir = new File(path);
         if (!storageDir.exists()) {
-            try {
-                storageDir.mkdirs();
-                logger.info("Created storage directory: {}", path);
-            } catch (Exception e) {
-                logger.error("Failed to create storage directory: {}", path, e);
+            if (!storageDir.mkdirs()) {
+                logger.error("Failed to create storage directory: {}", path);
                 return false;
             }
+            logger.info("Created storage directory: {}", path);
         }
 
         SystemConfig.StorageSpace spaceConfig = new SystemConfig.StorageSpace();
@@ -197,18 +190,6 @@ public class StorageService {
         // Clear cache after creating storage space
         clearStatsCache(name);
 
-        // Create thumbnails directory if not exists
-        File thumbnailsDir = new File(path, Constants.Directories.THUMBNAILS);
-        if (!thumbnailsDir.exists()) {
-            try {
-                thumbnailsDir.mkdirs();
-                logger.info("Created thumbnails directory: {}", thumbnailsDir.getAbsolutePath());
-            } catch (Exception e) {
-                logger.error("Failed to create thumbnails directory: {}", thumbnailsDir.getAbsolutePath(), e);
-                // Continue anyway, this is not critical
-            }
-        }
-
         logger.info("Storage space {} created", name);
         return true;
     }
@@ -236,25 +217,11 @@ public class StorageService {
 
         File storageDir = new File(path);
         if (!storageDir.exists()) {
-            try {
-                storageDir.mkdirs();
-                logger.info("Created storage directory: {}", path);
-            } catch (Exception e) {
-                logger.error("Failed to create storage directory: {}", path, e);
+            if (!storageDir.mkdirs()) {
+                logger.error("Failed to create storage directory: {}", path);
                 return false;
             }
-        }
-
-        // Create thumbnails directory if not exists
-        File thumbnailsDir = new File(path, Constants.Directories.THUMBNAILS);
-        if (!thumbnailsDir.exists()) {
-            try {
-                thumbnailsDir.mkdirs();
-                logger.info("Created thumbnails directory: {}", thumbnailsDir.getAbsolutePath());
-            } catch (Exception e) {
-                logger.error("Failed to create thumbnails directory: {}", thumbnailsDir.getAbsolutePath(), e);
-                // Continue anyway, this is not critical
-            }
+            logger.info("Created storage directory: {}", path);
         }
 
         for (SystemConfig.StorageSpace spaceConfig : config.getStorageSpaces()) {

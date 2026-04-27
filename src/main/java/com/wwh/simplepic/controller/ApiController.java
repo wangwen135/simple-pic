@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,9 +76,9 @@ public class ApiController {
             } else {
                 return ResponseEntity.badRequest().body(ResponseUtils.errorMessage(result.getMessage()));
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("API upload failed", e);
-            return ResponseEntity.status(500).body(ResponseUtils.errorWithDetail("upload_failed", e.getMessage()));
+            return ResponseEntity.status(500).body(ResponseUtils.error("upload_failed"));
         }
     }
 

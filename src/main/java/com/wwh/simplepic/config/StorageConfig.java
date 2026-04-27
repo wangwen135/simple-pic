@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Storage configuration
  * 存储配置
  */
 @Configuration
@@ -41,16 +40,10 @@ public class StorageConfig {
                     if (!storageDir.exists()) {
                         storageDir.mkdirs();
                     }
-
-                    // Create thumbnails directory
-                    File thumbnailsDir = new File(storageDir, ".thumbnails");
-                    if (!thumbnailsDir.exists()) {
-                        thumbnailsDir.mkdirs();
-                    }
                 }
             }
         } catch (Exception e) {
-            // Config file might not exist yet during first startup
+            // 首次启动时配置文件可能不存在，属于正常情况
         }
         return spaceMap;
     }

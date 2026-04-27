@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Authentication interceptor
  * 认证拦截器
  */
 @Component
@@ -73,7 +72,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (session == null) {
                 // Not logged in, check if anonymous upload is available
                 SystemConfig config = configService.getConfig();
-                boolean canAnonymousUpload = config.isAnonymousUploadEnabled()
+                boolean canAnonymousUpload = config != null && config.isAnonymousUploadEnabled()
                         && storageUtils.findAnonymousUploadSpace() != null;
 
                 if (canAnonymousUpload) {
@@ -100,7 +99,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (session == null) {
                 // Not logged in, check if anonymous upload is enabled
                 SystemConfig config = configService.getConfig();
-                if (!config.isAnonymousUploadEnabled() || storageUtils.findAnonymousUploadSpace() == null) {
+                if (config == null || !config.isAnonymousUploadEnabled() || storageUtils.findAnonymousUploadSpace() == null) {
                     // Anonymous upload not enabled, redirect to login
                     response.sendRedirect("/login.html");
                     return false;
@@ -155,7 +154,6 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Check if path is public (doesn't require authentication)
      * 检查路径是否为公共路径（不需要认证）
      */
     private boolean isPublicPath(String path) {
@@ -168,7 +166,6 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Check if path requires admin role
      * 检查路径是否需要管理员角色
      */
     private boolean isAdminPath(String path) {
@@ -181,13 +178,10 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * Extract authentication token from request
-     * 从请求中提取认证令牌
-     * Priority: Cookie > Authorization header > Query parameter
-     * 优先级：Cookie > Authorization header > 查询参数
+     * 从请求中提取认证令牌（优先级：Cookie > Authorization header > 查询参数）
      */
     private String getTokenFromRequest(HttpServletRequest request) {
-        // Check cookie first (优先从Cookie获取)
+        // 优先从 Cookie 获取
         javax.servlet.http.Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (javax.servlet.http.Cookie cookie : cookies) {
@@ -197,13 +191,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
 
-        // Check Authorization header (检查Authorization header)
+        // 检查 Authorization header
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
 
-        // Check query parameter (检查查询参数)
+        // 检查查询参数
         token = request.getParameter("token");
         if (token != null) {
             return token;
