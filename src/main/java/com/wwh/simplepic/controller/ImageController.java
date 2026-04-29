@@ -293,6 +293,7 @@ public class ImageController {
             if (bufferedImage != null) {
                 info.put("width", bufferedImage.getWidth());
                 info.put("height", bufferedImage.getHeight());
+                bufferedImage.flush();
             }
         } catch (IOException e) {
             logger.warn("Failed to read image dimensions for: {}", path);

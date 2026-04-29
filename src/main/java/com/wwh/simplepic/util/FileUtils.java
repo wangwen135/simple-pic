@@ -292,7 +292,7 @@ public class FileUtils {
         }
 
         // Check for path traversal patterns
-        if (userPath.contains("..") || userPath.contains("~") || userPath.contains("/.") || userPath.contains("\\.")) {
+        if (userPath.contains("..") || userPath.contains("~")) {
             return null;
         }
 

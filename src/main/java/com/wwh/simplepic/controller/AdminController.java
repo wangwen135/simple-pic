@@ -53,18 +53,6 @@ public class AdminController {
     private PasswordEncoder passwordEncoder;
 
     /**
-     * Generate password hash (for testing)
-     */
-    @GetMapping("/gen-password")
-    public ResponseEntity<Map<String, String>> generatePassword(@RequestParam String password) {
-        String hash = passwordEncoder.encode(password);
-        Map<String, String> result = new HashMap<>();
-        result.put("password", password);
-        result.put("hash", hash);
-        return ResponseEntity.ok(result);
-    }
-
-    /**
      * Dashboard statistics
      */
     @GetMapping("/dashboard")
@@ -367,18 +355,20 @@ public class AdminController {
     }
 
     /**
-     * Delete API key
+     * Delete API key by token value
      */
-    @DeleteMapping("/apikeys/{index}")
-    public ResponseEntity<Map<String, Object>> deleteApiKey(@PathVariable int index) {
+    @DeleteMapping("/apikeys/{token}")
+    public ResponseEntity<Map<String, Object>> deleteApiKey(@PathVariable String token) {
         SystemConfig config = configService.getConfig();
-        if (config.getApiKeys() != null && index >= 0 && index < config.getApiKeys().size()) {
-            config.getApiKeys().remove(index);
-            configService.saveConfig(config);
-            return ResponseEntity.ok(ResponseUtils.success());
+        if (config.getApiKeys() != null) {
+            boolean removed = config.getApiKeys().removeIf(key -> token.equals(key.getToken()));
+            if (removed) {
+                configService.saveConfig(config);
+                return ResponseEntity.ok(ResponseUtils.success());
+            }
         }
 
-        return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_api_key_index"));
+        return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_api_key"));
     }
 
     /**

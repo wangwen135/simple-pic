@@ -73,7 +73,7 @@ public class AuthController {
         if (token != null) {
             // Set cookie with security attributes
             int maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
-            boolean isSecure = isProductionEnvironment();
+            boolean isSecure = isSecureRequest(httpRequest);
             // Set SameSite cookie attribute for CSRF protection via header
             // Use Lax to allow cookies to be sent on same-site navigations
             String cookieHeader = String.format("token=%s; Path=/; HttpOnly; %s; Max-Age=%d; SameSite=Lax",
@@ -83,9 +83,15 @@ public class AuthController {
             response.addHeader("Set-Cookie", cookieHeader);
 
             User user = userService.getUser(username);
+            // Return safe user info without password hash
+            Map<String, Object> safeUserInfo = new HashMap<>();
+            safeUserInfo.put("username", user.getUsername());
+            safeUserInfo.put("role", user.getRole() != null ? user.getRole().toString() : null);
+            safeUserInfo.put("storageSpaces", user.getStorageSpaces());
+
             Map<String, Object> result = ResponseUtils.success();
             result.put("token", token);
-            result.put("user", user);
+            result.put("user", safeUserInfo);
 
             logger.info("User {} logged in successfully from IP: {}", username, ipAddress);
             return ResponseEntity.ok(result);
@@ -99,13 +105,14 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(@CookieValue(value = "token", required = false) String token,
-                                                      HttpServletResponse response) {
+                                                      HttpServletResponse response,
+                                                      HttpServletRequest httpRequest) {
         if (token != null) {
             authService.logout(token);
         }
 
         // Clear cookie with same security attributes via Set-Cookie header
-        boolean isSecure = isProductionEnvironment();
+        boolean isSecure = isSecureRequest(httpRequest);
         String cookieHeader = String.format("token=; Path=/; HttpOnly; %s; Max-Age=0; SameSite=Lax",
                 isSecure ? "Secure" : "");
         response.addHeader("Set-Cookie", cookieHeader);
@@ -196,7 +203,7 @@ public class AuthController {
         String newPassword = request.get("newPassword");
 
         if (currentPassword == null || newPassword == null) {
-            return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_file_format"));
+            return ResponseEntity.badRequest().body(ResponseUtils.error("password_required"));
         }
 
         // Verify current password
@@ -213,11 +220,17 @@ public class AuthController {
     }
 
     /**
-     * Check if running in production environment
+     * Check if the request is secure (HTTPS) to set Secure cookie flag
      */
-    private boolean isProductionEnvironment() {
-        // Check for common production indicators
-        String env = System.getProperty("spring.profiles.active");
-        return "prod".equalsIgnoreCase(env) || "production".equalsIgnoreCase(env);
+    private boolean isSecureRequest(HttpServletRequest request) {
+        if (request == null) {
+            return false;
+        }
+        // Check request scheme or common proxy headers
+        if ("https".equalsIgnoreCase(request.getScheme())) {
+            return true;
+        }
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        return "https".equalsIgnoreCase(forwardedProto);
     }
 }

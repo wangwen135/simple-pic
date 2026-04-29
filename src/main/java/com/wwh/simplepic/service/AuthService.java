@@ -243,7 +243,8 @@ public class AuthService {
         for (Map.Entry<String, LoginSession> entry : sessions.entrySet()) {
             Map<String, Object> sessionInfo = new java.util.HashMap<>();
             LoginSession session = entry.getValue();
-            sessionInfo.put("token", entry.getKey());
+            String rawToken = entry.getKey();
+            sessionInfo.put("token", rawToken.substring(0, Math.min(8, rawToken.length())) + "***");
             sessionInfo.put("username", session.getUsername());
             sessionInfo.put("role", session.getRole());
             sessionInfo.put("storageSpace", session.getCurrentStorageSpace());

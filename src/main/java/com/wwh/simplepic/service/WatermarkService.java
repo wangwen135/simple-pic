@@ -73,8 +73,11 @@ public class WatermarkService {
             File tempFile = new File(cacheDir, cacheFilename + ".tmp");
             applyWatermarkToFile(originalFile, tempFile, config, extension);
 
-            // 原子重命名
-            tempFile.renameTo(cachedFile);
+            // 原子重命名，失败时清理临时文件
+            if (!tempFile.renameTo(cachedFile)) {
+                tempFile.delete();
+                throw new IOException("Failed to rename watermark cache file");
+            }
 
             return cachedFile;
         } catch (Exception e) {
@@ -175,14 +178,16 @@ public class WatermarkService {
         }
 
         Graphics2D g2d = (Graphics2D) image.getGraphics();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        if ("text".equals(config.getType())) {
-            applyTextWatermark(g2d, image, config);
+            if ("text".equals(config.getType())) {
+                applyTextWatermark(g2d, image, config);
+            }
+        } finally {
+            g2d.dispose();
         }
-
-        g2d.dispose();
         ImageIO.write(image, extension, outputFile);
     }
 
