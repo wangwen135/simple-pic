@@ -94,9 +94,10 @@ public class StartupConfig implements CommandLineRunner {
         config.setName("Simple-Pic");
         config.setDescription("简单好用的本地图床");
 
-        // Frontend config - 默认使用明亮主题
-        config.setTheme("light");
-        config.setItemsPerPage(50);
+        // Upload settings
+        config.setWatermarkEnabled(false);
+        config.setMaxFileSizeMB(10);
+        config.setAllowedFileTypes("jpg,jpeg,png,gif,webp,svg");
 
         // 不创建默认存储空间，需要用户手动配置
 
@@ -108,13 +109,6 @@ public class StartupConfig implements CommandLineRunner {
         // 不分配存储空间，等用户创建后再分配
         config.getUsers().add(adminUser);
 
-        // 水印默认关闭
-        config.setWatermarkEnabled(false);
-        config.setWatermarkType("text");
-        config.setWatermarkContent("");
-        config.setWatermarkPosition("bottom-right");
-        config.setWatermarkOpacity(0.5);
-
         // Security config
         config.setRateLimitEnabled(true);
         config.setMaxRequests(100);
@@ -124,6 +118,11 @@ public class StartupConfig implements CommandLineRunner {
         config.setLoginLockoutEnabled(true);
         config.setMaxFailedAttempts(5);
         config.setLockoutMinutes(10);
+
+        // Hotlink protection config
+        config.setHotlinkProtectionEnabled(false);
+        config.setAllowedReferers("");
+        config.setHotlinkResponse("generated");
 
         return config;
     }

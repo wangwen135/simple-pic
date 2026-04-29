@@ -16,20 +16,15 @@ public class SystemConfig {
     private String description;
 
     private boolean anonymousUploadEnabled;
-    private String allowedOrigins; // CORS allowed origins (comma-separated)
+    private boolean watermarkEnabled;
 
-    private String theme;
-    private int itemsPerPage;
+    // 上传限制
+    private int maxFileSizeMB;
+    private String allowedFileTypes; // 逗号分隔的扩展名
 
     private List<StorageSpace> storageSpaces = new ArrayList<>();
     private List<User> users = new ArrayList<>();
     private List<ApiKey> apiKeys = new ArrayList<>();
-
-    private boolean watermarkEnabled;
-    private String watermarkType;
-    private String watermarkContent;
-    private String watermarkPosition;
-    private double watermarkOpacity;
 
     private boolean rateLimitEnabled;
     private int maxRequests;
@@ -39,6 +34,12 @@ public class SystemConfig {
     private boolean loginLockoutEnabled;
     private int maxFailedAttempts;
     private int lockoutMinutes;
+
+    // 防盗链设置
+    private boolean hotlinkProtectionEnabled;
+    private String allowedReferers; // 白名单域名（逗号分隔）
+    private String hotlinkResponse; // "generated" / "image" / "403"
+    private String hotlinkImagePath; // 自定义提示图路径
 
     @Data
     public static class StorageSpace {

@@ -43,10 +43,9 @@
             <div class="glass rounded-t-xl border-b border-slate-200 dark:border-slate-700">
                 <div class="flex overflow-x-auto px-2">
                     <button class="settings-tab active" onclick="switchTab('basic')">基本信息</button>
-                    <button class="settings-tab" onclick="switchTab('watermark')">批量水印</button>
                     <button class="settings-tab" onclick="switchTab('security')">安全设置</button>
                     <button class="settings-tab" onclick="switchTab('lockout')">登录锁定</button>
-                    <button class="settings-tab" onclick="switchTab('frontend')">前端设置</button>
+                    <button class="settings-tab" onclick="switchTab('hotlink')">防盗链</button>
                 </div>
             </div>
 
@@ -71,63 +70,21 @@
                             </label>
                             <p class="text-xs text-muted mt-1">启用后，未登录用户可以上传图片到允许匿名上传的存储空间</p>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Batch Watermark Tab -->
-                <div id="tab-watermark" class="tab-content">
-                    <!-- 所有存储空间的水印状态 -->
-                    <div class="mb-6">
-                        <h3 class="text-sm font-medium text-secondary mb-3">存储空间水印状态</h3>
-                        <div id="wm-space-list" class="space-y-2">
-                            <p class="text-muted text-sm">加载中...</p>
+                        <div class="md:col-span-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="watermark-enabled" class="w-4 h-4 rounded text-blue-600">
+                                <span class="text-secondary">启用水印</span>
+                            </label>
+                            <p class="text-xs text-muted mt-1">全局水印开关，关闭后所有存储空间的水印将不生效；开启后由各存储空间独立配置</p>
                         </div>
-                    </div>
-
-                    <!-- 批量操作 -->
-                    <div class="border-t border-slate-200 dark:border-slate-700 pt-5">
-                        <h3 class="text-sm font-medium text-secondary mb-3">批量水印配置</h3>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="flex items-center space-x-2">
-                                        <input type="checkbox" id="wm-enabled" class="w-4 h-4 rounded text-blue-600" onchange="updateWatermarkPreview()">
-                                        <span class="text-secondary text-sm">启用水印</span>
-                                    </label>
-                                </div>
-                                <div>
-                                    <label class="block text-secondary text-xs mb-1">水印内容</label>
-                                    <input type="text" id="wm-content" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" placeholder="例如: © My Site" oninput="updateWatermarkPreview()">
-                                </div>
-                                <div>
-                                    <label class="block text-secondary text-xs mb-1">位置</label>
-                                    <select id="wm-position" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" onchange="updateWatermarkPreview()">
-                                        <option value="top-left">左上角</option>
-                                        <option value="top-right">右上角</option>
-                                        <option value="bottom-left">左下角</option>
-                                        <option value="bottom-right" selected>右下角</option>
-                                        <option value="center">居中</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-secondary text-xs mb-1">透明度: <span id="wm-opacity-value">0.5</span></label>
-                                    <input type="range" id="wm-opacity" min="0.1" max="1" step="0.1" value="0.5" class="w-full accent-blue-600"
-                                        oninput="document.getElementById('wm-opacity-value').textContent=this.value; updateWatermarkPreview()">
-                                </div>
-                                <button type="button" onclick="applyWatermarkToAll()" class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
-                                    应用到所有存储空间
-                                </button>
-                                <button type="button" onclick="clearAllWatermark()" class="w-full px-3 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors">
-                                    清除所有水印
-                                </button>
-                                <span id="apply-wm-status" class="text-xs text-muted block mt-1"></span>
-                            </div>
-                            <div>
-                                <label class="block text-secondary text-xs mb-1">预览效果</label>
-                                <div class="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                                    <canvas id="watermark-preview" width="400" height="300" class="w-full" style="display:block;"></canvas>
-                                </div>
-                            </div>
+                        <div>
+                            <label class="block text-secondary text-sm mb-1">最大文件大小（MB）</label>
+                            <input type="number" id="max-file-size" class="w-full px-4 py-2 input-field rounded-lg" placeholder="10" min="1" max="100">
+                        </div>
+                        <div>
+                            <label class="block text-secondary text-sm mb-1">允许的文件格式</label>
+                            <input type="text" id="allowed-file-types" class="w-full px-4 py-2 input-field rounded-lg" placeholder="jpg,jpeg,png,gif,webp,svg">
+                            <p class="text-xs text-muted mt-1">多个格式用英文逗号分隔</p>
                         </div>
                     </div>
                 </div>
@@ -173,19 +130,53 @@
                     <p class="text-xs text-muted mt-4">启用后，同一 IP 连续登录失败达到最大次数后将被锁定指定时间。</p>
                 </div>
 
-                <!-- Frontend Tab -->
-                <div id="tab-frontend" class="tab-content">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Hotlink Protection Tab -->
+                <div id="tab-hotlink" class="tab-content">
+                    <div class="space-y-4">
                         <div>
-                            <label class="block text-secondary text-sm mb-1">主题</label>
-                            <select id="frontend-theme" class="w-full px-4 py-2 input-field rounded-lg">
-                                <option value="light">浅色</option>
-                                <option value="dark">深色</option>
-                            </select>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="hotlink-enabled" class="w-4 h-4 rounded text-blue-600">
+                                <span class="text-secondary">启用防盗链</span>
+                            </label>
+                            <p class="text-xs text-muted mt-1">启用后，只有白名单中的网站才能引用图片。直接访问图片链接（无 Referer）不受影响。</p>
                         </div>
                         <div>
-                            <label class="block text-secondary text-sm mb-1">每页显示数量</label>
-                            <input type="number" id="frontend-items" class="w-full px-4 py-2 input-field rounded-lg" placeholder="50" min="10" max="200">
+                            <label class="block text-secondary text-sm mb-1">允许的来源域名</label>
+                            <textarea id="hotlink-referers" rows="4" class="w-full px-4 py-2 input-field rounded-lg text-sm" placeholder="example.com&#10;*.example.com&#10;blog.example.net"></textarea>
+                            <p class="text-xs text-muted mt-1">每行一个域名，支持通配符如 *.example.com</p>
+                        </div>
+                        <div>
+                            <label class="block text-secondary text-sm mb-2">违规处理方式</label>
+                            <div class="flex flex-wrap gap-4">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="hotlink-response" value="generated" class="text-blue-600" checked>
+                                    <span class="text-secondary text-sm">生成提示图</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="hotlink-response" value="image" class="text-blue-600">
+                                    <span class="text-secondary text-sm">自定义图片</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="hotlink-response" value="403" class="text-blue-600">
+                                    <span class="text-secondary text-sm">返回 403</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="hotlink-image-section" class="hidden">
+                            <label class="block text-secondary text-sm mb-1">自定义防盗链提示图</label>
+                            <div class="flex items-center gap-3">
+                                <input type="file" id="hotlink-image-file" accept="image/*" class="text-sm text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                                <button type="button" onclick="uploadHotlinkImage()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">上传</button>
+                            </div>
+                            <div id="hotlink-image-preview-container" class="mt-2 hidden">
+                                <img id="hotlink-image-preview" class="max-w-xs max-h-32 rounded-lg border border-slate-200 dark:border-slate-700">
+                            </div>
+                        </div>
+                        <div id="hotlink-generated-preview-section" class="hidden">
+                            <label class="block text-secondary text-sm mb-1">提示图预览</label>
+                            <div class="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 inline-block">
+                                <canvas id="hotlink-generated-preview" width="400" height="200" style="display:block;max-width:100%;"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -226,9 +217,6 @@
             // Load settings
             loadSettings();
 
-            // Load watermark status
-            loadWatermarkStatus();
-
             // Hide loading after data loaded
             const loading = document.getElementById('admin-loading-overlay');
             if (loading) {
@@ -244,17 +232,11 @@
 
             // Find the clicked tab button and activate it
             const tabs = document.querySelectorAll('.settings-tab');
-            const tabMap = { basic: 0, watermark: 1, security: 2, lockout: 3, frontend: 4 };
+            const tabMap = { basic: 0, security: 1, lockout: 2, hotlink: 3 };
             if (tabs[tabMap[tabName]]) {
                 tabs[tabMap[tabName]].classList.add('active');
             }
             document.getElementById('tab-' + tabName).classList.add('active');
-
-            // 切换到水印标签时加载数据和预览
-            if (tabName === 'watermark') {
-                loadWatermarkStatus();
-                setTimeout(updateWatermarkPreview, 50);
-            }
         }
 
         async function loadSettings() {
@@ -268,6 +250,9 @@
                     document.getElementById('sys-name').value = c.name || '';
                     document.getElementById('sys-desc').value = c.description || '';
                     document.getElementById('anonymous-enabled').checked = c.anonymousUploadEnabled || false;
+                    document.getElementById('watermark-enabled').checked = c.watermarkEnabled || false;
+                    document.getElementById('max-file-size').value = c.maxFileSizeMB || 10;
+                    document.getElementById('allowed-file-types').value = c.allowedFileTypes || 'jpg,jpeg,png,gif,webp,svg';
                     // Security
                     document.getElementById('rl-enabled').checked = c.rateLimitEnabled || false;
                     document.getElementById('rl-max').value = c.maxRequests || 100;
@@ -276,199 +261,42 @@
                     document.getElementById('lockout-enabled').checked = c.loginLockoutEnabled || false;
                     document.getElementById('lockout-max-attempts').value = c.maxFailedAttempts || 5;
                     document.getElementById('lockout-minutes').value = c.lockoutMinutes || 30;
-                    // Frontend
-                    document.getElementById('frontend-theme').value = c.theme || 'light';
-                    document.getElementById('frontend-items').value = c.itemsPerPage || 50;
+                    // Hotlink
+                    document.getElementById('hotlink-enabled').checked = c.hotlinkProtectionEnabled || false;
+                    document.getElementById('hotlink-referers').value = c.allowedReferers || '';
+                    const resp = c.hotlinkResponse || 'generated';
+                    document.querySelectorAll('input[name="hotlink-response"]').forEach(r => r.checked = r.value === resp);
+                    toggleHotlinkImageSection();
+                    if (c.hotlinkImagePath) {
+                        document.getElementById('hotlink-image-preview').src = '/api/admin/hotlink-image/preview?t=' + Date.now();
+                        document.getElementById('hotlink-image-preview-container').classList.remove('hidden');
+                    }
+                    // Initialize preview visibility
+                    toggleHotlinkImageSection();
                 }
             } catch (error) {
                 console.error('Failed to load settings:', error);
             }
         }
 
-        function updateWatermarkPreview() {
-            const canvas = document.getElementById('watermark-preview');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            // Draw sample image (gradient)
-            const grad = ctx.createLinearGradient(0, 0, w, h);
-            grad.addColorStop(0, '#4f46e5');
-            grad.addColorStop(0.5, '#0ea5e9');
-            grad.addColorStop(1, '#10b981');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, w, h);
-
-            // Draw some decorative shapes
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.beginPath();
-            ctx.arc(w * 0.7, h * 0.3, 60, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(w * 0.2, h * 0.7, 40, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw watermark
-            const enabled = document.getElementById('wm-enabled').checked;
-            if (!enabled) return;
-
-            const content = document.getElementById('wm-content').value || '';
-            if (!content) return;
-
-            const position = document.getElementById('wm-position').value;
-            const opacity = parseFloat(document.getElementById('wm-opacity').value) || 0.5;
-
-            ctx.save();
-            ctx.globalAlpha = opacity;
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px Arial, sans-serif';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-
-            const metrics = ctx.measureText(content);
-            const textW = metrics.width;
-            const textH = 20;
-            const margin = 15;
-            let x, y;
-
-            switch (position) {
-                case 'top-left':
-                    x = margin; y = textH + margin; break;
-                case 'top-right':
-                    x = w - textW - margin; y = textH + margin; break;
-                case 'bottom-left':
-                    x = margin; y = h - margin; break;
-                case 'center':
-                    x = (w - textW) / 2; y = (h + textH) / 2; break;
-                case 'bottom-right':
-                default:
-                    x = w - textW - margin; y = h - margin;
-            }
-            ctx.fillText(content, x, y);
-            ctx.restore();
-        }
-
-        async function loadWatermarkStatus() {
-            try {
-                const resp = await fetch('/api/admin/storages');
-                const storages = await resp.json();
-                const container = document.getElementById('wm-space-list');
-                if (!storages || storages.length === 0) {
-                    container.innerHTML = '<p class="text-muted text-sm">暂无存储空间</p>';
-                    return;
-                }
-                container.innerHTML = storages.map(s => {
-                    const wm = s.watermark;
-                    const hasWm = wm && wm.enabled;
-                    return `
-                        <div class="flex items-center justify-between p-2.5 rounded-lg ${hasWm ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-slate-100 dark:bg-slate-800/50 border border-transparent'}">
-                            <div class="flex items-center gap-3">
-                                <span class="w-2 h-2 rounded-full ${hasWm ? 'bg-blue-500' : 'bg-slate-400'}"></span>
-                                <span class="text-primary text-sm font-medium">${s.name}</span>
-                            </div>
-                            <div class="text-xs ${hasWm ? 'text-blue-400' : 'text-muted'}">
-                                ${hasWm ? `"${wm.content || '(空)'}" · ${wm.position || '右下角'} · 透明度 ${wm.opacity || 0.5}` : '未启用水印'}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (e) {
-                console.error('Failed to load watermark status:', e);
-            }
-        }
-
-        async function clearAllWatermark() {
-            const status = document.getElementById('apply-wm-status');
-            if (!confirm('确定要清除所有存储空间的水印吗？')) return;
-            try {
-                const resp = await fetch('/api/admin/storages');
-                const storages = await resp.json();
-                let ok = 0, fail = 0;
-                for (const s of storages) {
-                    const r = await fetch(`/api/admin/storages/${s.name}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ path: s.path, maxSize: s.maxSize, urlPrefix: s.urlPrefix, allowAnonymous: s.allowAnonymous, watermark: null })
-                    });
-                    (await r.json()).success ? ok++ : fail++;
-                }
-                status.textContent = fail > 0 ? `${ok} 个成功，${fail} 个失败` : `已清除全部 ${ok} 个存储空间的水印`;
-                loadWatermarkStatus();
-            } catch (e) { status.textContent = '操作失败'; }
-        }
-
-        async function applyWatermarkToAll() {
-            const wmEnabled = document.getElementById('wm-enabled').checked;
-            const status = document.getElementById('apply-wm-status');
-
-            if (!wmEnabled) {
-                // 禁用水印 → 清除所有存储空间的水印
-                const watermark = null;
-                if (!confirm('确定要禁用所有存储空间的水印吗？')) return;
-                try {
-                    const resp = await fetch('/api/admin/storages');
-                    const storages = await resp.json();
-                    let ok = 0, fail = 0;
-                    for (const s of storages) {
-                        const r = await fetch(`/api/admin/storages/${s.name}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ path: s.path, maxSize: s.maxSize, urlPrefix: s.urlPrefix, allowAnonymous: s.allowAnonymous, watermark: null })
-                        });
-                        (await r.json()).success ? ok++ : fail++;
-                    }
-                    status.textContent = fail > 0 ? `${ok} 个成功，${fail} 个失败` : `已禁用全部 ${ok} 个存储空间的水印`;
-                    loadWatermarkStatus();
-                } catch (e) { status.textContent = '操作失败'; }
-                return;
-            }
-
-            const content = document.getElementById('wm-content').value;
-            if (!content) { Toast.error('请先填写水印内容'); return; }
-
-            const watermark = {
-                enabled: true,
-                type: document.getElementById('wm-type').value,
-                content: content,
-                position: document.getElementById('wm-position').value,
-                opacity: parseFloat(document.getElementById('wm-opacity').value)
-            };
-
-            try {
-                const resp = await fetch('/api/admin/storages');
-                const storages = await resp.json();
-                let ok = 0, fail = 0;
-                for (const s of storages) {
-                    const r = await fetch(`/api/admin/storages/${s.name}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ path: s.path, maxSize: s.maxSize, urlPrefix: s.urlPrefix, allowAnonymous: s.allowAnonymous, watermark: watermark })
-                    });
-                    (await r.json()).success ? ok++ : fail++;
-                }
-                status.textContent = fail > 0 ? `${ok} 个成功，${fail} 个失败` : `已应用到全部 ${ok} 个存储空间`;
-                loadWatermarkStatus();
-            } catch (e) {
-                status.textContent = '操作失败';
-            }
-        }
-
         async function saveSettings() {
+            const hotlinkResponse = document.querySelector('input[name="hotlink-response"]:checked').value;
             const config = {
                 name: document.getElementById('sys-name').value,
                 description: document.getElementById('sys-desc').value,
                 anonymousUploadEnabled: document.getElementById('anonymous-enabled').checked,
+                watermarkEnabled: document.getElementById('watermark-enabled').checked,
+                maxFileSizeMB: parseInt(document.getElementById('max-file-size').value) || 10,
+                allowedFileTypes: document.getElementById('allowed-file-types').value,
                 rateLimitEnabled: document.getElementById('rl-enabled').checked,
                 maxRequests: parseInt(document.getElementById('rl-max').value),
                 timeWindow: parseInt(document.getElementById('rl-window').value),
                 loginLockoutEnabled: document.getElementById('lockout-enabled').checked,
                 maxFailedAttempts: parseInt(document.getElementById('lockout-max-attempts').value),
                 lockoutMinutes: parseInt(document.getElementById('lockout-minutes').value),
-                theme: document.getElementById('frontend-theme').value,
-                itemsPerPage: parseInt(document.getElementById('frontend-items').value)
+                hotlinkProtectionEnabled: document.getElementById('hotlink-enabled').checked,
+                allowedReferers: document.getElementById('hotlink-referers').value,
+                hotlinkResponse: hotlinkResponse
             };
 
             try {
@@ -488,6 +316,90 @@
                 Toast.error('保存设置失败');
             }
         }
+
+        function toggleHotlinkImageSection() {
+            const selected = document.querySelector('input[name="hotlink-response"]:checked');
+            const val = selected ? selected.value : 'generated';
+            document.getElementById('hotlink-image-section').classList.toggle('hidden', val !== 'image');
+            const previewSection = document.getElementById('hotlink-generated-preview-section');
+            if (val === 'generated') {
+                previewSection.classList.remove('hidden');
+                drawGeneratedPreview();
+            } else {
+                previewSection.classList.add('hidden');
+            }
+        }
+
+        function drawGeneratedPreview() {
+            const canvas = document.getElementById('hotlink-generated-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+
+            // White background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+
+            // Red border
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(10, 10, w - 20, h - 20);
+
+            // Chinese title
+            ctx.fillStyle = '#dc3545';
+            ctx.font = 'bold 22px sans-serif';
+            let text = '\u9632\u76D7\u94FE\u56FE\u7247\u7981\u6B62\u5F15\u7528';
+            ctx.fillText(text, (w - ctx.measureText(text).width) / 2, 70);
+
+            // English title
+            ctx.font = 'bold 18px sans-serif';
+            text = 'Hotlink Not Allowed';
+            ctx.fillText(text, (w - ctx.measureText(text).width) / 2, 100);
+
+            // Chinese subtitle
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '13px sans-serif';
+            text = '\u6B64\u56FE\u7247\u7981\u6B62\u5916\u90E8\u5F15\u7528';
+            ctx.fillText(text, (w - ctx.measureText(text).width) / 2, 135);
+
+            // English subtitle
+            ctx.font = '12px sans-serif';
+            text = 'This image is protected from hotlinking';
+            ctx.fillText(text, (w - ctx.measureText(text).width) / 2, 160);
+        }
+
+        async function uploadHotlinkImage() {
+            const fileInput = document.getElementById('hotlink-image-file');
+            if (!fileInput.files || !fileInput.files[0]) {
+                Toast.error('请先选择图片');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            try {
+                const resp = await fetch('/api/admin/hotlink-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    Toast.success('防盗链提示图已上传');
+                    document.getElementById('hotlink-image-preview').src = '/api/admin/hotlink-image/preview?t=' + Date.now();
+                    document.getElementById('hotlink-image-preview-container').classList.remove('hidden');
+                } else {
+                    Toast.error(result.error || '上传失败');
+                }
+            } catch (e) {
+                Toast.error('上传失败');
+            }
+        }
+
+        // Radio change listener for hotlink response
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'hotlink-response') {
+                toggleHotlinkImageSection();
+            }
+        });
     </script>
 </body>
 </html>

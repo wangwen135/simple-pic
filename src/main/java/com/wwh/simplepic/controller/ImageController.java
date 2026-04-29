@@ -240,12 +240,13 @@ public class ImageController {
 
         String contentType = getContentType(imageFile.getName());
 
-        // 检查是否启用了水印
+        // 检查是否启用了水印（全局开关 + 存储空间独立配置）
         StorageSpace space = storageService.getStorageSpace(storageSpace);
         WatermarkConfig wmConfig = (space != null) ? space.getWatermark() : null;
         Resource resource;
 
-        if (wmConfig != null && wmConfig.isEnabled()) {
+        boolean globalWatermarkEnabled = configService.getConfig().isWatermarkEnabled();
+        if (globalWatermarkEnabled && wmConfig != null && wmConfig.isEnabled()) {
             File watermarkedFile = watermarkService.getWatermarkedImage(imageFile, wmConfig, storageSpace);
             resource = new FileSystemResource(watermarkedFile);
         } else {

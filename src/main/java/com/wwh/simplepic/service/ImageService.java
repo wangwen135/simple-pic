@@ -74,8 +74,21 @@ public class ImageService {
         }
 
         String extension = FileUtils.getFileExtension(originalFilename);
-        if (!Constants.Extensions.IMAGES.contains(extension.toLowerCase())) {
-            return UploadResult.error(ErrorMessages.getZh("file_type_not_allowed") + ": " + String.join(", ", Constants.Extensions.IMAGES));
+
+        // Check file type from config
+        SystemConfig config = configService.getConfig();
+        String allowedTypes = config.getAllowedFileTypes();
+        List<String> allowedExtensions = allowedTypes != null && !allowedTypes.isEmpty()
+                ? Arrays.asList(allowedTypes.split(","))
+                : Constants.Extensions.IMAGES;
+        if (!allowedExtensions.contains(extension.toLowerCase())) {
+            return UploadResult.error(ErrorMessages.getZh("file_type_not_allowed") + ": " + String.join(", ", allowedExtensions));
+        }
+
+        // Check file size from config
+        int maxFileSizeMB = config.getMaxFileSizeMB();
+        if (maxFileSizeMB > 0 && fileSize > (long) maxFileSizeMB * 1024 * 1024) {
+            return UploadResult.error(ErrorMessages.getZh("upload_exceeded") + "（最大 " + maxFileSizeMB + "MB）");
         }
 
         // Check file size

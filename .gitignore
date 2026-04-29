@@ -107,6 +107,9 @@ $RECYCLE.BIN/
 # Storage directories (images, thumbnails)
 storage/
 
+# Hotlink protection custom image
+hotlink/
+
 # Config files with sensitive data
 config.yml
 

@@ -1,6 +1,7 @@
 package com.wwh.simplepic.config;
 
 import com.wwh.simplepic.interceptor.AuthInterceptor;
+import com.wwh.simplepic.interceptor.HotlinkProtectionInterceptor;
 import com.wwh.simplepic.interceptor.RateLimitInterceptor;
 import com.wwh.simplepic.model.SystemConfig;
 import com.wwh.simplepic.service.ConfigService;
@@ -25,6 +26,9 @@ public class WebConfig implements WebMvcConfigurer {
     private RateLimitInterceptor rateLimitInterceptor;
 
     @Autowired
+    private HotlinkProtectionInterceptor hotlinkProtectionInterceptor;
+
+    @Autowired
     private ConfigService configService;
 
     @Override
@@ -46,26 +50,14 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 配置跨域资源共享，从配置文件读取允许的来源
+     * 配置跨域资源共享 - 允许所有来源
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Get allowed origins from config, fallback to safe defaults
-        com.wwh.simplepic.model.SystemConfig config = configService.getConfig();
-        String[] allowedOrigins;
-
-        if (config != null && config.getAllowedOrigins() != null && !config.getAllowedOrigins().isEmpty()) {
-            allowedOrigins = config.getAllowedOrigins().split(",");
-        } else {
-            // Safe default: only allow same origin
-            allowedOrigins = new String[]{"http://localhost:8080"};
-        }
-
         registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins)
+                .allowedOrigins("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true)
                 .maxAge(3600);
     }
 
@@ -75,6 +67,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns("/api/health");
+
+        // Add hotlink protection interceptor for image serving paths
+        registry.addInterceptor(hotlinkProtectionInterceptor)
+                .addPathPatterns("/image/**", "/images/**");
 
         // Add auth interceptor (don't exclude "/" or "/upload.html" so they can be handled)
         registry.addInterceptor(authInterceptor)

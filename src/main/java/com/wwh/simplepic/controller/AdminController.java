@@ -7,6 +7,7 @@ import com.wwh.simplepic.util.ResponseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -336,15 +337,6 @@ public class AdminController {
     }
 
     /**
-     * Get theme
-     */
-    @GetMapping("/theme")
-    public ResponseEntity<Map<String, Object>> getTheme() {
-        SystemConfig config = configService.getConfig();
-        return ResponseEntity.ok(ResponseUtils.success("theme", config.getTheme() != null ? config.getTheme() : "light"));
-    }
-
-    /**
      * Generate API key
      */
     @PostMapping("/apikeys")
@@ -610,5 +602,108 @@ public class AdminController {
         wm.setPosition((String) data.getOrDefault("position", "bottom-right"));
         wm.setOpacity(data.get("opacity") != null ? ((Number) data.get("opacity")).doubleValue() : 0.5);
         return wm;
+    }
+
+    /**
+     * Upload custom hotlink protection image
+     * 上传自定义防盗链提示图
+     */
+    @PostMapping("/hotlink-image")
+    public ResponseEntity<Map<String, Object>> uploadHotlinkImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("file_is_empty"));
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_filename"));
+        }
+
+        String extension = "";
+        int dotIndex = originalFilename.lastIndexOf('.');
+        if (dotIndex > 0) {
+            extension = originalFilename.substring(dotIndex + 1).toLowerCase();
+        }
+
+        List<String> allowedExts = Arrays.asList("jpg", "jpeg", "png", "gif", "webp");
+        if (!allowedExts.contains(extension)) {
+            return ResponseEntity.badRequest().body(ResponseUtils.error("invalid_file_format"));
+        }
+
+        try {
+            // Create hotlink directory
+            File hotlinkDir = new File("hotlink");
+            if (!hotlinkDir.exists()) {
+                hotlinkDir.mkdirs();
+            }
+
+            // Save with fixed filename
+            String filename = "hotlink-image." + extension;
+            File targetFile = new File(hotlinkDir, filename);
+
+            // Remove old file if different extension
+            if (targetFile.exists()) {
+                targetFile.delete();
+            } else {
+                // Clean up any previous hotlink images with different extensions
+                for (String ext : allowedExts) {
+                    File old = new File(hotlinkDir, "hotlink-image." + ext);
+                    if (old.exists() && !ext.equals(extension)) {
+                        old.delete();
+                    }
+                }
+            }
+
+            try (InputStream is = file.getInputStream()) {
+                Files.copy(is, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Update config with the new image path
+            SystemConfig config = configService.getConfig();
+            config.setHotlinkImagePath(targetFile.getAbsolutePath());
+            configService.saveConfig(config);
+
+            return ResponseEntity.ok(ResponseUtils.success("image_path", targetFile.getAbsolutePath()));
+        } catch (IOException e) {
+            logger.error("Failed to upload hotlink image", e);
+            return ResponseEntity.internalServerError().body(ResponseUtils.error("upload_failed"));
+        }
+    }
+
+    /**
+     * Preview hotlink protection image
+     * 预览防盗链提示图
+     */
+    @GetMapping("/hotlink-image/preview")
+    public ResponseEntity<Resource> previewHotlinkImage() {
+        SystemConfig config = configService.getConfig();
+        String imagePath = config.getHotlinkImagePath();
+        if (imagePath == null || imagePath.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        File imageFile = new File(imagePath);
+        if (!imageFile.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String name = imageFile.getName().toLowerCase();
+        String contentType;
+        if (name.endsWith(".jpg") || name.endsWith(".jpeg")) {
+            contentType = "image/jpeg";
+        } else if (name.endsWith(".png")) {
+            contentType = "image/png";
+        } else if (name.endsWith(".gif")) {
+            contentType = "image/gif";
+        } else if (name.endsWith(".webp")) {
+            contentType = "image/webp";
+        } else {
+            contentType = "image/png";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-cache")
+                .body(new org.springframework.core.io.FileSystemResource(imageFile));
     }
 }

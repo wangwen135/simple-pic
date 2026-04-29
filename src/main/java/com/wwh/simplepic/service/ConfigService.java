@@ -110,7 +110,9 @@ public class ConfigService {
             config.setName(getStringValue(systemData, "name", "Simple-Pic"));
             config.setDescription(getStringValue(systemData, "description", ""));
             config.setAnonymousUploadEnabled(getBooleanValue(systemData, "anonymous-upload-enabled", false));
-            config.setAllowedOrigins(getStringValue(systemData, "allowed-origins", ""));
+            config.setWatermarkEnabled(getBooleanValue(systemData, "watermark-enabled", false));
+            config.setMaxFileSizeMB(getIntValue(systemData, "max-file-size-mb", 10));
+            config.setAllowedFileTypes(getStringValue(systemData, "allowed-file-types", "jpg,jpeg,png,gif,webp,svg"));
         }
 
         // Parse storage spaces
@@ -193,16 +195,6 @@ public class ConfigService {
             config.setApiKeys(apiKeys);
         }
 
-        // Parse watermark
-        Map<String, Object> watermarkData = (Map<String, Object>) data.get("watermark");
-        if (watermarkData != null) {
-            config.setWatermarkEnabled(getBooleanValue(watermarkData, "enabled", false));
-            config.setWatermarkType(getStringValue(watermarkData, "type", "text"));
-            config.setWatermarkContent(getStringValue(watermarkData, "content", ""));
-            config.setWatermarkPosition(getStringValue(watermarkData, "position", "bottom-right"));
-            config.setWatermarkOpacity(getDoubleValue(watermarkData, "opacity", 0.5));
-        }
-
         // Parse security/rate-limit
         Map<String, Object> securityData = (Map<String, Object>) data.get("security");
         if (securityData != null) {
@@ -214,13 +206,6 @@ public class ConfigService {
             }
         }
 
-        // Parse frontend
-        Map<String, Object> frontendData = (Map<String, Object>) data.get("frontend");
-        if (frontendData != null) {
-            config.setTheme(getStringValue(frontendData, "theme", "light"));
-            config.setItemsPerPage(getIntValue(frontendData, "items-per-page", 50));
-        }
-
         // Parse login-lockout
         Map<String, Object> loginLockoutData = (Map<String, Object>) data.get("login-lockout");
         if (loginLockoutData != null) {
@@ -229,14 +214,16 @@ public class ConfigService {
             config.setLockoutMinutes(getIntValue(loginLockoutData, "lockout-minutes", 30));
         }
 
-        // Set defaults
-        if (config.getTheme() == null || config.getTheme().isEmpty()) {
-            config.setTheme("light");
-        }
-        if (config.getItemsPerPage() == 0) {
-            config.setItemsPerPage(50);
+        // Parse hotlink-protection
+        Map<String, Object> hotlinkData = (Map<String, Object>) data.get("hotlink-protection");
+        if (hotlinkData != null) {
+            config.setHotlinkProtectionEnabled(getBooleanValue(hotlinkData, "enabled", false));
+            config.setAllowedReferers(getStringValue(hotlinkData, "allowed-referers", ""));
+            config.setHotlinkResponse(getStringValue(hotlinkData, "response", "generated"));
+            config.setHotlinkImagePath(getStringValue(hotlinkData, "image-path", ""));
         }
 
+        // Set defaults
         return config;
     }
 
@@ -318,28 +305,25 @@ public class ConfigService {
         currentConfig.setName(newSettings.getName());
         currentConfig.setDescription(newSettings.getDescription());
         currentConfig.setAnonymousUploadEnabled(newSettings.isAnonymousUploadEnabled());
-        currentConfig.setAllowedOrigins(newSettings.getAllowedOrigins());
-
-        // Watermark settings
         currentConfig.setWatermarkEnabled(newSettings.isWatermarkEnabled());
-        currentConfig.setWatermarkType(newSettings.getWatermarkType());
-        currentConfig.setWatermarkContent(newSettings.getWatermarkContent());
-        currentConfig.setWatermarkPosition(newSettings.getWatermarkPosition());
-        currentConfig.setWatermarkOpacity(newSettings.getWatermarkOpacity());
+        currentConfig.setMaxFileSizeMB(newSettings.getMaxFileSizeMB());
+        currentConfig.setAllowedFileTypes(newSettings.getAllowedFileTypes());
 
         // Security settings
         currentConfig.setRateLimitEnabled(newSettings.isRateLimitEnabled());
         currentConfig.setMaxRequests(newSettings.getMaxRequests());
         currentConfig.setTimeWindow(newSettings.getTimeWindow());
 
-        // Frontend settings
-        currentConfig.setTheme(newSettings.getTheme());
-        currentConfig.setItemsPerPage(newSettings.getItemsPerPage());
-
         // Login lockout settings
         currentConfig.setLoginLockoutEnabled(newSettings.isLoginLockoutEnabled());
         currentConfig.setMaxFailedAttempts(newSettings.getMaxFailedAttempts());
         currentConfig.setLockoutMinutes(newSettings.getLockoutMinutes());
+
+        // Hotlink protection settings
+        currentConfig.setHotlinkProtectionEnabled(newSettings.isHotlinkProtectionEnabled());
+        currentConfig.setAllowedReferers(newSettings.getAllowedReferers());
+        currentConfig.setHotlinkResponse(newSettings.getHotlinkResponse());
+        // hotlinkImagePath is updated separately via upload endpoint
 
         // Save the updated config
         saveConfig(currentConfig);
@@ -357,9 +341,9 @@ public class ConfigService {
         system.put("name", config.getName());
         system.put("description", config.getDescription());
         system.put("anonymous-upload-enabled", config.isAnonymousUploadEnabled());
-        if (config.getAllowedOrigins() != null && !config.getAllowedOrigins().isEmpty()) {
-            system.put("allowed-origins", config.getAllowedOrigins());
-        }
+        system.put("watermark-enabled", config.isWatermarkEnabled());
+        system.put("max-file-size-mb", config.getMaxFileSizeMB());
+        system.put("allowed-file-types", config.getAllowedFileTypes());
         simplePic.put("system", system);
 
         // Storage spaces
@@ -413,15 +397,6 @@ public class ConfigService {
         }
         simplePic.put("api-keys", apiKeys);
 
-        // Watermark
-        Map<String, Object> watermark = new LinkedHashMap<>();
-        watermark.put("enabled", config.isWatermarkEnabled());
-        watermark.put("type", config.getWatermarkType());
-        watermark.put("content", config.getWatermarkContent());
-        watermark.put("position", config.getWatermarkPosition());
-        watermark.put("opacity", config.getWatermarkOpacity());
-        simplePic.put("watermark", watermark);
-
         // Security / Rate limit
         Map<String, Object> security = new LinkedHashMap<>();
         Map<String, Object> rateLimit = new LinkedHashMap<>();
@@ -431,18 +406,22 @@ public class ConfigService {
         security.put("rate-limit", rateLimit);
         simplePic.put("security", security);
 
-        // Frontend
-        Map<String, Object> frontend = new LinkedHashMap<>();
-        frontend.put("theme", config.getTheme());
-        frontend.put("items-per-page", config.getItemsPerPage());
-        simplePic.put("frontend", frontend);
-
         // Login lockout
         Map<String, Object> loginLockout = new LinkedHashMap<>();
         loginLockout.put("enabled", config.isLoginLockoutEnabled());
         loginLockout.put("max-failed-attempts", config.getMaxFailedAttempts());
         loginLockout.put("lockout-minutes", config.getLockoutMinutes());
         simplePic.put("login-lockout", loginLockout);
+
+        // Hotlink protection
+        Map<String, Object> hotlink = new LinkedHashMap<>();
+        hotlink.put("enabled", config.isHotlinkProtectionEnabled());
+        hotlink.put("allowed-referers", config.getAllowedReferers() != null ? config.getAllowedReferers() : "");
+        hotlink.put("response", config.getHotlinkResponse() != null ? config.getHotlinkResponse() : "generated");
+        if (config.getHotlinkImagePath() != null && !config.getHotlinkImagePath().isEmpty()) {
+            hotlink.put("image-path", config.getHotlinkImagePath());
+        }
+        simplePic.put("hotlink-protection", hotlink);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("simple-pic", simplePic);
