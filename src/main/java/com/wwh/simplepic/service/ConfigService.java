@@ -1,5 +1,6 @@
 package com.wwh.simplepic.service;
 
+import com.wwh.simplepic.model.WatermarkConfig;
 import com.wwh.simplepic.model.SystemConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,6 +124,18 @@ public class ConfigService {
                 space.setMaxSize(getStringValue(spaceData, "max-size", "10GB"));
                 space.setUrlPrefix(getStringValue(spaceData, "url-prefix", ""));
                 space.setAllowAnonymous(getBooleanValue(spaceData, "allow-anonymous", false));
+
+                // 解析每个存储空间的水印配置
+                Map<String, Object> wmData = (Map<String, Object>) spaceData.get("watermark");
+                if (wmData != null) {
+                    WatermarkConfig wm = new WatermarkConfig();
+                    wm.setEnabled(getBooleanValue(wmData, "enabled", false));
+                    wm.setType(getStringValue(wmData, "type", "text"));
+                    wm.setContent(getStringValue(wmData, "content", ""));
+                    wm.setPosition(getStringValue(wmData, "position", "bottom-right"));
+                    wm.setOpacity(getDoubleValue(wmData, "opacity", 0.5));
+                    space.setWatermark(wm);
+                }
 
                 // Legacy support: domain field
                 if (spaceData.containsKey("domain") && !spaceData.containsKey("url-prefix")) {
@@ -359,6 +372,16 @@ public class ConfigService {
                 spaceMap.put("max-size", space.getMaxSize());
                 spaceMap.put("url-prefix", space.getUrlPrefix() != null ? space.getUrlPrefix() : "");
                 spaceMap.put("allow-anonymous", space.isAllowAnonymous());
+                if (space.getWatermark() != null) {
+                    Map<String, Object> wmMap = new LinkedHashMap<>();
+                    WatermarkConfig wm = space.getWatermark();
+                    wmMap.put("enabled", wm.isEnabled());
+                    wmMap.put("type", wm.getType());
+                    wmMap.put("content", wm.getContent());
+                    wmMap.put("position", wm.getPosition());
+                    wmMap.put("opacity", wm.getOpacity());
+                    spaceMap.put("watermark", wmMap);
+                }
                 storageSpaces.add(spaceMap);
             }
         }

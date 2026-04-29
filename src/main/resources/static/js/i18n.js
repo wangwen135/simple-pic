@@ -548,8 +548,9 @@ const i18n = {
             el.placeholder = this.t(key);
         });
 
-        // Update title attributes
+        // Update title attributes (skip <html>, only used for document.title)
         document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            if (el === document.documentElement) return;
             const key = el.getAttribute('data-i18n-title');
             el.title = this.t(key);
         });

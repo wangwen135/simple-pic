@@ -3,6 +3,7 @@ package com.wwh.simplepic.service;
 import com.wwh.simplepic.model.StorageSpace;
 import com.wwh.simplepic.model.StorageStats;
 import com.wwh.simplepic.model.SystemConfig;
+import com.wwh.simplepic.model.WatermarkConfig;
 import com.wwh.simplepic.util.Constants;
 import com.wwh.simplepic.util.FileUtils;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -55,6 +56,7 @@ public class StorageService {
                     space.setMaxSize(spaceConfig.getMaxSize());
                     space.setUrlPrefix(spaceConfig.getUrlPrefix());
                     space.setAllowAnonymous(spaceConfig.isAllowAnonymous());
+                    space.setWatermark(spaceConfig.getWatermark());
                     return space;
                 })
                 .collect(java.util.stream.Collectors.toList());
@@ -77,6 +79,7 @@ public class StorageService {
                 space.setMaxSize(spaceConfig.getMaxSize());
                 space.setUrlPrefix(spaceConfig.getUrlPrefix());
                 space.setAllowAnonymous(spaceConfig.isAllowAnonymous());
+                space.setWatermark(spaceConfig.getWatermark());
                 return space;
             }
         }
@@ -122,9 +125,16 @@ public class StorageService {
     }
 
     /**
-     * Create storage space
+     * Create storage space (without watermark)
      */
     public boolean createStorageSpace(String name, String path, String maxSize, String urlPrefix, boolean allowAnonymous) {
+        return createStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous, null);
+    }
+
+    /**
+     * Create storage space (with watermark)
+     */
+    public boolean createStorageSpace(String name, String path, String maxSize, String urlPrefix, boolean allowAnonymous, WatermarkConfig watermark) {
         SystemConfig config = configService.getConfig();
         if (config == null) {
             return false;
@@ -169,6 +179,7 @@ public class StorageService {
         spaceConfig.setMaxSize(maxSize);
         spaceConfig.setUrlPrefix(urlPrefix);
         spaceConfig.setAllowAnonymous(allowAnonymous);
+        spaceConfig.setWatermark(watermark);
 
         if (config.getStorageSpaces() == null) {
             config.setStorageSpaces(new ArrayList<>());
@@ -195,9 +206,16 @@ public class StorageService {
     }
 
     /**
-     * Update storage space
+     * Update storage space (without watermark)
      */
     public boolean updateStorageSpace(String name, String path, String maxSize, String urlPrefix, boolean allowAnonymous) {
+        return updateStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous, null);
+    }
+
+    /**
+     * Update storage space (with watermark)
+     */
+    public boolean updateStorageSpace(String name, String path, String maxSize, String urlPrefix, boolean allowAnonymous, WatermarkConfig watermark) {
         SystemConfig config = configService.getConfig();
         if (config == null || config.getStorageSpaces() == null) {
             return false;
@@ -230,6 +248,7 @@ public class StorageService {
                 spaceConfig.setMaxSize(maxSize);
                 spaceConfig.setUrlPrefix(urlPrefix);
                 spaceConfig.setAllowAnonymous(allowAnonymous);
+                spaceConfig.setWatermark(watermark);
 
                 configService.saveConfig(config);
                 logger.info("Storage space {} updated", name);
@@ -324,7 +343,8 @@ public class StorageService {
      */
     private int[] countImagesAndDirectories(File dir) {
         return FileUtils.countFiles(dir, FileUtils::isImageFile,
-                name -> name.equals(Constants.Directories.THUMBNAILS));
+                name -> name.equals(Constants.Directories.THUMBNAILS)
+                        || name.equals(Constants.Directories.WATERMARKS));
     }
 
     /**

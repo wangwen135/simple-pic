@@ -19,6 +19,7 @@ public final class Constants {
      */
     public static final class Directories {
         public static final String THUMBNAILS = ".thumbnails";
+        public static final String WATERMARKS = ".watermarks";
 
         private Directories() {
             // Prevent instantiation

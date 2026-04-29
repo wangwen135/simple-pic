@@ -47,6 +47,7 @@ public class SystemConfig {
         private String maxSize;
         private String urlPrefix; // URL prefix for image access
         private boolean allowAnonymous;
+        private WatermarkConfig watermark; // 每个存储空间独立的水印配置
     }
 
     @Data

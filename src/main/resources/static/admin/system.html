@@ -11,6 +11,25 @@
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/lib/inter-font.css">
     <script src="/js/admin-components.js"></script>
+    <style>
+        .settings-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .settings-tab:hover { color: var(--text-primary); }
+        .settings-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            font-weight: 500;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
 </head>
 <body class="gradient-bg h-screen overflow-hidden flex flex-col">
     <!-- Component containers -->
@@ -18,100 +37,164 @@
     <div class="flex flex-1 overflow-hidden">
         <div id="sidebar-container" class="flex-shrink-0"></div>
         <main class="flex-1 overflow-y-auto p-8">
-            <h1 class="text-3xl font-bold mb-8" data-i18n="system_settings">System Settings</h1>
-            <div class="space-y-6">
-                <div class="glass rounded-xl p-6">
-                    <h2 class="text-xl font-semibold mb-4" data-i18n="system_name">Basic Information</h2>
+            <h1 class="text-3xl font-bold mb-6" data-i18n="system_settings">System Settings</h1>
+
+            <!-- Tab Navigation -->
+            <div class="glass rounded-t-xl border-b border-slate-200 dark:border-slate-700">
+                <div class="flex overflow-x-auto px-2">
+                    <button class="settings-tab active" onclick="switchTab('basic')">基本信息</button>
+                    <button class="settings-tab" onclick="switchTab('watermark')">批量水印</button>
+                    <button class="settings-tab" onclick="switchTab('security')">安全设置</button>
+                    <button class="settings-tab" onclick="switchTab('lockout')">登录锁定</button>
+                    <button class="settings-tab" onclick="switchTab('frontend')">前端设置</button>
+                </div>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="glass rounded-b-xl p-6 mb-4" style="min-height: 300px;">
+
+                <!-- Basic Info Tab -->
+                <div id="tab-basic" class="tab-content active">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="system_name">System Name</label>
-                            <input type="text" id="sys-name" class="w-full px-4 py-2 input-field rounded-lg">
+                            <label class="block text-secondary text-sm mb-1">系统名称</label>
+                            <input type="text" id="sys-name" class="w-full px-4 py-2 input-field rounded-lg" placeholder="Simple-Pic">
                         </div>
                         <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="system_description">Description</label>
-                            <input type="text" id="sys-desc" class="w-full px-4 py-2 input-field rounded-lg">
+                            <label class="block text-secondary text-sm mb-1">系统描述</label>
+                            <input type="text" id="sys-desc" class="w-full px-4 py-2 input-field rounded-lg" placeholder="简单好用的图床">
                         </div>
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" id="anonymous-enabled" class="w-4 h-4 rounded text-blue-600">
-                                <span class="text-secondary" data-i18n="anonymous_upload_enabled">Enable Anonymous Upload</span>
+                                <span class="text-secondary">允许匿名上传</span>
                             </label>
+                            <p class="text-xs text-muted mt-1">启用后，未登录用户可以上传图片到允许匿名上传的存储空间</p>
                         </div>
                     </div>
                 </div>
-                <div class="glass rounded-xl p-6">
-                    <h2 class="text-xl font-semibold mb-4" data-i18n="watermark_enabled">Watermark Settings</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="flex items-center space-x-2 mb-2">
-                                <input type="checkbox" id="wm-enabled" class="w-4 h-4 rounded text-blue-600">
-                                <span class="text-secondary" data-i18n="watermark_enabled">Enable Watermark</span>
-                            </label>
+
+                <!-- Batch Watermark Tab -->
+                <div id="tab-watermark" class="tab-content">
+                    <!-- 所有存储空间的水印状态 -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-medium text-secondary mb-3">存储空间水印状态</h3>
+                        <div id="wm-space-list" class="space-y-2">
+                            <p class="text-muted text-sm">加载中...</p>
                         </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="watermark_type">Type</label>
-                            <select id="wm-type" class="w-full px-4 py-2 input-field rounded-lg">
-                                <option value="text">Text</option>
-                                <option value="image">Image</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="watermark_content">Content</label>
-                            <input type="text" id="wm-content" class="w-full px-4 py-2 input-field rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="watermark_position">Position</label>
-                            <select id="wm-position" class="w-full px-4 py-2 input-field rounded-lg">
-                                <option value="top-left">Top Left</option>
-                                <option value="top-right">Top Right</option>
-                                <option value="bottom-left">Bottom Left</option>
-                                <option value="bottom-right">Bottom Right</option>
-                                <option value="center">Center</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="watermark_opacity">Opacity</label>
-                            <input type="number" id="wm-opacity" step="0.1" min="0" max="1" class="w-full px-4 py-2 input-field rounded-lg">
+                    </div>
+
+                    <!-- 批量操作 -->
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-5">
+                        <h3 class="text-sm font-medium text-secondary mb-3">批量水印配置</h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" id="wm-enabled" class="w-4 h-4 rounded text-blue-600" onchange="updateWatermarkPreview()">
+                                        <span class="text-secondary text-sm">启用水印</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-secondary text-xs mb-1">水印内容</label>
+                                    <input type="text" id="wm-content" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" placeholder="例如: © My Site" oninput="updateWatermarkPreview()">
+                                </div>
+                                <div>
+                                    <label class="block text-secondary text-xs mb-1">位置</label>
+                                    <select id="wm-position" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" onchange="updateWatermarkPreview()">
+                                        <option value="top-left">左上角</option>
+                                        <option value="top-right">右上角</option>
+                                        <option value="bottom-left">左下角</option>
+                                        <option value="bottom-right" selected>右下角</option>
+                                        <option value="center">居中</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-secondary text-xs mb-1">透明度: <span id="wm-opacity-value">0.5</span></label>
+                                    <input type="range" id="wm-opacity" min="0.1" max="1" step="0.1" value="0.5" class="w-full accent-blue-600"
+                                        oninput="document.getElementById('wm-opacity-value').textContent=this.value; updateWatermarkPreview()">
+                                </div>
+                                <button type="button" onclick="applyWatermarkToAll()" class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                                    应用到所有存储空间
+                                </button>
+                                <button type="button" onclick="clearAllWatermark()" class="w-full px-3 py-2 bg-slate-500 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors">
+                                    清除所有水印
+                                </button>
+                                <span id="apply-wm-status" class="text-xs text-muted block mt-1"></span>
+                            </div>
+                            <div>
+                                <label class="block text-secondary text-xs mb-1">预览效果</label>
+                                <div class="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                                    <canvas id="watermark-preview" width="400" height="300" class="w-full" style="display:block;"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="glass rounded-xl p-6">
-                    <h2 class="text-xl font-semibold mb-4" data-i18n="security_settings">Security Settings</h2>
+
+                <!-- Security Tab -->
+                <div id="tab-security" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="flex items-center space-x-2 mb-2">
+                            <label class="flex items-center space-x-2">
                                 <input type="checkbox" id="rl-enabled" class="w-4 h-4 rounded text-blue-600">
-                                <span class="text-secondary">Enable Rate Limit</span>
+                                <span class="text-secondary">启用限流</span>
                             </label>
                         </div>
                         <div>
-                            <label class="block text-secondary text-sm mb-1">Max Requests</label>
-                            <input type="number" id="rl-max" class="w-full px-4 py-2 input-field rounded-lg">
+                            <label class="block text-secondary text-sm mb-1">最大请求数</label>
+                            <input type="number" id="rl-max" class="w-full px-4 py-2 input-field rounded-lg" placeholder="100">
                         </div>
                         <div>
-                            <label class="block text-secondary text-sm mb-1">Time Window (seconds)</label>
-                            <input type="number" id="rl-window" class="w-full px-4 py-2 input-field rounded-lg">
+                            <label class="block text-secondary text-sm mb-1">时间窗口（秒）</label>
+                            <input type="number" id="rl-window" class="w-full px-4 py-2 input-field rounded-lg" placeholder="60">
                         </div>
                     </div>
                 </div>
-                <div class="glass rounded-xl p-6">
-                    <h2 class="text-xl font-semibold mb-4" data-i18n="settings">Frontend Settings</h2>
+
+                <!-- Login Lockout Tab -->
+                <div id="tab-lockout" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="lockout-enabled" class="w-4 h-4 rounded text-blue-600">
+                                <span class="text-secondary">启用登录锁定</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-secondary text-sm mb-1">最大失败次数</label>
+                            <input type="number" id="lockout-max-attempts" class="w-full px-4 py-2 input-field rounded-lg" placeholder="5" min="1">
+                        </div>
+                        <div>
+                            <label class="block text-secondary text-sm mb-1">锁定时间（分钟）</label>
+                            <input type="number" id="lockout-minutes" class="w-full px-4 py-2 input-field rounded-lg" placeholder="30" min="1">
+                        </div>
+                    </div>
+                    <p class="text-xs text-muted mt-4">启用后，同一 IP 连续登录失败达到最大次数后将被锁定指定时间。</p>
+                </div>
+
+                <!-- Frontend Tab -->
+                <div id="tab-frontend" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-secondary text-sm mb-1" data-i18n="theme">Theme</label>
+                            <label class="block text-secondary text-sm mb-1">主题</label>
                             <select id="frontend-theme" class="w-full px-4 py-2 input-field rounded-lg">
-                                <option value="light" data-i18n="light">Light</option>
-                                <option value="dark" data-i18n="dark">Dark</option>
+                                <option value="light">浅色</option>
+                                <option value="dark">深色</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-secondary text-sm mb-1">Items Per Page</label>
-                            <input type="number" id="frontend-items" class="w-full px-4 py-2 input-field rounded-lg">
+                            <label class="block text-secondary text-sm mb-1">每页显示数量</label>
+                            <input type="number" id="frontend-items" class="w-full px-4 py-2 input-field rounded-lg" placeholder="50" min="10" max="200">
                         </div>
                     </div>
                 </div>
-                <button onclick="saveSettings()" class="w-full px-4 py-2 btn-primary text-white rounded-lg transition-colors" data-i18n="save">Save Settings</button>
             </div>
+
+            <!-- Save Button -->
+            <button onclick="saveSettings()" class="w-full px-4 py-2.5 btn-primary text-white rounded-lg transition-colors font-medium">
+                保存设置
+            </button>
         </main>
     </div>
 
@@ -128,7 +211,7 @@
                 <div class="glass rounded-xl p-6 flex items-center space-x-3">
                     <svg class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     <span class="text-primary">Loading...</span>
                 </div>
@@ -143,6 +226,9 @@
             // Load settings
             loadSettings();
 
+            // Load watermark status
+            loadWatermarkStatus();
+
             // Hide loading after data loaded
             const loading = document.getElementById('admin-loading-overlay');
             if (loading) {
@@ -151,6 +237,26 @@
             }
         });
 
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Find the clicked tab button and activate it
+            const tabs = document.querySelectorAll('.settings-tab');
+            const tabMap = { basic: 0, watermark: 1, security: 2, lockout: 3, frontend: 4 };
+            if (tabs[tabMap[tabName]]) {
+                tabs[tabMap[tabName]].classList.add('active');
+            }
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // 切换到水印标签时加载数据和预览
+            if (tabName === 'watermark') {
+                loadWatermarkStatus();
+                setTimeout(updateWatermarkPreview, 50);
+            }
+        }
+
         async function loadSettings() {
             try {
                 const response = await fetch('/api/admin/config');
@@ -158,17 +264,19 @@
 
                 if (data.success && data.config) {
                     const c = data.config;
+                    // Basic
                     document.getElementById('sys-name').value = c.name || '';
                     document.getElementById('sys-desc').value = c.description || '';
                     document.getElementById('anonymous-enabled').checked = c.anonymousUploadEnabled || false;
-                    document.getElementById('wm-enabled').checked = c.watermarkEnabled;
-                    document.getElementById('wm-type').value = c.watermarkType || 'text';
-                    document.getElementById('wm-content').value = c.watermarkContent || '';
-                    document.getElementById('wm-position').value = c.watermarkPosition || 'bottom-right';
-                    document.getElementById('wm-opacity').value = c.watermarkOpacity || 0.5;
-                    document.getElementById('rl-enabled').checked = c.rateLimitEnabled;
+                    // Security
+                    document.getElementById('rl-enabled').checked = c.rateLimitEnabled || false;
                     document.getElementById('rl-max').value = c.maxRequests || 100;
                     document.getElementById('rl-window').value = c.timeWindow || 60;
+                    // Lockout
+                    document.getElementById('lockout-enabled').checked = c.loginLockoutEnabled || false;
+                    document.getElementById('lockout-max-attempts').value = c.maxFailedAttempts || 5;
+                    document.getElementById('lockout-minutes').value = c.lockoutMinutes || 30;
+                    // Frontend
                     document.getElementById('frontend-theme').value = c.theme || 'light';
                     document.getElementById('frontend-items').value = c.itemsPerPage || 50;
                 }
@@ -177,19 +285,188 @@
             }
         }
 
+        function updateWatermarkPreview() {
+            const canvas = document.getElementById('watermark-preview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Draw sample image (gradient)
+            const grad = ctx.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, '#4f46e5');
+            grad.addColorStop(0.5, '#0ea5e9');
+            grad.addColorStop(1, '#10b981');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw some decorative shapes
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.beginPath();
+            ctx.arc(w * 0.7, h * 0.3, 60, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(w * 0.2, h * 0.7, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw watermark
+            const enabled = document.getElementById('wm-enabled').checked;
+            if (!enabled) return;
+
+            const content = document.getElementById('wm-content').value || '';
+            if (!content) return;
+
+            const position = document.getElementById('wm-position').value;
+            const opacity = parseFloat(document.getElementById('wm-opacity').value) || 0.5;
+
+            ctx.save();
+            ctx.globalAlpha = opacity;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Arial, sans-serif';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            const metrics = ctx.measureText(content);
+            const textW = metrics.width;
+            const textH = 20;
+            const margin = 15;
+            let x, y;
+
+            switch (position) {
+                case 'top-left':
+                    x = margin; y = textH + margin; break;
+                case 'top-right':
+                    x = w - textW - margin; y = textH + margin; break;
+                case 'bottom-left':
+                    x = margin; y = h - margin; break;
+                case 'center':
+                    x = (w - textW) / 2; y = (h + textH) / 2; break;
+                case 'bottom-right':
+                default:
+                    x = w - textW - margin; y = h - margin;
+            }
+            ctx.fillText(content, x, y);
+            ctx.restore();
+        }
+
+        async function loadWatermarkStatus() {
+            try {
+                const resp = await fetch('/api/admin/storages');
+                const storages = await resp.json();
+                const container = document.getElementById('wm-space-list');
+                if (!storages || storages.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-sm">暂无存储空间</p>';
+                    return;
+                }
+                container.innerHTML = storages.map(s => {
+                    const wm = s.watermark;
+                    const hasWm = wm && wm.enabled;
+                    return `
+                        <div class="flex items-center justify-between p-2.5 rounded-lg ${hasWm ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-slate-100 dark:bg-slate-800/50 border border-transparent'}">
+                            <div class="flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full ${hasWm ? 'bg-blue-500' : 'bg-slate-400'}"></span>
+                                <span class="text-primary text-sm font-medium">${s.name}</span>
+                            </div>
+                            <div class="text-xs ${hasWm ? 'text-blue-400' : 'text-muted'}">
+                                ${hasWm ? `"${wm.content || '(空)'}" · ${wm.position || '右下角'} · 透明度 ${wm.opacity || 0.5}` : '未启用水印'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error('Failed to load watermark status:', e);
+            }
+        }
+
+        async function clearAllWatermark() {
+            const status = document.getElementById('apply-wm-status');
+            if (!confirm('确定要清除所有存储空间的水印吗？')) return;
+            try {
+                const resp = await fetch('/api/admin/storages');
+                const storages = await resp.json();
+                let ok = 0, fail = 0;
+                for (const s of storages) {
+                    const r = await fetch(`/api/admin/storages/${s.name}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: s.path, maxSize: s.maxSize, urlPrefix: s.urlPrefix, allowAnonymous: s.allowAnonymous, watermark: null })
+                    });
+                    (await r.json()).success ? ok++ : fail++;
+                }
+                status.textContent = fail > 0 ? `${ok} 个成功，${fail} 个失败` : `已清除全部 ${ok} 个存储空间的水印`;
+                loadWatermarkStatus();
+            } catch (e) { status.textContent = '操作失败'; }
+        }
+
+        async function applyWatermarkToAll() {
+            const wmEnabled = document.getElementById('wm-enabled').checked;
+            const status = document.getElementById('apply-wm-status');
+
+            if (!wmEnabled) {
+                // 禁用水印 → 清除所有存储空间的水印
+                const watermark = null;
+                if (!confirm('确定要禁用所有存储空间的水印吗？')) return;
+                try {
+                    const resp = await fetch('/api/admin/storages');
+                    const storages = await resp.json();
+                    let ok = 0, fail = 0;
+                    for (const s of storages) {
+                        const r = await fetch(`/api/admin/storages/${s.name}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ path: s.path, maxSize: s.maxSize, urlPrefix: s.urlPrefix, allowAnonymous: s.allowAnonymous, watermark: null })
+                        });
+                        (await r.json()).success ? ok++ : fail++;
+                    }
+                    status.textContent = fail > 0 ? `${ok} 个成功，${fail} 个失败` : `已禁用全部 ${ok} 个存储空间的水印`;
+                    loadWatermarkStatus();
+                } catch (e) { status.textContent = '操作失败'; }
+                return;
+            }
+
+            const content = document.getElementById('wm-content').value;
+            if (!content) { Toast.error('请先填写水印内容'); return; }
+
+            const watermark = {
+                enabled: true,
+                type: document.getElementById('wm-type').value,
+                content: content,
+                position: document.getElementById('wm-position').value,
+                opacity: parseFloat(document.getElementById('wm-opacity').value)
+            };
+
+            try {
+                const resp = await fetch('/api/admin/storages');
+                const storages = await resp.json();
+                let ok = 0, fail = 0;
+                for (const s of storages) {
+                    const r = await fetch(`/api/admin/storages/${s.name}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: s.path, maxSize: s.maxSize, urlPrefix: s.urlPrefix, allowAnonymous: s.allowAnonymous, watermark: watermark })
+                    });
+                    (await r.json()).success ? ok++ : fail++;
+                }
+                status.textContent = fail > 0 ? `${ok} 个成功，${fail} 个失败` : `已应用到全部 ${ok} 个存储空间`;
+                loadWatermarkStatus();
+            } catch (e) {
+                status.textContent = '操作失败';
+            }
+        }
+
         async function saveSettings() {
             const config = {
                 name: document.getElementById('sys-name').value,
                 description: document.getElementById('sys-desc').value,
                 anonymousUploadEnabled: document.getElementById('anonymous-enabled').checked,
-                watermarkEnabled: document.getElementById('wm-enabled').checked,
-                watermarkType: document.getElementById('wm-type').value,
-                watermarkContent: document.getElementById('wm-content').value,
-                watermarkPosition: document.getElementById('wm-position').value,
-                watermarkOpacity: parseFloat(document.getElementById('wm-opacity').value),
                 rateLimitEnabled: document.getElementById('rl-enabled').checked,
                 maxRequests: parseInt(document.getElementById('rl-max').value),
                 timeWindow: parseInt(document.getElementById('rl-window').value),
+                loginLockoutEnabled: document.getElementById('lockout-enabled').checked,
+                maxFailedAttempts: parseInt(document.getElementById('lockout-max-attempts').value),
+                lockoutMinutes: parseInt(document.getElementById('lockout-minutes').value),
                 theme: document.getElementById('frontend-theme').value,
                 itemsPerPage: parseInt(document.getElementById('frontend-items').value)
             };
@@ -203,12 +480,12 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    Toast.success(i18n.t('success') + '!');
+                    Toast.success('设置已保存');
                 } else {
-                    Toast.error(result.error);
+                    Toast.error(result.error || '保存失败');
                 }
             } catch (error) {
-                Toast.error('Failed to save settings');
+                Toast.error('保存设置失败');
             }
         }
     </script>

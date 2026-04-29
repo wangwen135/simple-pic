@@ -17,6 +17,7 @@ public class StorageSpace {
     private long maxSize; // in bytes
     private String urlPrefix; // URL prefix for image access (e.g., "http://localhost:8080/image/notes/")
     private boolean allowAnonymous;
+    private WatermarkConfig watermark; // 每个存储空间独立的水印配置
 
     public StorageSpace() {
         this.maxSize = 10L * 1024 * 1024 * 1024; // Default 10GB

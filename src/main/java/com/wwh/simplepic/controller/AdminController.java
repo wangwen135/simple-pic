@@ -46,6 +46,9 @@ public class AdminController {
     private ConfigService configService;
 
     @Autowired
+    private WatermarkService watermarkService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     /**
@@ -111,6 +114,7 @@ public class AdminController {
             spaceMap.put("urlPrefix", space.getUrlPrefix());
             spaceMap.put("maxSizeBytes", space.getMaxSizeInBytes());
             spaceMap.put("allowAnonymous", space.isAllowAnonymous());
+            spaceMap.put("watermark", space.getWatermark());
 
             StorageStats stats = storageService.getStorageStats(space.getName());
             if (stats != null) {
@@ -146,7 +150,12 @@ public class AdminController {
             return ResponseEntity.badRequest().body(ResponseUtils.error("path_required"));
         }
 
-        boolean success = storageService.createStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous);
+        // 提取水印配置
+        @SuppressWarnings("unchecked")
+        Map<String, Object> watermarkData = (Map<String, Object>) request.get("watermark");
+        WatermarkConfig watermarkConfig = parseWatermarkConfig(watermarkData);
+
+        boolean success = storageService.createStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous, watermarkConfig);
 
         if (success) {
             return ResponseEntity.ok(ResponseUtils.success());
@@ -172,7 +181,17 @@ public class AdminController {
             return ResponseEntity.badRequest().body(ResponseUtils.error("path_required"));
         }
 
-        boolean success = storageService.updateStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous);
+        // 提取水印配置
+        @SuppressWarnings("unchecked")
+        Map<String, Object> watermarkData = (Map<String, Object>) request.get("watermark");
+        WatermarkConfig watermarkConfig = parseWatermarkConfig(watermarkData);
+
+        boolean success = storageService.updateStorageSpace(name, path, maxSize, urlPrefix, allowAnonymous, watermarkConfig);
+
+        if (success) {
+            // 水印设置变更时清除缓存
+            watermarkService.clearWatermarkCache(name);
+        }
 
         if (success) {
             return ResponseEntity.ok(ResponseUtils.success());
@@ -575,5 +594,21 @@ public class AdminController {
      */
     private String generateApiKeyToken() {
         return com.wwh.simplepic.security.SecureTokenGenerator.generateApiKeyToken();
+    }
+
+    /**
+     * 从请求体解析水印配置
+     */
+    private WatermarkConfig parseWatermarkConfig(Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+        WatermarkConfig wm = new WatermarkConfig();
+        wm.setEnabled(data.get("enabled") != null && Boolean.TRUE.equals(data.get("enabled")));
+        wm.setType((String) data.getOrDefault("type", "text"));
+        wm.setContent((String) data.getOrDefault("content", ""));
+        wm.setPosition((String) data.getOrDefault("position", "bottom-right"));
+        wm.setOpacity(data.get("opacity") != null ? ((Number) data.get("opacity")).doubleValue() : 0.5);
+        return wm;
     }
 }

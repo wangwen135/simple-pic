@@ -1,6 +1,10 @@
 package com.wwh.simplepic.controller;
 
+import com.wwh.simplepic.model.StorageSpace;
+import com.wwh.simplepic.model.WatermarkConfig;
 import com.wwh.simplepic.service.ImageService;
+import com.wwh.simplepic.service.StorageService;
+import com.wwh.simplepic.service.WatermarkService;
 import com.wwh.simplepic.util.SimplePicUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +23,6 @@ import java.io.File;
 /**
  * Images controller - serves images at /images/{storageSpace}/**
  * Handles the plural /images/ path for backward compatibility.
- * Reads storage space paths dynamically from ConfigService on each request.
  */
 @RestController
 @RequestMapping("/images")
@@ -29,6 +32,12 @@ public class ImagesController {
 
     @Autowired
     private ImageService imageService;
+
+    @Autowired
+    private StorageService storageService;
+
+    @Autowired
+    private WatermarkService watermarkService;
 
     @GetMapping("/{storageSpace}/**")
     public ResponseEntity<Resource> getImage(
@@ -53,11 +62,22 @@ public class ImagesController {
         }
 
         String contentType = getContentType(imageFile.getName());
-        Resource resource = new FileSystemResource(imageFile);
+
+        // 检查是否启用了水印
+        StorageSpace space = storageService.getStorageSpace(storageSpace);
+        WatermarkConfig wmConfig = (space != null) ? space.getWatermark() : null;
+        Resource resource;
+
+        if (wmConfig != null && wmConfig.isEnabled()) {
+            File watermarkedFile = watermarkService.getWatermarkedImage(imageFile, wmConfig, storageSpace);
+            resource = new FileSystemResource(watermarkedFile);
+        } else {
+            resource = new FileSystemResource(imageFile);
+        }
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000")
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=2592000")
                 .body(resource);
     }
 

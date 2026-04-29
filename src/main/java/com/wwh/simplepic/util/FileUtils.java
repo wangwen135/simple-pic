@@ -141,7 +141,8 @@ public class FileUtils {
             for (File file : files) {
                 if (file.isFile()) {
                     size += file.length();
-                } else if (file.isDirectory() && !file.getName().equals(Constants.Directories.THUMBNAILS)) {
+                } else if (file.isDirectory() && !file.getName().equals(Constants.Directories.THUMBNAILS)
+                        && !file.getName().equals(Constants.Directories.WATERMARKS)) {
                     size += calculateDirectorySize(file, depth + 1, maxDepth);
                 }
             }
