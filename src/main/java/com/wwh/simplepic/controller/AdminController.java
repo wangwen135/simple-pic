@@ -1,6 +1,7 @@
 package com.wwh.simplepic.controller;
 
 import com.wwh.simplepic.model.*;
+import com.wwh.simplepic.security.RateLimiter;
 import com.wwh.simplepic.service.*;
 import com.wwh.simplepic.util.ErrorMessages;
 import com.wwh.simplepic.util.ResponseUtils;
@@ -51,6 +52,12 @@ public class AdminController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
+    @Autowired
+    private RateLimiter rateLimiter;
 
     /**
      * Dashboard statistics
@@ -294,6 +301,40 @@ public class AdminController {
         } else {
             return ResponseEntity.ok(ResponseUtils.error("failed_to_delete_user"));
         }
+    }
+
+    /**
+     * Get rate-limited IPs
+     */
+    @GetMapping("/ratelimit/ips")
+    public ResponseEntity<List<Map<String, Object>>> getRateLimitedIps() {
+        return ResponseEntity.ok(rateLimiter.getRateLimitedIps());
+    }
+
+    /**
+     * Reset rate limit for IP
+     */
+    @DeleteMapping("/ratelimit/ips/{ip}")
+    public ResponseEntity<Map<String, Object>> resetRateLimitIp(@PathVariable String ip) {
+        rateLimiter.reset(ip);
+        return ResponseEntity.ok(ResponseUtils.success());
+    }
+
+    /**
+     * Get locked IPs
+     */
+    @GetMapping("/lockout/ips")
+    public ResponseEntity<List<Map<String, Object>>> getLockedIps() {
+        return ResponseEntity.ok(loginAttemptService.getLockedIps());
+    }
+
+    /**
+     * Unlock IP
+     */
+    @DeleteMapping("/lockout/ips/{ip}")
+    public ResponseEntity<Map<String, Object>> unlockIp(@PathVariable String ip) {
+        loginAttemptService.unlockIp(ip);
+        return ResponseEntity.ok(ResponseUtils.success());
     }
 
     /**

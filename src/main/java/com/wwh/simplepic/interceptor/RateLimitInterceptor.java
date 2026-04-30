@@ -32,8 +32,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     // Paths that are rate limited
     private static final String[] RATE_LIMITED_PATHS = {
-            "/api/image/upload",
-            "/api/admin/"
+            "/images/",
+            "/image/",
+            "/api/image/upload"
     };
 
     private int maxRequests = 100;
@@ -95,6 +96,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (!rateLimiter.tryAcquire(ip, maxRequests, timeWindow)) {
             logger.warn("Rate limit exceeded for IP: {}", ip);
             response.setStatus(429);
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("rate_limit_exceeded") + "\",\"error_en\":\"" + ErrorMessages.getEn("rate_limit_exceeded") + "\"}");
             return false;
         }

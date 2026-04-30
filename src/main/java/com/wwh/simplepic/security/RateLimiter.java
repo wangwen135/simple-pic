@@ -4,6 +4,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -18,6 +21,9 @@ public class RateLimiter {
 
     // IP地址到令牌桶的映射
     private final Map<String, TokenBucket> buckets = new ConcurrentHashMap<>();
+
+    // 被限流的IP记录：IP -> {rejectedCount, lastRejectedTime}
+    private final Map<String, long[]> rateLimitedIps = new ConcurrentHashMap<>();
 
     private ScheduledExecutorService cleanupExecutor;
 
@@ -57,7 +63,18 @@ public class RateLimiter {
      */
     public boolean tryAcquire(String ip, int maxRequests, int timeWindow) {
         TokenBucket bucket = buckets.computeIfAbsent(ip, k -> new TokenBucket(maxRequests, timeWindow));
-        return bucket.tryConsume();
+        boolean allowed = bucket.tryConsume();
+        if (!allowed) {
+            rateLimitedIps.compute(ip, (key, val) -> {
+                if (val == null) {
+                    return new long[]{1, System.currentTimeMillis()};
+                }
+                val[0]++;
+                val[1] = System.currentTimeMillis();
+                return val;
+            });
+        }
+        return allowed;
     }
 
     /**
@@ -65,14 +82,36 @@ public class RateLimiter {
      */
     public void reset(String ip) {
         buckets.remove(ip);
+        rateLimitedIps.remove(ip);
     }
 
     /**
-     * 清理过期的令牌桶
+     * 获取当前被限流的IP列表
+     */
+    public List<Map<String, Object>> getRateLimitedIps() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, long[]> entry : rateLimitedIps.entrySet()) {
+            Map<String, Object> info = new HashMap<>();
+            info.put("ip", entry.getKey());
+            info.put("rejectedCount", entry.getValue()[0]);
+            info.put("lastRejectedAt", entry.getValue()[1]);
+            result.add(info);
+        }
+        return result;
+    }
+
+    /**
+     * 清理过期的令牌桶和限流记录
      */
     private void cleanup() {
         long now = System.currentTimeMillis();
-        buckets.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+        buckets.entrySet().removeIf(entry -> {
+            if (entry.getValue().isExpired(now)) {
+                rateLimitedIps.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
     }
 
     /**

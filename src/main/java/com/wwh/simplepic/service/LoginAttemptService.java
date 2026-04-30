@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -150,6 +153,53 @@ public class LoginAttemptService {
     private void lockout(String ipAddress, int minutes) {
         lockoutCache.put(ipAddress, System.currentTimeMillis());
         logger.warn("IP {} has been locked out for {} minutes due to too many failed login attempts", ipAddress, minutes);
+    }
+
+    /**
+     * 获取当前所有被锁定的IP信息
+     */
+    public List<Map<String, Object>> getLockedIps() {
+        SystemConfig config = configService.getConfig();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (config == null || !config.isLoginLockoutEnabled()) {
+            return result;
+        }
+
+        long lockoutMinutes = config.getLockoutMinutes();
+        long lockoutMillis = TimeUnit.MINUTES.toMillis(lockoutMinutes);
+        long currentTime = System.currentTimeMillis();
+
+        for (Map.Entry<String, Long> entry : lockoutCache.entrySet()) {
+            String ip = entry.getKey();
+            long lockTime = entry.getValue();
+            long expireTime = lockTime + lockoutMillis;
+            long remainingMillis = expireTime - currentTime;
+
+            if (remainingMillis <= 0) {
+                continue;
+            }
+
+            Map<String, Object> info = new HashMap<>();
+            info.put("ip", ip);
+            info.put("failedAttempts", attemptsCache.getOrDefault(ip, 0));
+            info.put("lockedAt", lockTime);
+            info.put("remainingMinutes", Math.max(1, TimeUnit.MILLISECONDS.toMinutes(remainingMillis) + 1));
+            info.put("lockoutMinutes", lockoutMinutes);
+            result.add(info);
+        }
+
+        return result;
+    }
+
+    /**
+     * 解锁指定IP
+     */
+    public boolean unlockIp(String ipAddress) {
+        boolean wasLocked = lockoutCache.containsKey(ipAddress);
+        lockoutCache.remove(ipAddress);
+        attemptsCache.remove(ipAddress);
+        return wasLocked;
     }
 
     /**

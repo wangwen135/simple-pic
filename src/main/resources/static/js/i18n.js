@@ -4,6 +4,10 @@
  */
 
 const i18n = {
+    // System config from server
+    _systemName: 'Simple-Pic',
+    _systemDescription: '',
+
     // Theme management
     theme: {
         light: 'light',
@@ -63,6 +67,8 @@ const i18n = {
             copy_link: "复制链接",
             upload_failed: "上传失败",
             please_select_images: "请仅选择图片文件",
+            file_type_not_supported: "不支持的文件格式",
+            allowed_types: "支持格式",
             not_logged_in: "未登录",
             storage: "存储空间",
 
@@ -301,6 +307,8 @@ const i18n = {
             delete_upload_record: "Delete upload record",
             upload_failed: "Upload failed",
             please_select_images: "Please select image files only",
+            file_type_not_supported: "File type not supported",
+            allowed_types: "Allowed types",
             not_logged_in: "Not logged in",
             storage: "Storage Space",
 
@@ -537,9 +545,16 @@ const i18n = {
      * Apply language to all elements with data-i18n attribute
      */
     applyLanguage: function() {
+        const self = this;
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            el.textContent = this.t(key);
+            if (key === 'app_title') {
+                el.textContent = self._systemName;
+            } else if (key === 'app_description') {
+                el.textContent = self._systemDescription;
+            } else {
+                el.textContent = self.t(key);
+            }
         });
 
         // Update placeholder attributes
@@ -558,7 +573,7 @@ const i18n = {
         // Update page title if data-i18n-title attribute exists on document
         const titleKey = document.documentElement.getAttribute('data-i18n-title');
         if (titleKey) {
-            document.title = this.t(titleKey);
+            document.title = this.t(titleKey).replace(/Simple-Pic/g, this._systemName);
         }
     },
 
@@ -598,11 +613,29 @@ const i18n = {
     },
 
     /**
+     * Load system config (name, description) from server
+     */
+    loadSystemConfig: function() {
+        const self = this;
+        fetch('/api/auth/config')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    self._systemName = data.systemName || 'Simple-Pic';
+                    self._systemDescription = data.systemDescription || '';
+                    self.applyLanguage();
+                }
+            })
+            .catch(function() {});
+    },
+
+    /**
      * Initialize i18n and theme
      */
     init: function() {
         this.applyTheme();
         this.applyLanguage();
+        this.loadSystemConfig();
     }
 };
 

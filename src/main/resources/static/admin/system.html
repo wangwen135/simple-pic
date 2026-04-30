@@ -54,37 +54,52 @@
 
                 <!-- Basic Info Tab -->
                 <div id="tab-basic" class="tab-content active">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-secondary text-sm mb-1">系统名称</label>
-                            <input type="text" id="sys-name" class="w-full px-4 py-2 input-field rounded-lg" placeholder="Simple-Pic">
+                    <div class="space-y-5">
+                        <!-- Group 1: 基本信息 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-secondary text-sm mb-1">系统名称</label>
+                                <input type="text" id="sys-name" class="w-full px-4 py-2 input-field rounded-lg" placeholder="Simple-Pic">
+                            </div>
+                            <div>
+                                <label class="block text-secondary text-sm mb-1">系统描述</label>
+                                <input type="text" id="sys-desc" class="w-full px-4 py-2 input-field rounded-lg" placeholder="简单好用的本地图床">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1">系统描述</label>
-                            <input type="text" id="sys-desc" class="w-full px-4 py-2 input-field rounded-lg" placeholder="简单好用的图床">
+
+                        <!-- Group 2: 功能开关 -->
+                        <div class="pt-5 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                            <div>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="anonymous-enabled" class="w-4 h-4 rounded text-blue-600">
+                                    <span class="text-secondary">允许匿名上传</span>
+                                </label>
+                                <p class="text-xs text-muted mt-1">启用后，未登录用户可以上传图片到允许匿名上传的存储空间</p>
+                            </div>
+                            <div>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="watermark-enabled" class="w-4 h-4 rounded text-blue-600">
+                                    <span class="text-secondary">启用水印</span>
+                                </label>
+                                <p class="text-xs text-muted mt-1">全局水印开关，关闭后所有存储空间的水印将不生效；开启后由各存储空间独立配置</p>
+                            </div>
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="anonymous-enabled" class="w-4 h-4 rounded text-blue-600">
-                                <span class="text-secondary">允许匿名上传</span>
-                            </label>
-                            <p class="text-xs text-muted mt-1">启用后，未登录用户可以上传图片到允许匿名上传的存储空间</p>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="watermark-enabled" class="w-4 h-4 rounded text-blue-600">
-                                <span class="text-secondary">启用水印</span>
-                            </label>
-                            <p class="text-xs text-muted mt-1">全局水印开关，关闭后所有存储空间的水印将不生效；开启后由各存储空间独立配置</p>
-                        </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1">最大文件大小（MB）</label>
-                            <input type="number" id="max-file-size" class="w-full px-4 py-2 input-field rounded-lg" placeholder="10" min="1" max="100">
-                        </div>
-                        <div>
-                            <label class="block text-secondary text-sm mb-1">允许的文件格式</label>
-                            <input type="text" id="allowed-file-types" class="w-full px-4 py-2 input-field rounded-lg" placeholder="jpg,jpeg,png,gif,webp,svg">
-                            <p class="text-xs text-muted mt-1">多个格式用英文逗号分隔</p>
+
+                        <!-- Group 3: 上传限制 -->
+                        <div class="pt-5 border-t border-slate-200 dark:border-slate-700">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-secondary text-sm mb-1">最大文件大小（MB）</label>
+                                    <input type="number" id="max-file-size" class="w-full px-4 py-2 input-field rounded-lg" placeholder="10" min="1" max="100">
+                                    <p class="text-xs text-muted mt-1">前端上传时的最大限制，不影响已有文件</p>
+                                </div>
+                                <div>
+                                    <label class="block text-secondary text-sm mb-2">允许的文件格式</label>
+                                    <div id="file-type-checkboxes" class="flex flex-wrap gap-2 mb-2"></div>
+                                    <input type="text" id="custom-file-types" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" placeholder="其他格式，逗号分隔（如 bmp,tiff）" oninput="updateFileTypesValue()">
+                                    <input type="hidden" id="allowed-file-types">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -97,6 +112,7 @@
                                 <input type="checkbox" id="rl-enabled" class="w-4 h-4 rounded text-blue-600">
                                 <span class="text-secondary">启用限流</span>
                             </label>
+                            <p class="text-xs text-muted mt-1">启用后，同一 IP 在指定时间窗口内请求数超过上限将被限流。</p>
                         </div>
                         <div>
                             <label class="block text-secondary text-sm mb-1">最大请求数</label>
@@ -105,6 +121,28 @@
                         <div>
                             <label class="block text-secondary text-sm mb-1">时间窗口（秒）</label>
                             <input type="number" id="rl-window" class="w-full px-4 py-2 input-field rounded-lg" placeholder="60">
+                        </div>
+                    </div>
+
+                    <!-- Rate Limited IPs List -->
+                    <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-secondary">限流记录</h3>
+                            <button onclick="loadRateLimitedIps()" class="text-xs text-blue-500 hover:text-blue-600 transition-colors">刷新</button>
+                        </div>
+                        <div id="ratelimit-ips-container" class="max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div id="ratelimit-ips-empty" class="py-8 text-center text-sm text-muted">暂无限流记录</div>
+                            <table id="ratelimit-ips-table" class="w-full text-sm hidden">
+                                <thead class="bg-slate-50 dark:bg-slate-800/50 sticky top-0">
+                                    <tr>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">IP 地址</th>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">被拒次数</th>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">最近触发时间</th>
+                                        <th class="text-right px-4 py-2 text-secondary font-medium">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ratelimit-ips-body"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -117,6 +155,7 @@
                                 <input type="checkbox" id="lockout-enabled" class="w-4 h-4 rounded text-blue-600">
                                 <span class="text-secondary">启用登录锁定</span>
                             </label>
+                            <p class="text-xs text-muted mt-1">启用后，同一 IP 连续登录失败达到最大次数后将被锁定指定时间。</p>
                         </div>
                         <div>
                             <label class="block text-secondary text-sm mb-1">最大失败次数</label>
@@ -127,7 +166,29 @@
                             <input type="number" id="lockout-minutes" class="w-full px-4 py-2 input-field rounded-lg" placeholder="30" min="1">
                         </div>
                     </div>
-                    <p class="text-xs text-muted mt-4">启用后，同一 IP 连续登录失败达到最大次数后将被锁定指定时间。</p>
+
+                    <!-- Locked IPs List -->
+                    <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-secondary">当前锁定列表</h3>
+                            <button onclick="loadLockedIps()" class="text-xs text-blue-500 hover:text-blue-600 transition-colors">刷新</button>
+                        </div>
+                        <div id="locked-ips-container" class="max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div id="locked-ips-empty" class="py-8 text-center text-sm text-muted">暂无被锁定的 IP</div>
+                            <table id="locked-ips-table" class="w-full text-sm hidden">
+                                <thead class="bg-slate-50 dark:bg-slate-800/50 sticky top-0">
+                                    <tr>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">IP 地址</th>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">失败次数</th>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">锁定时间</th>
+                                        <th class="text-left px-4 py-2 text-secondary font-medium">剩余时间</th>
+                                        <th class="text-right px-4 py-2 text-secondary font-medium">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="locked-ips-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Hotlink Protection Tab -->
@@ -225,6 +286,53 @@
             }
         });
 
+        const PREDEFINED_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+
+        function parseAllowedFileTypes(typesStr) {
+            const allTypes = typesStr.split(',').map(t => t.trim().toLowerCase().replace(/^\./, '')).filter(t => t);
+            const predefined = new Set();
+            const custom = [];
+            allTypes.forEach(type => {
+                if (PREDEFINED_FORMATS.includes(type)) {
+                    predefined.add(type);
+                } else {
+                    custom.push(type);
+                }
+            });
+            return { predefined, custom };
+        }
+
+        function renderFileTypeCheckboxes(predefined) {
+            const container = document.getElementById('file-type-checkboxes');
+            container.innerHTML = PREDEFINED_FORMATS.map(fmt => {
+                const checked = predefined.has(fmt);
+                return `<label class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${checked ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700' : 'border-slate-200 dark:border-slate-700'} hover:border-blue-400">
+                    <input type="checkbox" value="${fmt}" ${checked ? 'checked' : ''} class="w-3.5 h-3.5 rounded text-blue-600" onchange="toggleCheckboxStyle(this)">
+                    <span class="text-sm text-primary font-mono">.${fmt}</span>
+                </label>`;
+            }).join('');
+        }
+
+        function toggleCheckboxStyle(checkbox) {
+            const label = checkbox.closest('label');
+            if (checkbox.checked) {
+                label.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-300', 'dark:border-blue-700');
+                label.classList.remove('border-slate-200', 'dark:border-slate-700');
+            } else {
+                label.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-300', 'dark:border-blue-700');
+                label.classList.add('border-slate-200', 'dark:border-slate-700');
+            }
+            updateFileTypesValue();
+        }
+
+        function updateFileTypesValue() {
+            const checked = Array.from(document.querySelectorAll('#file-type-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+            const customStr = document.getElementById('custom-file-types').value;
+            const customTypes = customStr.split(',').map(t => t.trim().toLowerCase().replace(/^\./, '')).filter(t => t && !PREDEFINED_FORMATS.includes(t));
+            const allTypes = [...new Set([...checked, ...customTypes])];
+            document.getElementById('allowed-file-types').value = allTypes.join(',');
+        }
+
         function switchTab(tabName) {
             // Update tab buttons
             document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.remove('active'));
@@ -237,6 +345,107 @@
                 tabs[tabMap[tabName]].classList.add('active');
             }
             document.getElementById('tab-' + tabName).classList.add('active');
+
+            if (tabName === 'lockout') {
+                loadLockedIps();
+            } else if (tabName === 'security') {
+                loadRateLimitedIps();
+            }
+        }
+
+        async function loadLockedIps() {
+            try {
+                const response = await fetch('/api/admin/lockout/ips');
+                const data = await response.json();
+                const tbody = document.getElementById('locked-ips-body');
+                const table = document.getElementById('locked-ips-table');
+                const empty = document.getElementById('locked-ips-empty');
+
+                if (data.length === 0) {
+                    table.classList.add('hidden');
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                empty.classList.add('hidden');
+                table.classList.remove('hidden');
+                tbody.innerHTML = data.map(item => {
+                    const lockTime = new Date(item.lockedAt).toLocaleString('zh-CN');
+                    const remaining = item.remainingMinutes;
+                    const remainingText = remaining >= 60
+                        ? Math.floor(remaining / 60) + ' 小时 ' + (remaining % 60) + ' 分钟'
+                        : remaining + ' 分钟';
+                    return `<tr class="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td class="px-4 py-2.5 font-mono text-primary">${item.ip}</td>
+                        <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400">${item.failedAttempts} 次</span></td>
+                        <td class="px-4 py-2.5 text-muted">${lockTime}</td>
+                        <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">${remainingText}</span></td>
+                        <td class="px-4 py-2.5 text-right"><button onclick="unlockIp('${item.ip}')" class="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-secondary hover:bg-blue-500 hover:text-white transition-colors">解锁</button></td>
+                    </tr>`;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load locked IPs:', error);
+            }
+        }
+
+        async function unlockIp(ip) {
+            try {
+                const response = await fetch('/api/admin/lockout/ips/' + encodeURIComponent(ip), { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    Toast.success('已解锁 ' + ip);
+                    loadLockedIps();
+                } else {
+                    Toast.error('解锁失败');
+                }
+            } catch (error) {
+                Toast.error('解锁失败');
+            }
+        }
+
+        async function loadRateLimitedIps() {
+            try {
+                const response = await fetch('/api/admin/ratelimit/ips');
+                const data = await response.json();
+                const tbody = document.getElementById('ratelimit-ips-body');
+                const table = document.getElementById('ratelimit-ips-table');
+                const empty = document.getElementById('ratelimit-ips-empty');
+
+                if (data.length === 0) {
+                    table.classList.add('hidden');
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                empty.classList.add('hidden');
+                table.classList.remove('hidden');
+                tbody.innerHTML = data.map(item => {
+                    const lastTime = new Date(item.lastRejectedAt).toLocaleString('zh-CN');
+                    return `<tr class="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td class="px-4 py-2.5 font-mono text-primary">${item.ip}</td>
+                        <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">${item.rejectedCount} 次</span></td>
+                        <td class="px-4 py-2.5 text-muted">${lastTime}</td>
+                        <td class="px-4 py-2.5 text-right"><button onclick="resetRateLimitIp('${item.ip}')" class="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-secondary hover:bg-blue-500 hover:text-white transition-colors">重置</button></td>
+                    </tr>`;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load rate limited IPs:', error);
+            }
+        }
+
+        async function resetRateLimitIp(ip) {
+            try {
+                const response = await fetch('/api/admin/ratelimit/ips/' + encodeURIComponent(ip), { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    Toast.success('已重置 ' + ip + ' 的限流');
+                    loadRateLimitedIps();
+                } else {
+                    Toast.error('重置失败');
+                }
+            } catch (error) {
+                Toast.error('重置失败');
+            }
         }
 
         async function loadSettings() {
@@ -252,7 +461,10 @@
                     document.getElementById('anonymous-enabled').checked = c.anonymousUploadEnabled || false;
                     document.getElementById('watermark-enabled').checked = c.watermarkEnabled || false;
                     document.getElementById('max-file-size').value = c.maxFileSizeMB || 10;
-                    document.getElementById('allowed-file-types').value = c.allowedFileTypes || 'jpg,jpeg,png,gif,webp,svg';
+                    const { predefined, custom } = parseAllowedFileTypes(c.allowedFileTypes || 'jpg,jpeg,png,gif,webp,svg');
+                    renderFileTypeCheckboxes(predefined);
+                    document.getElementById('custom-file-types').value = custom.join(', ');
+                    updateFileTypesValue();
                     // Security
                     document.getElementById('rl-enabled').checked = c.rateLimitEnabled || false;
                     document.getElementById('rl-max').value = c.maxRequests || 100;
@@ -280,6 +492,11 @@
         }
 
         async function saveSettings() {
+            updateFileTypesValue();
+            if (!document.getElementById('allowed-file-types').value) {
+                Toast.error('至少需要选择一种文件格式');
+                return;
+            }
             const hotlinkResponse = document.querySelector('input[name="hotlink-response"]:checked').value;
             const config = {
                 name: document.getElementById('sys-name').value,

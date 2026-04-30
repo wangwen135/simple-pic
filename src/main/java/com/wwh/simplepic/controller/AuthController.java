@@ -182,6 +182,7 @@ public class AuthController {
         result.put("systemName", config.getName());
         result.put("systemDescription", config.getDescription());
         result.put("availableStorageSpaces", availableSpaces);
+        result.put("allowedFileTypes", config.getAllowedFileTypes() != null ? config.getAllowedFileTypes() : "jpg,jpeg,png,gif,webp,svg");
 
         return ResponseEntity.ok(result);
     }

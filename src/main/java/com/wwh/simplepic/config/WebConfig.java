@@ -65,7 +65,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // Add rate limit interceptor
         registry.addInterceptor(rateLimitInterceptor)
-                .addPathPatterns("/api/**")
+                .addPathPatterns("/api/**", "/images/**")
                 .excludePathPatterns("/api/health");
 
         // Add hotlink protection interceptor for image serving paths

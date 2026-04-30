@@ -108,7 +108,7 @@ public class ConfigService {
         Map<String, Object> systemData = (Map<String, Object>) data.get("system");
         if (systemData != null) {
             config.setName(getStringValue(systemData, "name", "Simple-Pic"));
-            config.setDescription(getStringValue(systemData, "description", ""));
+            config.setDescription(getStringValue(systemData, "description", "简单好用的本地图床"));
             config.setAnonymousUploadEnabled(getBooleanValue(systemData, "anonymous-upload-enabled", false));
             config.setWatermarkEnabled(getBooleanValue(systemData, "watermark-enabled", false));
             config.setMaxFileSizeMB(getIntValue(systemData, "max-file-size-mb", 10));

@@ -107,7 +107,7 @@ public class ApiController {
     public ResponseEntity<Map<String, Object>> healthCheck() {
         Map<String, Object> response = ResponseUtils.success();
         response.put("status", "ok");
-        response.put("service", "Simple-Pic");
+        response.put("service", configService.getConfig() != null ? configService.getConfig().getName() : "Simple-Pic");
         return ResponseEntity.ok(response);
     }
 }
