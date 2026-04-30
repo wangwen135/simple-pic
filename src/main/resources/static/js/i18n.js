@@ -32,6 +32,7 @@ const i18n = {
             title_users: "用户管理 - Simple-Pic",
             title_system: "系统设置 - Simple-Pic",
             title_apikey: "API密钥管理 - Simple-Pic",
+            title_about: "关于 - Simple-Pic",
 
             // Common
             app_title: "Simple-Pic",
@@ -261,7 +262,25 @@ const i18n = {
             next_page: "下一页",
             parent_directory: "上级目录",
             current_directory: "当前目录",
-            directory: "目录"
+            directory: "目录",
+
+            // About page
+            about: "关于",
+            footer_author: "作者: wwh",
+            about_project_description: "简单易用的本地图床应用",
+            about_version: "版本",
+            about_author: "作者",
+            about_license: "开源许可证",
+            about_tech_stack: "技术栈",
+            about_features: "功能特性",
+            about_github_description: "源码与问题追踪",
+            about_feature_no_db: "零数据库依赖 - 基于 YAML 的配置管理",
+            about_feature_multi_storage: "多存储空间，配额独立管理",
+            about_feature_api: "API 密钥 Token 鉴权上传",
+            about_feature_watermark: "动态水印叠加",
+            about_feature_security: "限流与 IP 锁定安全防护",
+            about_feature_i18n: "多语言支持（中/英）",
+            about_license_text: "本项目基于 Apache License 2.0 许可证开源，您可以在以下地址获取许可证副本："
         },
         en: {
             // Page titles
@@ -273,6 +292,7 @@ const i18n = {
             title_users: "User Management - Simple-Pic",
             title_system: "System Settings - Simple-Pic",
             title_apikey: "API Key Management - Simple-Pic",
+            title_about: "About - Simple-Pic",
 
             // Common
             app_title: "Simple-Pic",
@@ -501,7 +521,25 @@ const i18n = {
             next_page: "Next",
             parent_directory: "Parent Directory",
             current_directory: "Current Directory",
-            directory: "Directory"
+            directory: "Directory",
+
+            // About page
+            about: "About",
+            footer_author: "Author: wwh",
+            about_project_description: "Simple local image hosting application",
+            about_version: "Version",
+            about_author: "Author",
+            about_license: "License",
+            about_tech_stack: "Tech Stack",
+            about_features: "Features",
+            about_github_description: "Source code and issue tracking",
+            about_feature_no_db: "Zero database dependency - YAML based configuration",
+            about_feature_multi_storage: "Multi-storage space with independent quota",
+            about_feature_api: "API key token-based upload",
+            about_feature_watermark: "Dynamic watermark overlay",
+            about_feature_security: "Rate limiting and IP lockout security",
+            about_feature_i18n: "Multi-language support (zh/en)",
+            about_license_text: "Licensed under the Apache License, Version 2.0. You may obtain a copy of the License at"
         }
     },
 
