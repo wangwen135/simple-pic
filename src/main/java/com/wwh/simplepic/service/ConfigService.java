@@ -136,6 +136,15 @@ public class ConfigService {
                     wm.setContent(getStringValue(wmData, "content", ""));
                     wm.setPosition(getStringValue(wmData, "position", "bottom-right"));
                     wm.setOpacity(getDoubleValue(wmData, "opacity", 0.5));
+                    wm.setFontSize(getIntValue(wmData, "font-size", 20));
+                    wm.setColor(getStringValue(wmData, "color", "#ffffff"));
+                    wm.setMargin(getIntValue(wmData, "margin", 10));
+                    wm.setOutlineEnabled(getBooleanValue(wmData, "outline-enabled", true));
+                    wm.setOutlineColor(getStringValue(wmData, "outline-color", "#000000"));
+                    wm.setShadowEnabled(getBooleanValue(wmData, "shadow-enabled", true));
+                    wm.setTileEnabled(getBooleanValue(wmData, "tile-enabled", false));
+                    wm.setTileGap(getIntValue(wmData, "tile-gap", 120));
+                    wm.setAngle(getIntValue(wmData, "angle", 0));
                     space.setWatermark(wm);
                 }
 
@@ -364,6 +373,15 @@ public class ConfigService {
                     wmMap.put("content", wm.getContent());
                     wmMap.put("position", wm.getPosition());
                     wmMap.put("opacity", wm.getOpacity());
+                    wmMap.put("font-size", wm.getFontSize());
+                    wmMap.put("color", wm.getColor());
+                    wmMap.put("margin", wm.getMargin());
+                    wmMap.put("outline-enabled", wm.isOutlineEnabled());
+                    wmMap.put("outline-color", wm.getOutlineColor());
+                    wmMap.put("shadow-enabled", wm.isShadowEnabled());
+                    wmMap.put("tile-enabled", wm.isTileEnabled());
+                    wmMap.put("tile-gap", wm.getTileGap());
+                    wmMap.put("angle", wm.getAngle());
                     spaceMap.put("watermark", wmMap);
                 }
                 storageSpaces.add(spaceMap);

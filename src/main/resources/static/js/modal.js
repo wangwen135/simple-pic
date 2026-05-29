@@ -13,7 +13,8 @@ const Modal = {
             cancelText = '取消',
             showCancel = true,
             size = 'medium', // small, medium, large
-            closable = true
+            closable = true,
+            horizontalButtons = false
         } = options;
 
         // Remove existing modal
@@ -34,7 +35,9 @@ const Modal = {
             small: 'max-w-sm',
             medium: 'max-w-md',
             large: 'max-w-lg',
-            xlarge: 'max-w-xl'
+            xlarge: 'max-w-4xl',
+            xxlarge: 'max-w-6xl',
+            full: 'max-w-7xl'
         };
 
         // Create modal content
@@ -65,17 +68,28 @@ const Modal = {
 
         // Create buttons
         let buttonsHtml = '';
-        if (showCancel) {
-            buttonsHtml += `<button id="modal-cancel" class="w-full px-4 py-2 btn-secondary rounded-lg mb-2">${cancelText}</button>`;
-        }
-        if (onConfirm) {
-            buttonsHtml += `<button id="modal-confirm" class="w-full px-4 py-2 btn-primary text-white rounded-lg">${confirmText}</button>`;
+        let btnContainerClass = 'space-y-2';
+        if (horizontalButtons) {
+            btnContainerClass = 'flex gap-3 justify-end';
+            if (onConfirm) {
+                buttonsHtml += `<button id="modal-confirm" class="px-4 py-2 btn-primary text-white rounded-lg">${confirmText}</button>`;
+            }
+            if (showCancel) {
+                buttonsHtml += `<button id="modal-cancel" class="px-4 py-2 btn-secondary rounded-lg">${cancelText}</button>`;
+            }
+        } else {
+            if (showCancel) {
+                buttonsHtml += `<button id="modal-cancel" class="w-full px-4 py-2 btn-secondary rounded-lg mb-2">${cancelText}</button>`;
+            }
+            if (onConfirm) {
+                buttonsHtml += `<button id="modal-confirm" class="w-full px-4 py-2 btn-primary text-white rounded-lg">${confirmText}</button>`;
+            }
         }
 
         modal.innerHTML = `
             ${headerHtml}
             <div id="modal-content" class="mb-4">${content}</div>
-            <div id="modal-buttons" class="space-y-2">${buttonsHtml}</div>
+            <div id="modal-buttons" class="${btnContainerClass}">${buttonsHtml}</div>
         `;
 
         overlay.appendChild(modal);

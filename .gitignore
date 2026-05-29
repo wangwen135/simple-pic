@@ -104,8 +104,11 @@ $RECYCLE.BIN/
 .nfs*
 
 # Application specific
+AGENTS.md
+
 # Storage directories (images, thumbnails)
 storage/
+uploads/
 
 # Hotlink protection custom image
 hotlink/

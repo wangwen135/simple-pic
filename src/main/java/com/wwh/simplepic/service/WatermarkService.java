@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -200,43 +202,104 @@ public class WatermarkService {
             return;
         }
 
-        float opacity = (float) config.getOpacity();
+        float opacity = (float) clamp(config.getOpacity(), 0.0, 1.0);
+        int fontSize = (int) clamp(config.getFontSize(), 12, 96);
+        int margin = (int) clamp(config.getMargin(), 0, 100);
+        int tileGap = (int) clamp(config.getTileGap(), 40, 400);
+        int angle = (int) clamp(config.getAngle(), -90, 90);
+        Color textColor = parseColor(config.getColor(), Color.WHITE);
+        Color outlineColor = parseColor(config.getOutlineColor(), Color.BLACK);
+
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.setFont(new Font("Arial", Font.BOLD, fontSize));
 
         FontMetrics metrics = g2d.getFontMetrics();
         int textWidth = metrics.stringWidth(text);
         int textHeight = metrics.getHeight();
 
+        if (config.isTileEnabled()) {
+            for (int y = margin; y < image.getHeight() + textHeight; y += textHeight + tileGap) {
+                for (int x = margin; x < image.getWidth() + textWidth; x += textWidth + tileGap) {
+                    drawText(g2d, text, x, y, angle, textColor, outlineColor, config);
+                }
+            }
+            return;
+        }
+
         int x, y;
         String position = config.getPosition();
-        int margin = 10;
 
         switch (position != null ? position : "bottom-right") {
             case "top-left":
                 x = margin;
-                y = textHeight;
+                y = margin;
                 break;
             case "top-right":
                 x = image.getWidth() - textWidth - margin;
-                y = textHeight;
+                y = margin;
                 break;
             case "bottom-left":
                 x = margin;
-                y = image.getHeight() - margin;
+                y = image.getHeight() - textHeight - margin;
                 break;
             case "center":
                 x = (image.getWidth() - textWidth) / 2;
-                y = (image.getHeight() - textHeight) / 2 + metrics.getAscent();
+                y = (image.getHeight() - textHeight) / 2;
                 break;
             case "bottom-right":
             default:
                 x = image.getWidth() - textWidth - margin;
-                y = image.getHeight() - margin;
+                y = image.getHeight() - textHeight - margin;
         }
 
-        g2d.drawString(text, x, y);
+        drawText(g2d, text, x, y, angle, textColor, outlineColor, config);
+    }
+
+    private void drawText(Graphics2D g2d, String text, int x, int y, int angle, Color textColor, Color outlineColor, WatermarkConfig config) {
+        FontMetrics metrics = g2d.getFontMetrics();
+        int baseline = y + metrics.getAscent();
+        double radians = Math.toRadians(angle);
+        double centerX = x + metrics.stringWidth(text) / 2.0;
+        double centerY = y + metrics.getHeight() / 2.0;
+        AffineTransform originalTransform = g2d.getTransform();
+
+        if (angle != 0) {
+            g2d.rotate(radians, centerX, centerY);
+        }
+
+        if (config.isShadowEnabled()) {
+            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.drawString(text, x + 2, baseline + 2);
+        }
+
+        if (config.isOutlineEnabled()) {
+            GlyphVector glyphVector = g2d.getFont().createGlyphVector(g2d.getFontRenderContext(), text);
+            Shape textShape = glyphVector.getOutline(x, baseline);
+            Stroke originalStroke = g2d.getStroke();
+            g2d.setColor(outlineColor);
+            g2d.setStroke(new BasicStroke(Math.max(1f, g2d.getFont().getSize2D() / 12f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2d.draw(textShape);
+            g2d.setStroke(originalStroke);
+        }
+
+        g2d.setColor(textColor);
+        g2d.drawString(text, x, baseline);
+        g2d.setTransform(originalTransform);
+    }
+
+    private Color parseColor(String value, Color defaultColor) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultColor;
+        }
+        try {
+            return Color.decode(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultColor;
+        }
+    }
+
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private String getExtension(String filename) {

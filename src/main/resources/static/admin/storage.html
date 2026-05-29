@@ -259,13 +259,14 @@
 
         function showCreateModal() {
             isEditing = false;
+            currentStorageData = null;
             currentModalInstance = Modal.show({
                 title: i18n.t('create_storage'),
                 content: getFormContent(),
                 confirmText: i18n.t('save'),
                 cancelText: i18n.t('cancel'),
                 onConfirm: () => saveStorage(),
-                size: 'xlarge'
+                size: 'xxlarge'
             });
 
             // Initialize form values
@@ -381,30 +382,83 @@
             return value + unit;
         }
 
+        function escapeHtml(value) {
+            return String(value === undefined || value === null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function wmValue(value, defaultValue) {
+            return value === undefined || value === null || value === '' ? defaultValue : value;
+        }
+
+        function toggleWmFields() {
+            const enabled = document.getElementById('wm-modal-enabled').checked;
+            const fields = document.getElementById('wm-modal-fields');
+            if (enabled) {
+                fields.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                fields.classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        function getWatermarkFormValue() {
+            return {
+                enabled: document.getElementById('wm-modal-enabled').checked,
+                type: 'text',
+                content: document.getElementById('wm-modal-content').value.trim(),
+                position: document.getElementById('wm-modal-position').value,
+                opacity: parseFloat(document.getElementById('wm-modal-opacity').value),
+                fontSize: parseInt(document.getElementById('wm-modal-font-size').value, 10),
+                color: document.getElementById('wm-modal-color').value,
+                margin: parseInt(document.getElementById('wm-modal-margin').value, 10),
+                outlineEnabled: document.getElementById('wm-modal-outline').checked,
+                outlineColor: document.getElementById('wm-modal-outline-color').value,
+                shadowEnabled: document.getElementById('wm-modal-shadow').checked,
+                tileEnabled: document.getElementById('wm-modal-tile').checked,
+                tileGap: parseInt(document.getElementById('wm-modal-tile-gap').value, 10),
+                angle: parseInt(document.getElementById('wm-modal-angle').value, 10)
+            };
+        }
+
         async function showWatermarkModal(name) {
             const storage = allStorages.find(s => s.name === name);
             if (!storage) return;
 
             const wm = storage.watermark || {};
+            const fontSize = wmValue(wm.fontSize, 20);
+            const margin = wmValue(wm.margin, 10);
+            const tileGap = wmValue(wm.tileGap, 120);
+            const opacity = wmValue(wm.opacity, 0.5);
+            const angle = wmValue(wm.angle, 0);
+            const color = wmValue(wm.color, '#ffffff');
+            const outlineColor = wmValue(wm.outlineColor, '#000000');
             const content = `
                 <div class="space-y-4">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div class="space-y-3">
-                            <div>
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" id="wm-modal-enabled" class="w-4 h-4 rounded text-blue-600" ${wm.enabled ? 'checked' : ''} onchange="updateStorageWmPreview()">
-                                    <span class="text-secondary">启用水印</span>
-                                </label>
-                            </div>
-                            <div>
-                                <label class="block text-secondary text-xs mb-1">类型</label>
-                                <select id="wm-modal-type" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" onchange="updateStorageWmPreview()">
-                                    <option value="text" ${wm.type === 'text' ? 'selected' : ''}>文字水印</option>
-                                </select>
+                    <div class="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 mx-auto" style="max-width:640px">
+                        <canvas id="storage-wm-preview" width="640" height="360" class="w-full" style="display:block;"></canvas>
+                    </div>
+                    <p class="text-xs text-muted text-center">预览使用示例背景，实际效果根据原图尺寸按相同参数生成</p>
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
+                        <div class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="wm-modal-enabled" class="w-4 h-4 rounded text-blue-600" ${wm.enabled ? 'checked' : ''} onchange="toggleWmFields(); updateStorageWmPreview()">
+                                <span class="text-secondary">启用水印</span>
+                            </label>
+                            <span class="text-xs text-muted">动态叠加，不修改原图</span>
+                        </div>
+                        <div id="wm-modal-fields" class="${wm.enabled ? '' : 'opacity-40 pointer-events-none'} space-y-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-secondary text-xs mb-1">水印内容</label>
+                                <input type="text" id="wm-modal-content" class="w-full px-3 py-2 input-field rounded-lg text-sm" value="${escapeHtml(wm.content || '')}" placeholder="例如: © My Site" oninput="updateStorageWmPreview()">
                             </div>
                             <div>
                                 <label class="block text-secondary text-xs mb-1">位置</label>
-                                <select id="wm-modal-position" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" onchange="updateStorageWmPreview()">
+                                <select id="wm-modal-position" class="w-full px-3 py-2 input-field rounded-lg text-sm" onchange="updateStorageWmPreview()">
                                     <option value="top-left" ${wm.position === 'top-left' ? 'selected' : ''}>左上角</option>
                                     <option value="top-right" ${wm.position === 'top-right' ? 'selected' : ''}>右上角</option>
                                     <option value="bottom-left" ${wm.position === 'bottom-left' ? 'selected' : ''}>左下角</option>
@@ -413,23 +467,55 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-secondary text-xs mb-1">水印内容</label>
-                                <input type="text" id="wm-modal-content" class="w-full px-3 py-1.5 input-field rounded-lg text-sm" value="${wm.content || ''}" placeholder="例如: © My Site" oninput="updateStorageWmPreview()">
+                                <label class="block text-secondary text-xs mb-1">文字颜色</label>
+                                <input type="color" id="wm-modal-color" class="w-full h-10 input-field rounded-lg p-1" value="${escapeHtml(color)}" oninput="updateStorageWmPreview()">
                             </div>
                             <div>
-                                <label class="block text-secondary text-xs mb-1">透明度: <span id="wm-modal-opacity-value">${wm.opacity || 0.5}</span></label>
-                                <input type="range" id="wm-modal-opacity" min="0.1" max="1" step="0.1" value="${wm.opacity || 0.5}" class="w-full accent-blue-600"
+                                <label class="block text-secondary text-xs mb-1">字号: <span id="wm-modal-font-size-value">${fontSize}</span>px</label>
+                                <input type="range" id="wm-modal-font-size" min="12" max="96" step="1" value="${fontSize}" class="w-full accent-blue-600"
+                                    oninput="document.getElementById('wm-modal-font-size-value').textContent=this.value; updateStorageWmPreview()">
+                            </div>
+                            <div>
+                                <label class="block text-secondary text-xs mb-1">边距: <span id="wm-modal-margin-value">${margin}</span>px</label>
+                                <input type="range" id="wm-modal-margin" min="0" max="100" step="1" value="${margin}" class="w-full accent-blue-600"
+                                    oninput="document.getElementById('wm-modal-margin-value').textContent=this.value; updateStorageWmPreview()">
+                            </div>
+                            <div>
+                                <label class="block text-secondary text-xs mb-1">透明度: <span id="wm-modal-opacity-value">${opacity}</span></label>
+                                <input type="range" id="wm-modal-opacity" min="0.1" max="1" step="0.05" value="${opacity}" class="w-full accent-blue-600"
                                     oninput="document.getElementById('wm-modal-opacity-value').textContent=this.value; updateStorageWmPreview()">
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-secondary text-xs mb-1">预览效果</label>
-                            <div class="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                                <canvas id="storage-wm-preview" width="320" height="240" class="w-full" style="display:block;"></canvas>
+                            <div>
+                                <label class="block text-secondary text-xs mb-1">角度: <span id="wm-modal-angle-value">${angle}</span>°</label>
+                                <input type="range" id="wm-modal-angle" min="-90" max="90" step="1" value="${angle}" class="w-full accent-blue-600"
+                                    oninput="document.getElementById('wm-modal-angle-value').textContent=this.value; updateStorageWmPreview()">
                             </div>
                         </div>
+                        <div class="flex flex-wrap items-end gap-3">
+                            <label class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                <input type="checkbox" id="wm-modal-outline" class="w-4 h-4 rounded text-blue-600" ${wm.outlineEnabled !== false ? 'checked' : ''} onchange="updateStorageWmPreview()">
+                                <span class="text-secondary text-sm">描边</span>
+                            </label>
+                            <div>
+                                <label class="block text-secondary text-xs mb-1">描边颜色</label>
+                                <input type="color" id="wm-modal-outline-color" class="h-10 w-14 input-field rounded-lg p-1" value="${escapeHtml(outlineColor)}" oninput="updateStorageWmPreview()">
+                            </div>
+                            <label class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                <input type="checkbox" id="wm-modal-shadow" class="w-4 h-4 rounded text-blue-600" ${wm.shadowEnabled !== false ? 'checked' : ''} onchange="updateStorageWmPreview()">
+                                <span class="text-secondary text-sm">阴影</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
+                                <input type="checkbox" id="wm-modal-tile" class="w-4 h-4 rounded text-blue-600" ${wm.tileEnabled ? 'checked' : ''} onchange="updateStorageWmPreview()">
+                                <span class="text-secondary text-sm">平铺</span>
+                            </label>
+                            <div class="w-40">
+                                <label class="block text-secondary text-xs mb-1">间距: <span id="wm-modal-tile-gap-value">${tileGap}</span>px</label>
+                                <input type="range" id="wm-modal-tile-gap" min="40" max="400" step="10" value="${tileGap}" class="w-full accent-blue-600"
+                                    oninput="document.getElementById('wm-modal-tile-gap-value').textContent=this.value; updateStorageWmPreview()">
+                            </div>
+                        </div>
+                        </div>
                     </div>
-                    <p class="text-xs text-muted">启用水印后，访问图片时会动态叠加水印，原图不会被修改。</p>
                 </div>
             `;
 
@@ -438,15 +524,9 @@
                 content: content,
                 confirmText: i18n.t('save'),
                 cancelText: i18n.t('cancel'),
+                horizontalButtons: true,
                 onConfirm: async () => {
-                    const wmEnabled = document.getElementById('wm-modal-enabled').checked;
-                    const watermark = wmEnabled ? {
-                        enabled: true,
-                        type: document.getElementById('wm-modal-type').value,
-                        content: document.getElementById('wm-modal-content').value,
-                        position: document.getElementById('wm-modal-position').value,
-                        opacity: parseFloat(document.getElementById('wm-modal-opacity').value)
-                    } : null;
+                    const watermark = getWatermarkFormValue();
 
                     try {
                         const response = await fetch(`/api/admin/storages/${name}`, {
@@ -474,7 +554,7 @@
                         return false;
                     }
                 },
-                size: 'large'
+                size: 'full'
             });
 
             // Initialize preview after modal renders
@@ -489,41 +569,76 @@
 
             // Sample background
             const grad = ctx.createLinearGradient(0, 0, w, h);
-            grad.addColorStop(0, '#4f46e5');
-            grad.addColorStop(0.5, '#0ea5e9');
-            grad.addColorStop(1, '#10b981');
+            grad.addColorStop(0, '#1e293b');
+            grad.addColorStop(0.4, '#2563eb');
+            grad.addColorStop(1, '#16a34a');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, w, h);
-            ctx.fillStyle = 'rgba(255,255,255,0.08)';
-            ctx.beginPath(); ctx.arc(w * 0.7, h * 0.3, 50, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(w * 0.2, h * 0.7, 35, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.16)';
+            ctx.fillRect(34, 34, 120, 72);
+            ctx.fillStyle = 'rgba(15,23,42,0.28)';
+            ctx.fillRect(178, 116, 136, 98);
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.beginPath(); ctx.arc(w * 0.78, h * 0.26, 42, 0, Math.PI * 2); ctx.fill();
 
             const enabled = document.getElementById('wm-modal-enabled');
             if (!enabled || !enabled.checked) return;
 
-            const content = document.getElementById('wm-modal-content')?.value || '';
-            if (!content) return;
-
-            const position = document.getElementById('wm-modal-position')?.value || 'bottom-right';
-            const opacity = parseFloat(document.getElementById('wm-modal-opacity')?.value) || 0.5;
+            const wm = getWatermarkFormValue();
+            if (!wm.content) return;
 
             ctx.save();
-            ctx.globalAlpha = opacity;
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial, sans-serif';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 3;
-            const metrics = ctx.measureText(content);
-            const textW = metrics.width, textH = 18, margin = 12;
-            let x, y;
-            switch (position) {
-                case 'top-left': x = margin; y = textH + margin; break;
-                case 'top-right': x = w - textW - margin; y = textH + margin; break;
-                case 'bottom-left': x = margin; y = h - margin; break;
-                case 'center': x = (w - textW) / 2; y = (h + textH) / 2; break;
-                default: x = w - textW - margin; y = h - margin;
+            ctx.globalAlpha = wm.opacity;
+            ctx.font = `bold ${wm.fontSize}px Arial, sans-serif`;
+            ctx.textBaseline = 'top';
+
+            const drawText = (x, y) => {
+                const centerX = x + textW / 2;
+                const centerY = y + textH / 2;
+                ctx.save();
+                if (wm.angle !== 0) {
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(wm.angle * Math.PI / 180);
+                    ctx.translate(-centerX, -centerY);
+                }
+                if (wm.shadowEnabled) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                    ctx.fillText(wm.content, x + 2, y + 2);
+                }
+                if (wm.outlineEnabled) {
+                    ctx.lineWidth = Math.max(1, wm.fontSize / 12);
+                    ctx.lineJoin = 'round';
+                    ctx.strokeStyle = wm.outlineColor;
+                    ctx.strokeText(wm.content, x, y);
+                }
+                ctx.fillStyle = wm.color;
+                ctx.fillText(wm.content, x, y);
+                ctx.restore();
+            };
+
+            const metrics = ctx.measureText(wm.content);
+            const textW = metrics.width;
+            const textH = wm.fontSize * 1.2;
+
+            if (wm.tileEnabled) {
+                for (let y = wm.margin; y < h + textH; y += textH + wm.tileGap) {
+                    for (let x = wm.margin; x < w + textW; x += textW + wm.tileGap) {
+                        drawText(x, y);
+                    }
+                }
+                ctx.restore();
+                return;
             }
-            ctx.fillText(content, x, y);
+
+            let x, y;
+            switch (wm.position) {
+                case 'top-left': x = wm.margin; y = wm.margin; break;
+                case 'top-right': x = w - textW - wm.margin; y = wm.margin; break;
+                case 'bottom-left': x = wm.margin; y = h - textH - wm.margin; break;
+                case 'center': x = (w - textW) / 2; y = (h - textH) / 2; break;
+                default: x = w - textW - wm.margin; y = h - textH - wm.margin;
+            }
+            drawText(x, y);
             ctx.restore();
         }
 
@@ -576,7 +691,7 @@
                     const response = await fetch(`/api/admin/storages/${name}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ path, maxSize, urlPrefix, allowAnonymous })
+                        body: JSON.stringify({ path, maxSize, urlPrefix, allowAnonymous, watermark: currentStorageData ? currentStorageData.watermark : null })
                     });
                     const result = await response.json();
 

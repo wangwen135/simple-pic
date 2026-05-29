@@ -632,7 +632,24 @@ public class AdminController {
         wm.setContent((String) data.getOrDefault("content", ""));
         wm.setPosition((String) data.getOrDefault("position", "bottom-right"));
         wm.setOpacity(data.get("opacity") != null ? ((Number) data.get("opacity")).doubleValue() : 0.5);
+        wm.setFontSize(getIntValue(data, "fontSize", 20));
+        wm.setColor((String) data.getOrDefault("color", "#ffffff"));
+        wm.setMargin(getIntValue(data, "margin", 10));
+        wm.setOutlineEnabled(data.get("outlineEnabled") == null || Boolean.TRUE.equals(data.get("outlineEnabled")));
+        wm.setOutlineColor((String) data.getOrDefault("outlineColor", "#000000"));
+        wm.setShadowEnabled(data.get("shadowEnabled") == null || Boolean.TRUE.equals(data.get("shadowEnabled")));
+        wm.setTileEnabled(data.get("tileEnabled") != null && Boolean.TRUE.equals(data.get("tileEnabled")));
+        wm.setTileGap(getIntValue(data, "tileGap", 120));
+        wm.setAngle(getIntValue(data, "angle", 0));
         return wm;
+    }
+
+    private int getIntValue(Map<String, Object> data, String key, int defaultValue) {
+        Object value = data.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return defaultValue;
     }
 
     /**
