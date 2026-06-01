@@ -115,8 +115,13 @@ public class ImageService {
                 relativePath = filename;
                 targetDir = space.getStorageDirectory();
             } else {
-                relativePath = targetPath.replace("/", File.separator) + File.separator + filename;
-                targetDir = new File(space.getStorageDirectory(), targetPath.replace("/", File.separator));
+                targetDir = FileUtils.validatePath(targetPath, space.getStorageDirectory());
+                if (targetDir == null) {
+                    logger.warn("Invalid target path for upload: {}", targetPath);
+                    return UploadResult.error(ErrorMessages.getZh("invalid_filename"));
+                }
+                String normalizedTargetPath = FileUtils.getRelativePath(targetDir, space.getStorageDirectory());
+                relativePath = normalizedTargetPath + File.separator + filename;
             }
         } else {
             // Use default yyyy/MM structure

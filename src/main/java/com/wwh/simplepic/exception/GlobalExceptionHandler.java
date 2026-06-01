@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -53,6 +54,19 @@ public class GlobalExceptionHandler {
         response.put("error", ex.getMessage());
 
         logger.warn("Illegal argument: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * Handle malformed request bodies
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("error", "Malformed request body");
+
+        logger.warn("Malformed request body: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(response);
     }
 

@@ -127,27 +127,27 @@
             return `
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="storage_name">Name</span></label>
-                        <input type="text" id="create-name" class="w-full px-4 py-2 input-field rounded-lg" placeholder="storage-name">
+                        <label for="create-name" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="storage_name">Name</span></label>
+                        <input type="text" id="create-name" name="storageName" autocomplete="off" class="w-full px-4 py-2 input-field rounded-lg" placeholder="storage-name">
                         <p class="text-xs text-muted mt-1" data-i18n="storage_name_hint">英文字母、数字、下划线、中划线</p>
                     </div>
                     <div>
-                        <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="storage_path">Path</span></label>
-                        <input type="text" id="create-path" class="w-full px-4 py-2 input-field rounded-lg" placeholder="./storage/custom">
+                        <label for="create-path" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="storage_path">Path</span></label>
+                        <input type="text" id="create-path" name="storagePath" autocomplete="off" class="w-full px-4 py-2 input-field rounded-lg" placeholder="./storage/custom">
                         <p class="text-xs text-muted mt-1" data-i18n="storage_path_hint">绝对路径或相对路径，不存在将自动创建</p>
                     </div>
                     <div>
-                        <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="max_size">Max Size</span></label>
+                        <label for="create-size-value" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="max_size">Max Size</span></label>
                         <div class="flex items-center space-x-2">
-                            <input type="number" id="create-size-value" class="flex-1 px-4 py-2 input-field rounded-lg" placeholder="1" min="1">
-                            <select id="create-size-unit" class="px-4 py-2 input-field rounded-lg">
+                            <input type="number" id="create-size-value" name="storageSizeValue" class="flex-1 px-4 py-2 input-field rounded-lg" placeholder="1" min="1">
+                            <select id="create-size-unit" name="storageSizeUnit" aria-label="Storage size unit" class="px-4 py-2 input-field rounded-lg">
                                 <option value="MB" data-i18n="unit_mb">MB</option>
                                 <option value="GB" selected data-i18n="unit_gb">GB</option>
                             </select>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="domain">URL Prefix</span></label>
+                        <label for="create-url-prefix" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="domain">URL Prefix</span></label>
 
                         <!-- Current system URL prefix example -->
                         <div class="bg-slate-100 dark:bg-slate-800/50 px-3 py-2.5 rounded-lg mb-2 border border-slate-200 dark:border-slate-700">
@@ -158,7 +158,7 @@
                             <button type="button" onclick="applyUrlPrefix()" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors" data-i18n="apply">应用</button>
                         </div>
 
-                        <input type="text" id="create-url-prefix" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://192.168.31.88:8080/image/note/">
+                        <input type="text" id="create-url-prefix" name="urlPrefix" autocomplete="url" class="w-full px-4 py-2 input-field rounded-lg" placeholder="http://192.168.31.88:8080/image/note/">
 
                         <!-- Description content -->
                         <div class="text-sm text-muted mt-2 space-y-1">

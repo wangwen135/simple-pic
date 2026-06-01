@@ -40,16 +40,16 @@
             <input type="hidden" id="edit-username" value="">
             <div class="space-y-4 mb-4">
                 <div>
-                    <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="username">Username</span></label>
-                    <input type="text" id="create-username" class="w-full px-4 py-2 input-field rounded-lg" placeholder="username">
+                    <label for="create-username" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="username">Username</span></label>
+                    <input type="text" id="create-username" name="username" autocomplete="username" class="w-full px-4 py-2 input-field rounded-lg" placeholder="username">
                 </div>
                 <div>
-                    <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="password">Password</span></label>
-                    <input type="password" id="create-password" class="w-full px-4 py-2 input-field rounded-lg" placeholder="********">
+                    <label for="create-password" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="password">Password</span></label>
+                    <input type="password" id="create-password" name="password" autocomplete="new-password" class="w-full px-4 py-2 input-field rounded-lg" placeholder="********">
                 </div>
                 <div>
-                    <label class="block text-secondary text-sm mb-1" data-i18n="role">Role</label>
-                    <select id="create-role" class="w-full px-4 py-2 input-field rounded-lg">
+                    <label for="create-role" class="block text-secondary text-sm mb-1" data-i18n="role">Role</label>
+                    <select id="create-role" name="role" class="w-full px-4 py-2 input-field rounded-lg">
                         <option value="USER" data-i18n="user">User</option>
                         <option value="ADMIN" data-i18n="admin">Admin</option>
                     </select>

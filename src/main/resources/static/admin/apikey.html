@@ -66,14 +66,14 @@
         <div class="modal rounded-xl p-6 w-full max-w-md">
             <h2 class="text-xl font-bold text-primary mb-4" data-i18n="generate_api_key">Generate API Key</h2>
             <div class="mb-4">
-                <label class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="storage_space_for_key">Storage Space</span></label>
-                <select id="generate-storage" class="w-full px-4 py-2 input-field rounded-lg">
+                <label for="generate-storage" class="block text-secondary text-sm mb-1"><span class="text-red-500">*</span> <span data-i18n="storage_space_for_key">Storage Space</span></label>
+                <select id="generate-storage" name="storageSpace" class="w-full px-4 py-2 input-field rounded-lg">
                     <option value="" disabled selected>Loading...</option>
                 </select>
             </div>
             <div class="mb-4">
-                <label class="block text-secondary text-sm mb-1"><span data-i18n="remark">Remark</span></label>
-                <input type="text" id="generate-remark" class="w-full px-4 py-2 input-field rounded-lg" data-i18n-placeholder="remark_placeholder" placeholder="Optional remark for this API key">
+                <label for="generate-remark" class="block text-secondary text-sm mb-1"><span data-i18n="remark">Remark</span></label>
+                <input type="text" id="generate-remark" name="remark" autocomplete="off" class="w-full px-4 py-2 input-field rounded-lg" data-i18n-placeholder="remark_placeholder" placeholder="Optional remark for this API key">
             </div>
             <button onclick="generateApiKey()" class="w-full px-4 py-2 btn-primary text-white rounded-lg mb-2" data-i18n="save">Generate</button>
             <button onclick="hideGenerateModal()" class="w-full px-4 py-2 btn-secondary rounded-lg" data-i18n="cancel">Cancel</button>

@@ -137,3 +137,8 @@ test-images/
 
 # Development scripts
 restart.sh
+
+# Node / Playwright
+node_modules/
+test-results/
+playwright-report/
