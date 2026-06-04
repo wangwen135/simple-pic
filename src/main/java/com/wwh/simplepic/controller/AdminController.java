@@ -565,7 +565,7 @@ public class AdminController {
         if (sourcePath == null || sourcePath.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(ResponseUtils.error("source_path_required"));
         }
-        if (targetPath == null || targetPath.trim().isEmpty()) {
+        if (targetPath == null) {
             return ResponseEntity.badRequest().body(ResponseUtils.error("target_path_required"));
         }
 

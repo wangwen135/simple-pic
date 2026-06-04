@@ -39,6 +39,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             "/api/auth/config",
             "/login.html",
             "/api/image/",
+            "/image/upload",
             "/favicon.svg",
             "/favicon.ico",
             "/lib/",
@@ -87,7 +88,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         // Check if path is public
-        if (isPublicPath(path)) {
+        if (isPublicPath(path) || isPublicImageRequest(path, method)) {
             return true;
         }
 
@@ -139,8 +140,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // Check admin role for admin paths
-        if (isAdminPath(path) && !"ADMIN".equals(session.getRole())) {
+        // Check admin role for admin paths and image management endpoints.
+        if ((isAdminPath(path) || isImageManagementRequest(path, method)) && !"ADMIN".equals(session.getRole())) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"" + ErrorMessages.getZh("forbidden") + "\",\"error_en\":\"" + ErrorMessages.getEn("forbidden") + "\"}");
@@ -163,6 +164,39 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
         return false;
+    }
+
+    /**
+     * 公开图片访问只允许读取真实图片文件，图片管理接口仍然需要认证。
+     */
+    private boolean isPublicImageRequest(String path, String method) {
+        if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) {
+            return false;
+        }
+        if (!path.startsWith("/image/")) {
+            return false;
+        }
+        return !path.equals("/image/list")
+                && !path.startsWith("/image/list/")
+                && !path.equals("/image/batch")
+                && !path.startsWith("/image/batch/")
+                && !path.startsWith("/image/info/");
+    }
+
+    /**
+     * 图片列表、删除等管理接口要求管理员权限。
+     */
+    private boolean isImageManagementRequest(String path, String method) {
+        if (path.equals("/image/list") || path.startsWith("/image/list/")) {
+            return true;
+        }
+        if (path.equals("/image/batch") || path.startsWith("/image/batch/")) {
+            return true;
+        }
+        if (path.startsWith("/image/info/")) {
+            return true;
+        }
+        return "DELETE".equalsIgnoreCase(method) && path.startsWith("/image/");
     }
 
     /**

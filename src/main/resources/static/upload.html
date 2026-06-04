@@ -548,7 +548,6 @@
                         Toast.success(i18n.t('image_uploaded_and_copied'));
                     } else {
                         Toast.success(i18n.t('image_uploaded'));
-                        setTimeout(() => Toast.error(i18n.t('copy_failed')), 1500);
                     }
                 } else {
                     Toast.error(result.error || i18n.t('upload_failed'));
@@ -729,8 +728,11 @@
         // Copy link from history using URL to avoid escaping issues
         window.copyHistoryLink = async function(url) {
             const link = generateLinkFromUrl(url);
-            await copyToClipboard(link);
-            Toast.success(i18n.t('link_copied'));
+            if (await copyToClipboard(link)) {
+                Toast.success(i18n.t('link_copied'));
+            } else {
+                Toast.error(i18n.t('copy_failed'));
+            }
         };
 
         // Delete single history item
@@ -756,8 +758,11 @@
 
         // Copy link from history (deprecated, kept for compatibility)
         window.copyLink = async function(link) {
-            await copyToClipboard(link);
-            Toast.success(i18n.t('link_copied'));
+            if (await copyToClipboard(link)) {
+                Toast.success(i18n.t('link_copied'));
+            } else {
+                Toast.error(i18n.t('copy_failed'));
+            }
         };
 
         // Clear history

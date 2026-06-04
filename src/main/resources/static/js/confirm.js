@@ -201,6 +201,13 @@ const Confirm = {
     },
 
     /**
+     * Show generic confirm
+     */
+    confirm(message, title, options = {}) {
+        return this.info(message, title, options);
+    },
+
+    /**
      * Show warning confirm
      */
     warning(message, title, options = {}) {

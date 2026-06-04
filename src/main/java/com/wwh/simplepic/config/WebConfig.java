@@ -78,7 +78,6 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/health",
                         "/api/upload",
-                        "/image/**",
                         "/images/**",
                         "/api/auth/**",
                         "/login.html",

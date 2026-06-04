@@ -307,8 +307,9 @@ public class FileUtils {
             String baseCanonical = baseDir.getCanonicalPath();
             String resolvedCanonical = resolvedFile.getCanonicalPath();
 
-            // Ensure resolved path is within base directory
-            if (!resolvedCanonical.startsWith(baseCanonical)) {
+            // Ensure resolved path is inside base directory, not just sharing its prefix.
+            if (!resolvedCanonical.equals(baseCanonical)
+                    && !resolvedCanonical.startsWith(baseCanonical + File.separator)) {
                 return null;
             }
 

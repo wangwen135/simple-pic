@@ -4,17 +4,34 @@
 [![Java](https://img.shields.io/badge/Java-8%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.18-green.svg)](https://spring.io/projects/spring-boot)
 
-Simple-Pic 是一个零数据库的本地图床应用，基于 Java 8 和 Spring Boot 2.7。
+Simple-Pic 是一个零数据库的本地图床应用，配置和图片都存储在本地。
 
 它支持图片上传、多用户、多存储空间、后台管理、API 上传、水印、防盗链和访问限流。运行数据保存在本地文件和 `config.yml` 中，不依赖数据库。
 
 ## 截图
 
-截图放在 `doc/images/` 目录下，文件名可按下面示例保存。
+### 上传页面
+
+支持选择文件、拖拽上传和粘贴上传，上传完成后可直接复制图片链接。
 
 ![上传页面](doc/images/upload.png)
+
+### 仪表盘
+
+集中展示存储空间、图片数量、上传趋势和系统运行状态。
+
 ![仪表盘](doc/images/dashboard.png)
+
+### 图片管理
+
+支持查看、搜索、复制链接和删除图片。
+
 ![图片管理](doc/images/images.png)
+
+### 系统设置
+
+统一管理上传限制、水印、防盗链、安全策略等配置。
+
 ![系统设置](doc/images/system.png)
 
 ## 功能
@@ -30,22 +47,36 @@ Simple-Pic 是一个零数据库的本地图床应用，基于 Java 8 和 Spring
 
 环境要求：
 
-- Java 8+
-- Maven 3.6+
+- JDK 8+
+
+下载发布包后解压，目录内已包含 Windows 和 Linux 启动脚本。
+
+Linux：
 
 ```bash
-mvn clean package
-java -jar target/simple-pic-1.0.0.jar
+./start.sh
 ```
 
-首次启动会在项目根目录生成 `config.yml`，管理员账号和随机密码会输出到控制台。
+Windows：
 
-常用地址：
+```bat
+start.bat
+```
 
-- 上传页面：`http://localhost:8080/upload.html`
-- 登录页面：`http://localhost:8080/login.html`
-- 管理后台：`http://localhost:8080/admin/dashboard.html`
-- 健康检查：`http://localhost:8080/api/health`
+首次启动时，应用程序会：
+1. 在项目根目录生成 `config.yml` 配置文件
+2. 为管理员账户生成随机密码，并输出到控制台
+
+**示例输出：**
+```
+==============================================
+ADMIN CREDENTIALS:
+Username: admin
+Password: AbCdEf1234!@#
+==============================================
+```
+
+使用这些凭据登录：http://localhost:8080/login.html
 
 ## API 上传
 
@@ -60,8 +91,6 @@ curl -X POST http://localhost:8080/api/upload \
 ## 配置
 
 主要配置文件为项目根目录下的 `config.yml`。首次启动自动生成，可在后台页面维护用户、存储空间、水印、防盗链、上传限制等设置。
-
-不要提交真实的 `config.yml`、API Token、上传文件或日志。
 
 ## 文档
 
