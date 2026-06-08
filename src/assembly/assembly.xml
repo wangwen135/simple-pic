@@ -20,34 +20,37 @@
             </includes>
         </fileSet>
 
+        <!-- External application.yml (user can edit port, logging, etc.) -->
+        <fileSet>
+            <directory>${project.build.directory}/classes</directory>
+            <outputDirectory>.</outputDirectory>
+            <includes>
+                <include>application.yml</include>
+            </includes>
+        </fileSet>
+
         <!-- Static resources (CSS, JS, fonts, etc.) -->
         <fileSet>
             <directory>${project.build.directory}/classes/static</directory>
             <outputDirectory>.</outputDirectory>
         </fileSet>
 
-        <!-- Startup/Stop scripts for Linux -->
+        <!-- Management script for Linux/macOS -->
         <fileSet>
             <directory>src/assembly/scripts</directory>
             <outputDirectory>.</outputDirectory>
             <includes>
-                <include>start.sh</include>
-                <include>stop.sh</include>
-                <include>status.sh</include>
-                <include>restart.sh</include>
+                <include>simple-pic.sh</include>
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>
 
-        <!-- Startup/Stop scripts for Windows -->
+        <!-- Management script for Windows -->
         <fileSet>
             <directory>src/assembly/scripts</directory>
             <outputDirectory>.</outputDirectory>
             <includes>
-                <include>start.bat</include>
-                <include>stop.bat</include>
-                <include>status.bat</include>
-                <include>restart.bat</include>
+                <include>simple-pic.bat</include>
             </includes>
         </fileSet>
 
