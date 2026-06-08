@@ -32,27 +32,39 @@ if exist "application.yml" (
     for /f "tokens=2 delims=:" %%a in ('findstr /r "^ *port:" application.yml') do (
         set RAW_PORT=%%a
     )
-    REM Strip spaces and ${SERVER_PORT:...} pattern
     if defined RAW_PORT (
         for /f "tokens=*" %%b in ("!RAW_PORT!") do set PORT=%%b
     )
 )
 set PORT=%PORT: =%
-REM If port still contains ${...}, fallback to 8080
 echo %PORT% | findstr /r "^[0-9]*$" >nul
 if errorlevel 1 set PORT=8080
 goto :eof
 
+REM === Print banner ===
+:print_banner
+echo.
+echo   -------------------------------
+echo   Simple-Pic Management Script
+echo   -------------------------------
+echo.
+goto :eof
+
 REM === Start ===
 :do_start
+call :print_banner
+
 where java >nul 2>nul
 if errorlevel 1 (
-    echo Error: Java is not installed. Please install Java 8 or higher.
+    echo   [ERROR] Java is not installed.
+    echo   Please install JDK 8 or higher.
+    echo.
     exit /b 1
 )
 
 if not defined JAR_FILE (
-    echo Error: JAR file not found.
+    echo   [ERROR] JAR file not found.
+    echo.
     exit /b 1
 )
 
@@ -60,7 +72,13 @@ if exist "%PID_FILE%" (
     set /p PID=<%PID_FILE%
     tasklist /FI "PID eq !PID!" 2>nul | find /I /N "java.exe">nul
     if "!ERRORLEVEL!"=="0" (
-        echo %APP_NAME% is already running ^(PID: !PID!^)
+        call :get_port
+        echo   [WARN] %APP_NAME% is already running
+        echo.
+        echo   PID:    !PID!
+        echo   Port:   %PORT%
+        echo   Log:    %LOG_FILE%
+        echo.
         exit /b 0
     )
     del "%PID_FILE%" 2>nul
@@ -68,7 +86,11 @@ if exist "%PID_FILE%" (
 
 if not exist "logs" mkdir logs
 
-echo Starting %APP_NAME%...
+call :get_port
+echo   [*] Starting %APP_NAME%...
+echo   Port: %PORT%
+echo.
+
 start /B java -jar "%JAR_FILE%" >> "%LOG_FILE%" 2>&1
 
 REM Get the PID of the Java process
@@ -77,24 +99,35 @@ for /f "tokens=2" %%i in ('tasklist ^| findstr "java.exe"') do (
     set JAVA_PID=%%i
 )
 
-timeout /t 3 /nobreak >nul
+echo   Waiting for startup...
+timeout /t 5 /nobreak >nul
 
 if defined JAVA_PID (
     echo !JAVA_PID! > "%PID_FILE%"
-    call :get_port
-    echo %APP_NAME% started successfully ^(PID: !JAVA_PID!^)
-    echo Log file: %LOG_FILE%
-    echo Access: http://localhost:%PORT%
+    echo.
+    echo   [OK] %APP_NAME% started successfully!
+    echo.
+    echo   PID:    !JAVA_PID!
+    echo   Port:   %PORT%
+    echo   Log:    %LOG_FILE%
+    echo   Access: http://localhost:%PORT%
+    echo.
 ) else (
-    echo Failed to start %APP_NAME%. Check log: %LOG_FILE%
+    echo.
+    echo   [ERROR] Failed to start %APP_NAME%.
+    echo   Check log: %LOG_FILE%
+    echo.
     exit /b 1
 )
 goto :eof
 
 REM === Stop ===
 :do_stop
+call :print_banner
+
 if not exist "%PID_FILE%" (
-    echo %APP_NAME% is not running
+    echo   [INFO] %APP_NAME% is not running
+    echo.
     exit /b 0
 )
 
@@ -102,29 +135,38 @@ set /p PID=<%PID_FILE%
 
 tasklist /FI "PID eq %PID%" 2>nul | find /I /N "java.exe">nul
 if "%ERRORLEVEL%"=="1" (
-    echo %APP_NAME% is not running ^(stale PID file^)
+    echo   [INFO] %APP_NAME% is not running ^(stale PID cleaned^)
+    echo.
     del "%PID_FILE%" 2>nul
     exit /b 0
 )
 
-echo Stopping %APP_NAME% ^(PID: %PID%^)...
+echo   [*] Stopping %APP_NAME% (PID: %PID%)...
+echo.
 taskkill /PID %PID% /F
 
 timeout /t 2 /nobreak >nul
 
 tasklist /FI "PID eq %PID%" 2>nul | find /I /N "java.exe">nul
 if "%ERRORLEVEL%"=="1" (
-    echo %APP_NAME% stopped successfully
     del "%PID_FILE%" 2>nul
+    echo   [OK] %APP_NAME% stopped successfully.
+    echo.
 ) else (
-    echo Failed to stop %APP_NAME%
+    echo   [WARN] Failed to stop %APP_NAME%.
+    echo.
 )
 goto :eof
 
 REM === Status ===
 :do_status
+call :print_banner
+
 if not exist "%PID_FILE%" (
-    echo %APP_NAME% is not running
+    echo   [INFO] %APP_NAME% is not running
+    echo.
+    echo   Use: simple-pic.bat start
+    echo.
     exit /b 0
 )
 
@@ -133,13 +175,21 @@ set /p PID=<%PID_FILE%
 tasklist /FI "PID eq %PID%" 2>nul | find /I /N "java.exe">nul
 if "%ERRORLEVEL%"=="0" (
     call :get_port
-    echo %APP_NAME% is running ^(PID: %PID%^)
+    echo   [RUNNING] %APP_NAME% is running
     echo.
-    tasklist /FI "PID eq %PID%" /V
+    echo   -----------------------------------------
+    echo   PID:     %PID%
+    echo   Port:    %PORT%
+    echo   Access:  http://localhost:%PORT%
+    echo   -----------------------------------------
     echo.
-    echo Access: http://localhost:%PORT%
+    echo   Resource usage:
+    echo.
+    tasklist /FI "PID eq %PID%" /FO TABLE
+    echo.
 ) else (
-    echo %APP_NAME% is not running ^(stale PID file^)
+    echo   [INFO] %APP_NAME% is not running ^(stale PID cleaned^)
+    echo.
     del "%PID_FILE%" 2>nul
 )
 goto :eof
@@ -153,5 +203,18 @@ goto :eof
 
 REM === Usage ===
 :usage
-echo Usage: simple-pic.bat {start^|stop^|restart^|status}
+echo.
+echo   Simple-Pic Management Script
+echo.
+echo   Usage: simple-pic.bat {start^|stop^|restart^|status}
+echo.
+echo   Commands:
+echo     start    Start the application
+echo     stop     Stop the application
+echo     restart  Restart the application
+echo     status   Show running status
+echo.
+echo   Port: Edit server.port in application.yml
+echo   Env:  set SERVER_PORT=9090 ^& simple-pic.bat start
+echo.
 exit /b 1
