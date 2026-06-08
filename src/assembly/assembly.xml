@@ -29,12 +29,6 @@
             </includes>
         </fileSet>
 
-        <!-- Static resources (CSS, JS, fonts, etc.) -->
-        <fileSet>
-            <directory>${project.build.directory}/classes/static</directory>
-            <outputDirectory>.</outputDirectory>
-        </fileSet>
-
         <!-- Management script for Linux/macOS -->
         <fileSet>
             <directory>src/assembly/scripts</directory>
